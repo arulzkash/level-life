@@ -62,7 +62,7 @@ class QuestController extends Controller
         $today = now()->toDateString();
         $yesterday = now()->subDay()->toDateString();
 
-        $last = $profile->last_quest_completed_at?->toDateString();
+        $last = $profile->last_quest_completed_at;
 
         if ($last === $today) {
             // hari ini sudah ada completion -> streak tetap

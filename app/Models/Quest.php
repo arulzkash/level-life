@@ -16,7 +16,9 @@ class Quest extends Model
         'coin_reward',
         'due_date',
         'completed_at',
+        'is_repeatable'
     ];
+
 
     public function user()
     {

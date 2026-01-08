@@ -1,54 +1,150 @@
 <script setup>
-// import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-// import { Head } from '@inertiajs/vue3';
+import { useForm } from '@inertiajs/vue3'
 
-import { useForm } from "@inertiajs/vue3";
-defineProps({
-    message: String,
-    time: String,
+const props = defineProps({
+    profile: Object,
+    activeQuests: Array,
 });
 
-const form = useForm({
-    message: "",
+const createForm = useForm({
+    name: "",
+    status: "todo",
+    type: "Daily Grind",
+    xp_reward: 70,
+    coin_reward: 70,
+    due_date: null,
+    is_repeatable: true,
 });
+
+const completeForms = {};
+
+const getCompleteForm = (id) => {
+    if (!completeForms[id]) {
+        completeForms[id] = useForm({ note: "" });
+    }
+    return completeForms[id];
+};
+
+const completeQuest = (id) => {
+    const form = getCompleteForm(id);
+    form.patch(`/quests/${id}/complete`, {
+        preserveScroll: true,
+        onSuccess: () => form.reset("note"),
+    });
+};
 </script>
 
 <template>
-    <h2>Dashboard</h2>
+    <div style="padding: 16px">
+        <h2>Dashboard</h2>
 
-    <form @submit.prevent="form.post('dashboard/message')">
-        <input v-model="form.message" type="text" placeholder="ketik pesan" />
+        <section style="margin: 12px 0">
+            <h3>Profile</h3>
+            <div>XP: {{ profile?.xp_total }}</div>
+            <div>Coins: {{ profile?.coin_balance }}</div>
+            <div>Streak: {{ profile?.current_streak }}</div>
+        </section>
 
-        <button type="submit" :disabled="form.processing">Kirim</button>
+        <hr />
 
-        <p v-if="form.errors.message" style="color:red">
-            {{ form.errors.message }}
-        </p>
-    </form>
-</template>
+        <section style="margin: 12px 0">
+            <h3>Create Quest</h3>
 
-<!-- <template>
-     <Head title="Dashboard" />
-
-    <AuthenticatedLayout>
-        <template #header>
-            <h2
-                class="text-xl font-semibold leading-tight text-gray-800"
-            >
-                Dashboard
-            </h2>
-        </template>
-
-        <div class="py-12">
-            <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
-                <div
-                    class="overflow-hidden bg-white shadow-sm sm:rounded-lg"
-                >
-                    <div class="p-6 text-gray-900">
-                        You're logged in!
+            <form @submit.prevent="createForm.post('/quests')">
+                <div>
+                    <input v-model="createForm.name" placeholder="Quest name" />
+                    <div v-if="createForm.errors.name">
+                        {{ createForm.errors.name }}
                     </div>
                 </div>
-            </div>
-        </div>
-    </AuthenticatedLayout>
-</template> -->
+
+                <div>
+                    <select v-model="createForm.status">
+                        <option value="todo">todo</option>
+                        <option value="in_progress">in_progress</option>
+                        <option value="locked">locked</option>
+                    </select>
+                </div>
+
+                <div>
+                    <input v-model="createForm.type" placeholder="Type" />
+                </div>
+
+                <div>
+                    <input
+                        type="number"
+                        v-model.number="createForm.xp_reward"
+                    />
+                    <input
+                        type="number"
+                        v-model.number="createForm.coin_reward"
+                    />
+                </div>
+
+                <div>
+                    <input type="date" v-model="createForm.due_date" />
+                </div>
+
+                <div>
+                    <label>
+                        <input
+                            type="checkbox"
+                            v-model="createForm.is_repeatable"
+                        />
+                        Repeatable
+                    </label>
+                </div>
+
+                <button type="submit" :disabled="createForm.processing">
+                    Create
+                </button>
+            </form>
+        </section>
+
+        <hr />
+
+        <section style="margin: 12px 0">
+            <h3>Active Quests</h3>
+
+            <ul>
+                <li
+                    v-for="q in activeQuests"
+                    :key="q.id"
+                    style="margin-bottom: 14px"
+                >
+                    <div>
+                        <strong>{{ q.name }}</strong>
+                        <span>
+                            — {{ q.status }} | {{ q.type }} | repeatable:
+                            {{ q.is_repeatable ? "yes" : "no" }}
+                        </span>
+                    </div>
+
+                    <div>
+                        XP: {{ q.xp_reward }} | Coins: {{ q.coin_reward }}
+                    </div>
+
+                    <div style="margin-top: 6px">
+                        <input
+                            v-model="getCompleteForm(q.id).note"
+                            placeholder="Note (optional)"
+                            style="width: 60%"
+                        />
+
+                        <button
+                            @click="completeQuest(q.id)"
+                            :disabled="getCompleteForm(q.id).processing"
+                            style="margin-left: 8px"
+                        >
+                            Complete
+                        </button>
+                    </div>
+
+                    <div v-if="getCompleteForm(q.id).errors.note">
+                        {{ getCompleteForm(q.id).errors.note }}
+                    </div>
+                </li>
+            </ul>
+        </section>
+    </div>
+</template>

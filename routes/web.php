@@ -34,10 +34,22 @@ require __DIR__ . '/auth.php';
 
 
 
-Route::get('/dashboard', function () {
+// Route::get('/dashboard', function () {
+//     return Inertia::render('Dashboard', [
+//         'message' => 'Hello from Laravel!',
+//         'time' => now()->toDateString(),
+//     ]);
+// })->middleware(['auth']);
+
+Route::get('/dashboard', function (Request $request) {
+    $user = $request->user();
+
     return Inertia::render('Dashboard', [
-        'message' => 'Hello from Laravel!',
-        'time' => now()->toDateString(),
+        'profile' => $user->profile,
+        'activeQuests' => $user->quests()
+            ->whereIn('status', ['todo', 'in_progress'])
+            ->latest()
+            ->get(),
     ]);
 })->middleware(['auth']);
 
