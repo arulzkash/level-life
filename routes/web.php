@@ -53,6 +53,26 @@ Route::get('/dashboard', function (Request $request) {
     ]);
 })->middleware(['auth']);
 
+Route::get('/logs/completions', function (Request $request) {
+    $user = $request->user();
+
+    return Inertia::render('Logs/Completions', [
+        'logs' => $user->questCompletions()
+            ->latest('completed_at')
+            ->with('quest:id,name,type')
+            ->paginate(20),
+    ]);
+})->middleware(['auth']);
+
+Route::get('/quests', function (Request $request) {
+    $user = $request->user();
+
+    return Inertia::render('Quests/Index', [
+        'quests' => $user->quests()->latest()->paginate(20),
+    ]);
+})->middleware(['auth']);
+
+
 Route::post('dashboard/message', function (Request $request) {
     $request->validate([
         'message' => 'required|string|max:255',
