@@ -1,5 +1,5 @@
 <script setup>
-import { Link, useForm } from "@inertiajs/vue3";
+import { Link, useForm, router } from "@inertiajs/vue3";
 import { ref } from "vue";
 
 const props = defineProps({
@@ -32,6 +32,26 @@ const saveEdit = () => {
         preserveScroll: true,
         onSuccess: () => cancelEdit(),
     });
+};
+
+const canComplete = (q) => {
+    if (q.status === "locked") return false;
+    if (!q.is_repeatable && q.status === "done") return false;
+    return true;
+};
+
+const completeQuest = (q) => {
+    if (!canComplete(q)) return;
+
+    const note = window.prompt("Note (optional):", "") ?? "";
+
+    router.patch(
+        `/quests/${q.id}/complete`,
+        { note },
+        {
+            preserveScroll: true,
+        }
+    );
 };
 </script>
 
@@ -76,6 +96,7 @@ const saveEdit = () => {
                     <th>Repeatable</th>
                     <th>Due</th>
                     <th>Completed</th>
+                    <th>Complete</th>
                     <th>Action</th>
                 </tr>
             </thead>
@@ -218,6 +239,16 @@ const saveEdit = () => {
                     <!-- COMPLETED -->
                     <td>
                         {{ q.completed_at ?? "-" }}
+                    </td>
+
+                    <td>
+                        <button
+                            @click="completeQuest(q)"
+                            :disabled="!canComplete(q)"
+                            type="button"
+                        >
+                            Complete
+                        </button>
                     </td>
 
                     <!-- ACTION -->
