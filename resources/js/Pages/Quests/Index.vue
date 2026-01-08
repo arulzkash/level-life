@@ -3,7 +3,9 @@ import { Link, useForm, router } from "@inertiajs/vue3";
 import { ref } from "vue";
 
 const props = defineProps({
-    quests: Object, // paginator object
+    quests: Object,
+    filters: Object,
+    typeOptions: Array,
 });
 
 const editingId = ref(null);
@@ -53,6 +55,37 @@ const completeQuest = (q) => {
         }
     );
 };
+
+const filterForm = useForm({
+    status: props.filters?.status ?? "",
+    type: props.filters?.type ?? "",
+    repeatable: props.filters?.repeatable ?? "",
+    sort: props.filters?.sort ?? "created_at",
+    dir: props.filters?.dir ?? "desc",
+});
+
+const applyFilters = () => {
+    router.get(
+        "/quests",
+        {
+            ...filterForm.data(),
+        },
+        {
+            preserveScroll: true,
+            preserveState: true,
+        }
+    );
+};
+
+const resetFilters = () => {
+    filterForm.status = "";
+    filterForm.type = "";
+    filterForm.repeatable = "";
+    filterForm.sort = "created_at";
+    filterForm.dir = "desc";
+
+    applyFilters();
+};
 </script>
 
 <template>
@@ -76,6 +109,82 @@ const completeQuest = (q) => {
         <p style="margin: 8px 0 16px">
             Edit quest dilakukan di sini. Status "done" hanya lewat complete.
         </p>
+
+        <section
+            style="
+                margin: 12px 0;
+                padding: 10px;
+                border: 1px solid #ddd;
+                border-radius: 8px;
+            "
+        >
+            <strong>Filter & Sort</strong>
+
+            <div
+                style="
+                    display: flex;
+                    gap: 12px;
+                    flex-wrap: wrap;
+                    margin-top: 10px;
+                    align-items: end;
+                "
+            >
+                <div>
+                    <div>Status</div>
+                    <select v-model="filterForm.status">
+                        <option value="">All</option>
+                        <option value="todo">todo</option>
+                        <option value="in_progress">in_progress</option>
+                        <option value="locked">locked</option>
+                        <option value="done">done</option>
+                    </select>
+                </div>
+
+                <div>
+                    <div>Type</div>
+                    <select v-model="filterForm.type">
+                        <option value="">All</option>
+                        <option v-for="t in typeOptions" :key="t" :value="t">
+                            {{ t }}
+                        </option>
+                    </select>
+                </div>
+
+                <div>
+                    <div>Repeatable</div>
+                    <select v-model="filterForm.repeatable">
+                        <option value="">All</option>
+                        <option value="1">Yes</option>
+                        <option value="0">No</option>
+                    </select>
+                </div>
+
+                <div>
+                    <div>Sort</div>
+                    <select v-model="filterForm.sort">
+                        <option value="created_at">created_at</option>
+                        <option value="name">name</option>
+                        <option value="due_date">due_date</option>
+                        <option value="xp_reward">xp_reward</option>
+                        <option value="coin_reward">coin_reward</option>
+                        <option value="completed_at">completed_at</option>
+                    </select>
+                </div>
+
+                <div>
+                    <div>Dir</div>
+                    <select v-model="filterForm.dir">
+                        <option value="desc">desc</option>
+                        <option value="asc">asc</option>
+                    </select>
+                </div>
+
+                <div style="display: flex; gap: 8px">
+                    <button type="button" @click="applyFilters">Apply</button>
+                    <button type="button" @click="resetFilters">Reset</button>
+                </div>
+            </div>
+        </section>
 
         <div v-if="quests.data.length === 0">Belum ada quest.</div>
 
