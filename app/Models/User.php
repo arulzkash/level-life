@@ -66,4 +66,14 @@ class User extends Authenticatable
     {
         return $this->hasMany(QuestCompletion::class);
     }
+
+    public function treasuryRewards()
+    {
+        return $this->hasMany(TreasuryReward::class);
+    }
+
+    public function treasuryPurchases()
+    {
+        return $this->hasMany(TreasuryPurchase::class);
+    }
 }
