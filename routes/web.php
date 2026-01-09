@@ -25,10 +25,12 @@
 // });
 use App\Http\Controllers\QuestController;
 use App\Http\Controllers\TaskController;
+use App\Http\Controllers\CompletionLogController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Models\Task;
+use Illuminate\Support\Carbon;
 
 require __DIR__ . '/auth.php';
 
@@ -53,16 +55,66 @@ Route::get('/dashboard', function (Request $request) {
     ]);
 })->middleware(['auth']);
 
+
+
 Route::get('/logs/completions', function (Request $request) {
     $user = $request->user();
 
+    // --- filters ---
+    $period = $request->query('period', 'all'); // all|today|7d|month|custom
+    $date = $request->query('date');            // YYYY-MM-DD
+    $from = $request->query('from');            // YYYY-MM-DD
+    $to = $request->query('to');                // YYYY-MM-DD
+
+    $query = $user->questCompletions()->with('quest:id,name,type');
+
+    // Priority: date (single day) > range (from-to) > period
+    if ($date) {
+        $query->whereDate('completed_at', $date);
+        $period = 'custom';
+    } elseif ($from || $to) {
+        $start = $from ? Carbon::parse($from)->startOfDay() : Carbon::minValue();
+        $end   = $to ? Carbon::parse($to)->endOfDay() : now()->endOfDay();
+        $query->whereBetween('completed_at', [$start, $end]);
+        $period = 'custom';
+    } else {
+        if ($period === 'today') {
+            $query->whereDate('completed_at', now()->toDateString());
+        } elseif ($period === '7d') {
+            $start = now()->subDays(6)->startOfDay();
+            $end = now()->endOfDay();
+            $query->whereBetween('completed_at', [$start, $end]);
+        } elseif ($period === 'month') {
+            $start = now()->startOfMonth();
+            $end = now()->endOfDay();
+            $query->whereBetween('completed_at', [$start, $end]);
+        }
+        // all = no filter
+    }
+
+    // --- sort ---
+    $allowedSorts = ['completed_at', 'xp_awarded', 'coin_awarded', 'created_at'];
+    $sort = $request->query('sort', 'completed_at');
+    $dir = $request->query('dir', 'desc');
+
+    if (!in_array($sort, $allowedSorts, true)) $sort = 'completed_at';
+    if (!in_array($dir, ['asc', 'desc'], true)) $dir = 'desc';
+
+    $query->orderBy($sort, $dir);
+
     return Inertia::render('Logs/Completions', [
-        'logs' => $user->questCompletions()
-            ->latest('completed_at')
-            ->with('quest:id,name,type')
-            ->paginate(20),
+        'logs' => $query->paginate(20)->withQueryString(),
+        'filters' => [
+            'period' => $period,
+            'date' => $date ?? '',
+            'from' => $from ?? '',
+            'to' => $to ?? '',
+            'sort' => $sort,
+            'dir' => $dir,
+        ],
     ]);
 })->middleware(['auth']);
+
 
 Route::get('/quests', function (Request $request) {
     $user = $request->user();
@@ -134,3 +186,9 @@ Route::middleware(['auth'])->group(function () {
     Route::patch('/quests/{quest}/complete', [QuestController::class, 'complete']);
     Route::patch('/quests/{quest}', [QuestController::class, 'update']);
 });
+
+
+
+Route::patch('/logs/completions/{completion}', [CompletionLogController::class, 'update'])
+    ->middleware(['auth']);
+
