@@ -30,6 +30,30 @@ class TreasuryController extends Controller
         return redirect()->back();
     }
 
+    public function updateReward(Request $request, TreasuryReward $reward)
+    {
+        abort_unless($reward->user_id === $request->user()->id, 403);
+
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'cost_coin' => ['required', 'integer', 'min:0'],
+        ]);
+
+        $reward->update($data);
+
+        return redirect()->back();
+    }
+
+    public function destroyReward(Request $request, TreasuryReward $reward)
+    {
+        abort_unless($reward->user_id === $request->user()->id, 403);
+
+        // soft delete
+        $reward->delete();
+
+        return redirect()->back();
+    }
+
     public function buy(Request $request, TreasuryReward $reward)
     {
         // ownership check

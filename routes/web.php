@@ -53,6 +53,8 @@ Route::middleware('auth')->group(function () {
         // rewards actions
         Route::post('/rewards', [TreasuryController::class, 'storeReward']);
         Route::patch('/rewards/{reward}/buy', [TreasuryController::class, 'buy']);
+        Route::patch('/rewards/{reward}', [TreasuryController::class, 'updateReward']);
+        Route::delete('/rewards/{reward}', [TreasuryController::class, 'destroyReward']);
     });
 
     // TASKS

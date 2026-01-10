@@ -1,5 +1,6 @@
 <script setup>
 import { Link, useForm, router } from "@inertiajs/vue3";
+import { ref } from "vue";
 import AppLayout from "@/Layouts/AppLayout.vue";
 defineOptions({ layout: AppLayout });
 
@@ -31,6 +32,38 @@ const buyReward = (reward) => {
         }
     );
 };
+
+const editingId = ref(null);
+const editForm = ref(null);
+
+const startEdit = (r) => {
+    editingId.value = r.id;
+    editForm.value = useForm({
+        name: r.name,
+        cost_coin: r.cost_coin,
+    });
+};
+
+const cancelEdit = () => {
+    editingId.value = null;
+    editForm.value = null;
+};
+
+const saveEdit = () => {
+    editForm.value.patch(`/treasury/rewards/${editingId.value}`, {
+        preserveScroll: true,
+        onSuccess: () => cancelEdit(),
+    });
+};
+
+const deleteReward = (r) => {
+    const ok = window.confirm(`Delete reward "${r.name}"?`);
+    if (!ok) return;
+
+    router.delete(`/treasury/rewards/${r.id}`, {
+        preserveScroll: true,
+    });
+};
 </script>
 
 <template>
@@ -43,7 +76,6 @@ const buyReward = (reward) => {
             "
         >
             <h2>Treasury</h2>
-            
         </div>
 
         <section style="margin: 12px 0">
@@ -134,11 +166,65 @@ const buyReward = (reward) => {
 
                 <tbody>
                     <tr v-for="r in rewards" :key="r.id">
-                        <td>{{ r.name }}</td>
-                        <td>{{ r.cost_coin }}</td>
                         <td>
+                            <template v-if="editingId === r.id">
+                                <input v-model="editForm.name" />
+                                <div
+                                    v-if="editForm.errors.name"
+                                    style="color: #b00020"
+                                >
+                                    {{ editForm.errors.name }}
+                                </div>
+                            </template>
+                            <template v-else>
+                                {{ r.name }}
+                            </template>
+                        </td>
+
+                        <td>
+                            <template v-if="editingId === r.id">
+                                <input
+                                    type="number"
+                                    v-model.number="editForm.cost_coin"
+                                    style="width: 120px"
+                                />
+                                <div
+                                    v-if="editForm.errors.cost_coin"
+                                    style="color: #b00020"
+                                >
+                                    {{ editForm.errors.cost_coin }}
+                                </div>
+                            </template>
+                            <template v-else>
+                                {{ r.cost_coin }}
+                            </template>
+                        </td>
+
+                        <td style="display: flex; gap: 8px; flex-wrap: wrap">
                             <button type="button" @click="buyReward(r)">
                                 Buy
+                            </button>
+
+                            <template v-if="editingId === r.id">
+                                <button
+                                    type="button"
+                                    @click="saveEdit"
+                                    :disabled="editForm.processing"
+                                >
+                                    Save
+                                </button>
+                                <button type="button" @click="cancelEdit">
+                                    Cancel
+                                </button>
+                            </template>
+                            <template v-else>
+                                <button type="button" @click="startEdit(r)">
+                                    Edit
+                                </button>
+                            </template>
+
+                            <button type="button" @click="deleteReward(r)">
+                                Delete
                             </button>
                         </td>
                     </tr>

@@ -19,7 +19,9 @@ class TreasuryLogPageController extends Controller
         $rewardId = $request->query('reward_id');   // optional
 
         $query = $user->treasuryPurchases()
-            ->with('reward:id,name,cost_coin');
+            ->with(['reward' => function ($q) {
+                $q->withTrashed()->select('id', 'name', 'cost_coin', 'deleted_at');
+            }]);
 
         if ($rewardId) {
             $query->where('treasury_reward_id', $rewardId);
