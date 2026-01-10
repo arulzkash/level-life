@@ -76,4 +76,14 @@ class User extends Authenticatable
     {
         return $this->hasMany(TreasuryPurchase::class);
     }
+
+    public function habits()
+    {
+        return $this->hasMany(Habit::class);
+    }
+
+    public function habitEntries()
+    {
+        return $this->hasMany(HabitEntry::class);
+    }
 }
