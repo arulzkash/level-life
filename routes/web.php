@@ -10,7 +10,7 @@ use App\Http\Controllers\QuestPageController;
 
 use App\Http\Controllers\CompletionLogController;
 use App\Http\Controllers\CompletionLogPageController;
-
+use App\Http\Controllers\HabitController;
 use App\Http\Controllers\TreasuryController;
 use App\Http\Controllers\TreasuryLogPageController;
 use App\Http\Controllers\TreasuryPurchaseLogController;
@@ -55,6 +55,14 @@ Route::middleware('auth')->group(function () {
         Route::patch('/rewards/{reward}/buy', [TreasuryController::class, 'buy']);
         Route::patch('/rewards/{reward}', [TreasuryController::class, 'updateReward']);
         Route::delete('/rewards/{reward}', [TreasuryController::class, 'destroyReward']);
+    });
+
+    // HABIT
+    Route::prefix('habits')->group(function () {
+        // Route::get('/', [HabitPageController::class, 'index']); // nanti Step 3C
+        // Route::post('/', [HabitController::class, 'store']);    // nanti Step 3C
+        Route::patch('/{habit}/toggle', [HabitController::class, 'toggleToday']);
+        // Route::patch('/{habit}/archive', [HabitController::class, 'archive']); // nanti Step 3C
     });
 
     // TASKS
