@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 use App\Http\Controllers\TaskController;
@@ -19,10 +20,18 @@ use App\Http\Controllers\TreasuryPurchaseLogController;
 
 require __DIR__ . '/auth.php';
 
+Route::get('/', function () {
+    return Auth::check()
+        ? redirect()->route('dashboard')
+        : redirect()->route('login');
+});
+
+
+
 Route::middleware('auth')->group(function () {
 
     // DASHBOARD (page)
-    Route::get('/dashboard', [DashboardController::class, 'index']);
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');;
 
     // QUESTS
     Route::prefix('quests')->group(function () {
