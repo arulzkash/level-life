@@ -19,6 +19,19 @@ import { Link } from "@inertiajs/vue3";
             <Link href="/treasury">Treasury</Link>
             <Link href="/logs/treasury">Purchase Log</Link>
             <Link href="/habits">Habits</Link>
+            <Link
+                href="/logout"
+                method="post"
+                as="button"
+                style="
+                    background: none;
+                    border: none;
+                    padding: 0;
+                    cursor: pointer;
+                "
+            >
+                Logout
+            </Link>
         </nav>
 
         <main style="padding: 16px">

@@ -8,6 +8,8 @@ const props = defineProps({
     activeQuests: Array,
     habits: Array,
     habitSummary: Object,
+    level: Object,
+    today: String,
 });
 
 const createForm = useForm({
@@ -54,7 +56,9 @@ const toggleHabit = (id) => {
 
         <section style="margin: 12px 0">
             <h3>Profile</h3>
-            <div>XP: {{ profile?.xp_total }}</div>
+            <div>Level: {{ level.level }}</div>
+            <div>XP: {{ level.xp_into_level }} / {{ level.xp_needed }}</div>
+            <div>Progress: {{ level.progress }}%</div>
             <div>Coins: {{ profile?.coin_balance }}</div>
             <div>Streak: {{ profile?.current_streak }}</div>
         </section>
@@ -136,6 +140,19 @@ const toggleHabit = (id) => {
 
                     <div>
                         XP: {{ q.xp_reward }} | Coins: {{ q.coin_reward }}
+                    </div>
+
+                    <div v-if="q.due_date" style="margin-top: 4px">
+                        Due: <strong>{{ q.due_date }}</strong>
+                        <span
+                            v-if="q.due_date < today"
+                            style="color: #b00020; margin-left: 8px"
+                        >
+                            OVERDUE
+                        </span>
+                    </div>
+                    <div v-else style="margin-top: 4px; opacity: 0.7">
+                        No due date
                     </div>
 
                     <div style="margin-top: 6px">
