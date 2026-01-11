@@ -1,11 +1,12 @@
 <script setup>
-import { useForm } from "@inertiajs/vue3";
+import { useForm, router } from "@inertiajs/vue3";
 import AppLayout from "@/Layouts/AppLayout.vue";
 defineOptions({ layout: AppLayout });
 
 const props = defineProps({
     profile: Object,
     activeQuests: Array,
+    habits: Array,
 });
 
 const createForm = useForm({
@@ -33,6 +34,16 @@ const completeQuest = (id) => {
         preserveScroll: true,
         onSuccess: () => form.reset("note"),
     });
+};
+
+const toggleHabit = (id) => {
+    router.patch(
+        `/habits/${id}/toggle`,
+        {},
+        {
+            preserveScroll: true,
+        }
+    );
 };
 </script>
 
@@ -145,6 +156,50 @@ const completeQuest = (id) => {
                     <div v-if="getCompleteForm(q.id).errors.note">
                         {{ getCompleteForm(q.id).errors.note }}
                     </div>
+                </li>
+            </ul>
+        </section>
+
+        <hr />
+
+        <section style="margin: 16px 0">
+            <h3>Habits (Today)</h3>
+
+            <div v-if="!habits || habits.length === 0" style="opacity: 0.7">
+                Belum ada habit aktif.
+            </div>
+
+            <ul v-else style="padding-left: 18px">
+                <li v-for="h in habits" :key="h.id" style="margin: 10px 0">
+                    <label
+                        style="display: flex; gap: 10px; align-items: center"
+                    >
+                        <input
+                            type="checkbox"
+                            :checked="h.done_today"
+                            @change="toggleHabit(h.id)"
+                        />
+
+                        <div>
+                            <div>
+                                <strong>{{ h.name }}</strong>
+                                <span style="opacity: 0.7">
+                                    (streak: {{ h.streak }})</span
+                                >
+                                <span style="margin-left: 8px"
+                                    >Today:
+                                    {{ h.done_today ? "✅" : "❌" }}</span
+                                >
+                            </div>
+
+                            <div style="opacity: 0.7; font-size: 13px">
+                                start: {{ h.start_date
+                                }}<span v-if="h.end_date">
+                                    | end: {{ h.end_date }}</span
+                                >
+                            </div>
+                        </div>
+                    </label>
                 </li>
             </ul>
         </section>

@@ -37,10 +37,15 @@ class DashboardController extends Controller
 
             $isDoneToday = isset($dates[$today]);
 
-            // streak: kalau hari ini belum done -> 0
             $streak = 0;
-            if ($isDoneToday) {
-                $cursor = now();
+
+            // start cursor: today kalau done, kalau belum -> yesterday
+            $cursor = $isDoneToday ? now() : now()->subDay();
+
+            // kalau habit baru mulai hari ini dan belum done today, streak harus 0
+            if ($cursor->toDateString() < $h->start_date) {
+                $streak = 0;
+            } else {
                 while (true) {
                     $d = $cursor->toDateString();
                     if (!isset($dates[$d])) break;
@@ -48,7 +53,6 @@ class DashboardController extends Controller
                     $streak++;
                     $cursor = $cursor->subDay();
 
-                    // jangan ngitung sebelum start_date
                     if ($cursor->toDateString() < $h->start_date) break;
                 }
             }
