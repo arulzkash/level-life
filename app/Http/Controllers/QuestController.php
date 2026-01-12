@@ -109,4 +109,20 @@ class QuestController extends Controller
 
         return redirect()->back();
     }
+
+    public function destroy(Request $request, Quest $quest)
+    {
+        $this->authorize('delete', $quest);
+
+        // block delete kalau ada completion logs
+        if ($quest->completions()->exists()) {
+            return redirect()->back()->withErrors([
+                'delete' => 'Quest sudah punya completion log, jadi tidak bisa dihapus.',
+            ]);
+        }
+
+        $quest->delete();
+
+        return redirect()->back();
+    }
 }

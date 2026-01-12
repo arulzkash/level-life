@@ -42,6 +42,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/', [QuestController::class, 'store']);
         Route::patch('/{quest}', [QuestController::class, 'update']);
         Route::patch('/{quest}/complete', [QuestController::class, 'complete']);
+        Route::delete('/{quest}', [QuestController::class, 'destroy']);
     });
 
     // LOGS

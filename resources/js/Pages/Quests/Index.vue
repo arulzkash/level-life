@@ -58,6 +58,15 @@ const completeQuest = (q) => {
     );
 };
 
+const deleteQuest = (q) => {
+    const ok = window.confirm(`Delete quest "${q.name}"?`);
+    if (!ok) return;
+
+    router.delete(`/quests/${q.id}`, {
+        preserveScroll: true,
+    });
+};
+
 const filterForm = useForm({
     status: props.filters?.status ?? "",
     type: props.filters?.type ?? "",
@@ -101,13 +110,18 @@ const resetFilters = () => {
             "
         >
             <h2>Quests</h2>
-
-            
         </div>
 
         <p style="margin: 8px 0 16px">
             Edit quest dilakukan di sini. Status "done" hanya lewat complete.
         </p>
+
+        <div
+            v-if="$page.props.errors?.delete"
+            style="color: #b00020; margin: 10px 0"
+        >
+            {{ $page.props.errors.delete }}
+        </div>
 
         <section
             style="
@@ -378,7 +392,17 @@ const resetFilters = () => {
                         </template>
 
                         <template v-else>
-                            <button @click="startEdit(q)">Edit</button>
+                            <button @click="startEdit(q)" type="button">
+                                Edit
+                            </button>
+
+                            <button
+                                @click="deleteQuest(q)"
+                                type="button"
+                                style="margin-left: 8px; color: #b00020"
+                            >
+                                Delete
+                            </button>
                         </template>
                     </td>
                 </tr>
