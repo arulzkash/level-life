@@ -1,5 +1,5 @@
 <script setup>
-import { useForm, router } from "@inertiajs/vue3";
+import { useForm, router, Link } from "@inertiajs/vue3";
 import AppLayout from "@/Layouts/AppLayout.vue";
 import { watch } from "vue";
 
@@ -62,6 +62,23 @@ watch(
 <template>
     <div style="padding: 16px">
         <h2>Dashboard</h2>
+
+        <section
+            style="margin: 12px 0; display: flex; gap: 12px; flex-wrap: wrap"
+        >
+            <Link href="/quests" as="button" style="padding: 6px 10px"
+                >View all quests</Link
+            >
+
+            <Link href="/logs/completions" as="button" style="padding: 6px 10px"
+                >View completion logs</Link
+            >
+            <Link href="/treasury" as="button" style="padding: 6px 10px"
+                >View treasury</Link
+            >
+        </section>
+
+        <hr />
 
         <section style="margin: 12px 0">
             <h3>Profile</h3>
