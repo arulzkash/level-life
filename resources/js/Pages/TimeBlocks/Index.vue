@@ -1,6 +1,7 @@
 <script setup>
 import AppLayout from "@/Layouts/AppLayout.vue";
 import { Link, useForm, router } from "@inertiajs/vue3";
+import { ref } from "vue";
 
 defineOptions({ layout: AppLayout });
 
@@ -43,6 +44,32 @@ const deleteBlock = (id) => {
     const ok = window.confirm("Delete time block?");
     if (!ok) return;
     router.delete(`/timeblocks/${id}`, { preserveScroll: true });
+};
+
+const editingId = ref(null);
+const editForm = ref(null);
+
+const startEdit = (b) => {
+    editingId.value = b.id;
+    editForm.value = useForm({
+        date: b.date,
+        start_time: b.start_time,
+        end_time: b.end_time,
+        title: b.title,
+        note: b.note ?? "",
+    });
+};
+
+const cancelEdit = () => {
+    editingId.value = null;
+    editForm.value = null;
+};
+
+const saveEdit = () => {
+    editForm.value.patch(`/timeblocks/${editingId.value}`, {
+        preserveScroll: true,
+        onSuccess: () => cancelEdit(),
+    });
 };
 </script>
 
@@ -189,29 +216,130 @@ const deleteBlock = (id) => {
                         :key="b.id"
                         style="margin: 8px 0"
                     >
-                        <div>
-                            <strong
-                                >{{ b.start_time }} - {{ b.end_time }}</strong
+                        <template v-if="editingId === b.id">
+                            <div
+                                style="
+                                    display: flex;
+                                    gap: 10px;
+                                    flex-wrap: wrap;
+                                    align-items: end;
+                                "
                             >
-                            — {{ b.title }}
-                        </div>
-                        <div
-                            v-if="b.note"
-                            style="
-                                opacity: 0.7;
-                                font-size: 13px;
-                                margin-top: 2px;
-                            "
-                        >
-                            {{ b.note }}
-                        </div>
-                        <button
-                            type="button"
-                            @click="deleteBlock(b.id)"
-                            style="margin-top: 6px; color: #b00020"
-                        >
-                            Delete
-                        </button>
+                                <div>
+                                    <div>Date</div>
+                                    <input
+                                        type="date"
+                                        v-model="editForm.date"
+                                    />
+                                </div>
+
+                                <div>
+                                    <div>Start</div>
+                                    <input
+                                        type="time"
+                                        v-model="editForm.start_time"
+                                    />
+                                </div>
+
+                                <div>
+                                    <div>End</div>
+                                    <input
+                                        type="time"
+                                        v-model="editForm.end_time"
+                                    />
+                                </div>
+
+                                <div style="min-width: 240px; flex: 1">
+                                    <div>Title</div>
+                                    <input
+                                        v-model="editForm.title"
+                                        style="width: 100%"
+                                    />
+                                </div>
+                            </div>
+
+                            <div style="margin-top: 10px">
+                                <div>Note</div>
+                                <textarea
+                                    v-model="editForm.note"
+                                    rows="2"
+                                    style="width: 100%"
+                                ></textarea>
+                            </div>
+
+                            <div
+                                style="
+                                    margin-top: 10px;
+                                    display: flex;
+                                    gap: 8px;
+                                    flex-wrap: wrap;
+                                "
+                            >
+                                <button
+                                    type="button"
+                                    @click="saveEdit"
+                                    :disabled="editForm.processing"
+                                >
+                                    Save
+                                </button>
+                                <button type="button" @click="cancelEdit">
+                                    Cancel
+                                </button>
+                            </div>
+
+                            <div
+                                v-if="editForm.errors.end_time"
+                                style="color: #b00020; margin-top: 6px"
+                            >
+                                {{ editForm.errors.end_time }}
+                            </div>
+                            <div
+                                v-if="editForm.errors.title"
+                                style="color: #b00020; margin-top: 6px"
+                            >
+                                {{ editForm.errors.title }}
+                            </div>
+                        </template>
+
+                        <template v-else>
+                            <div>
+                                <strong
+                                    >{{ b.start_time }} -
+                                    {{ b.end_time }}</strong
+                                >
+                                — {{ b.title }}
+                            </div>
+                            <div
+                                v-if="b.note"
+                                style="
+                                    opacity: 0.7;
+                                    font-size: 13px;
+                                    margin-top: 2px;
+                                "
+                            >
+                                {{ b.note }}
+                            </div>
+
+                            <div
+                                style="
+                                    margin-top: 6px;
+                                    display: flex;
+                                    gap: 8px;
+                                    flex-wrap: wrap;
+                                "
+                            >
+                                <button type="button" @click="startEdit(b)">
+                                    Edit
+                                </button>
+                                <button
+                                    type="button"
+                                    @click="deleteBlock(b.id)"
+                                    style="color: #b00020"
+                                >
+                                    Delete
+                                </button>
+                            </div>
+                        </template>
                     </li>
                 </ul>
             </div>
