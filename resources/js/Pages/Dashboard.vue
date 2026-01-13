@@ -10,7 +10,6 @@ const props = defineProps({
     activeQuests: Array,
     habits: Array,
     habitSummary: Object,
-    level: Object,
     today: String,
     todayBlocks: Array,
 });
@@ -111,9 +110,9 @@ const deleteTimeblock = (id) => {
 
         <section style="margin: 12px 0">
             <h3>Profile</h3>
-            <div>Level: {{ level.level }}</div>
-            <div>XP: {{ level.xp_into_level }} / {{ level.xp_needed }}</div>
-            <div>Progress: {{ level.progress }}%</div>
+            <div>Level: {{ profile.level_data.current_level }}</div>
+            <div>XP: {{ profile.level_data.xp_current }} / {{ profile.level_data.xp_needed }}</div>
+            <div>Progress: {{ profile.level_data.progress_percent }}%</div>
             <div>Coins: {{ profile?.coin_balance }}</div>
             <div>Streak: {{ profile?.current_streak }}</div>
         </section>

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Builder;
 
 class Habit extends Model
 {
@@ -22,5 +23,10 @@ class Habit extends Model
     {
         return $this->hasMany(HabitEntry::class);
     }
-}
 
+    public function scopeActive(Builder $query, string $date): void
+    {
+        $query->where('start_date', '<=', $date)
+            ->whereNull('end_date');
+    }
+}

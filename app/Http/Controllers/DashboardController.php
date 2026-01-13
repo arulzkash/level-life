@@ -12,18 +12,13 @@ class DashboardController extends Controller
         $user = $request->user();
 
         // PROFILE
-
         $profile = $user->profile;
 
-        $level = $this->levelData((int) $profile->xp_total);
-
         // HABIT
-
         $today = now()->toDateString();
 
         $habits = $user->habits()
-            ->where('start_date', '<=', $today)
-            ->whereNull('end_date')   // ACTIVE ONLY
+            ->active($today)
             ->orderBy('name')
             ->get();
 
@@ -95,7 +90,6 @@ class DashboardController extends Controller
 
         return Inertia::render('Dashboard', [
             'profile' => $profile,
-            'level' => $level,
             'today' => $today,
             'habits' => $habitsPayload,
             'habitSummary' => [
@@ -111,36 +105,5 @@ class DashboardController extends Controller
         ]);
     }
 
-    private function xpToNextLevel(int $level): int
-    {
-        return (int) floor(pow($level, 1.5) * 100);
-    }
-
-    private function levelData(int $xpTotal): array
-    {
-        $level = 1;
-        $xpIntoLevel = $xpTotal;
-
-        while (true) {
-            $need = $this->xpToNextLevel($level);
-
-            if ($xpIntoLevel < $need) {
-                break;
-            }
-
-            $xpIntoLevel -= $need;
-            $level++;
-        }
-
-        $need = $this->xpToNextLevel($level);
-
-        return [
-            'level' => $level,
-            'xp_total' => $xpTotal,
-            'xp_into_level' => $xpIntoLevel,
-            'xp_needed' => $need,
-            'xp_remaining' => $need - $xpIntoLevel,
-            'progress' => $need > 0 ? round(($xpIntoLevel / $need) * 100, 2) : 0,
-        ];
-    }
+    
 }
