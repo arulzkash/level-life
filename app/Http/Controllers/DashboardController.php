@@ -98,7 +98,6 @@ class DashboardController extends Controller
             ],
             'activeQuests' => $user->quests()
                 ->active()
-                ->latest()
                 ->get(),
             'todayBlocks' => $todayBlocks,
         ]);
