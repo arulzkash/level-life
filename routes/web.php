@@ -13,6 +13,8 @@ use App\Http\Controllers\CompletionLogController;
 use App\Http\Controllers\CompletionLogPageController;
 use App\Http\Controllers\HabitController;
 use App\Http\Controllers\HabitPageController;
+use App\Http\Controllers\TimeBlockController;
+use App\Http\Controllers\TimeBlockPageController;
 use App\Http\Controllers\TreasuryController;
 use App\Http\Controllers\TreasuryLogPageController;
 use App\Http\Controllers\TreasuryPurchaseLogController;
@@ -82,6 +84,17 @@ Route::middleware('auth')->group(function () {
 
         // monthly view toggle by date (payload date)
         Route::patch('/{habit}/entries/toggle', [HabitController::class, 'toggleDate']);
+    });
+
+    // TIMEBLOCK
+    Route::prefix('timeblocks')->group(function () {
+        // page
+        Route::get('/', [TimeBlockPageController::class, 'index']);
+
+        // actions
+        Route::post('/', [TimeBlockController::class, 'store']);
+        Route::patch('/{timeBlock}', [TimeBlockController::class, 'update']);
+        Route::delete('/{timeBlock}', [TimeBlockController::class, 'destroy']);
     });
 
     // TASKS

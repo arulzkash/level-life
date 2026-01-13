@@ -19,6 +19,7 @@ import { Link } from "@inertiajs/vue3";
             <Link href="/treasury">Treasury</Link>
             <Link href="/logs/treasury">Purchase Log</Link>
             <Link href="/habits">Habits</Link>
+            <Link href="/timeblocks">Timeblocks</Link>
             <Link
                 href="/logout"
                 method="post"

@@ -86,4 +86,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(HabitEntry::class);
     }
+
+    public function timeBlocks()
+    {
+        return $this->hasMany(TimeBlock::class);
+    }
 }
