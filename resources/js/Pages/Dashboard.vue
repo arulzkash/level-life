@@ -150,6 +150,65 @@ const triggerConfetti = () => {
     fire(0.1, { spread: 120, startVelocity: 25, decay: 0.92, scalar: 1.2 });
     fire(0.1, { spread: 120, startVelocity: 45 });
 };
+
+// --- LEVEL UP LOGIC ---
+const showLevelUpModal = ref(false);
+// Simpan level awal saat page load
+const previousLevel = ref(props.profile?.level_data?.current_level || 1);
+
+// Pantau perubahan pada props.profile
+watch(
+    () => props.profile,
+    (newProfile, oldProfile) => {
+        if (!newProfile) return;
+
+        const newLevel = newProfile.level_data.current_level;
+
+        // Jika level baru lebih besar dari level yang kita ingat
+        if (newLevel > previousLevel.value) {
+            // 1. Munculkan Modal
+            showLevelUpModal.value = true;
+
+            // 2. Mainkan Efek Suara (Opsional, kalau mau simpel skip aja baris ini)
+            // new Audio('/sounds/levelup.mp3').play();
+
+            // 3. Ledakkan Confetti Spesial (Durasi lama)
+            triggerLevelUpConfetti();
+
+            // 4. Update ingatan level kita
+            previousLevel.value = newLevel;
+        }
+    },
+    { deep: true }
+);
+
+// Confetti Spesial Level Up (Fireworks Style)
+const triggerLevelUpConfetti = () => {
+    const duration = 3000;
+    const end = Date.now() + duration;
+
+    (function frame() {
+        // Luncurkan dari kiri dan kanan layar
+        confetti({
+            particleCount: 5,
+            angle: 60,
+            spread: 55,
+            origin: { x: 0 },
+            colors: ["#fbbf24", "#f59e0b", "#ef4444"], // Nuansa Emas/Merah
+        });
+        confetti({
+            particleCount: 5,
+            angle: 120,
+            spread: 55,
+            origin: { x: 1 },
+            colors: ["#3b82f6", "#8b5cf6", "#ec4899"], // Nuansa Biru/Ungu
+        });
+
+        if (Date.now() < end) {
+            requestAnimationFrame(frame);
+        }
+    })();
+};
 </script>
 
 <template>
@@ -229,7 +288,7 @@ const triggerConfetti = () => {
             >
                 <Link href="/quests" class="btn-secondary">📜 Quest Board</Link>
                 <Link href="/logs/completions" class="btn-secondary"
-                    >📒 Logbook</Link
+                    >📒 Completion Log</Link
                 >
                 <Link href="/treasury" class="btn-secondary">💰 Merchant</Link>
             </div>
@@ -539,7 +598,11 @@ const triggerConfetti = () => {
                                     />
                                     <button
                                         @click="
-                                            completeQuest(q.id, q.xp_reward, q.coin_reward)
+                                            completeQuest(
+                                                q.id,
+                                                q.xp_reward,
+                                                q.coin_reward
+                                            )
                                         "
                                         :disabled="
                                             getCompleteForm(q.id).processing
@@ -712,6 +775,39 @@ const triggerConfetti = () => {
                 </div>
             </div>
         </div>
+
+        <div
+            v-if="showLevelUpModal"
+            class="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-sm animate-fade-in"
+        >
+            <div class="text-center relative">
+                <div
+                    class="absolute inset-0 bg-yellow-500 blur-[100px] opacity-20 rounded-full animate-pulse"
+                ></div>
+
+                <h1
+                    class="text-8xl md:text-9xl font-black text-transparent bg-clip-text bg-gradient-to-b from-yellow-300 via-yellow-500 to-yellow-700 drop-shadow-[0_0_25px_rgba(234,179,8,0.8)] animate-bounce-in relative z-10"
+                >
+                    LEVEL UP!
+                </h1>
+
+                <div
+                    class="mt-8 text-white text-4xl font-bold tracking-widest uppercase animate-slide-up relative z-10"
+                >
+                    You reached Level
+                    <span class="text-yellow-400 text-6xl">{{
+                        profile.level_data.current_level
+                    }}</span>
+                </div>
+
+                <button
+                    @click="showLevelUpModal = false"
+                    class="mt-12 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold py-4 px-12 rounded-full text-xl shadow-[0_0_30px_rgba(99,102,241,0.6)] transform hover:scale-105 transition-all duration-300 relative z-10"
+                >
+                    AWESOME!
+                </button>
+            </div>
+        </div>
     </div>
 </template>
 
@@ -734,7 +830,7 @@ const triggerConfetti = () => {
 
 input[type="time"]::-webkit-calendar-picker-indicator,
 input[type="date"]::-webkit-calendar-picker-indicator {
-    filter: invert(1); 
+    filter: invert(1);
     cursor: pointer;
 }
 ::-webkit-scrollbar {
@@ -745,5 +841,54 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 ::-webkit-scrollbar-thumb {
     @apply bg-slate-700 rounded-full hover:bg-slate-600;
+}
+
+@keyframes bounce-in {
+    0% {
+        transform: scale(0.3);
+        opacity: 0;
+    }
+    50% {
+        transform: scale(1.05);
+    }
+    70% {
+        transform: scale(0.9);
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes slide-up {
+    0% {
+        transform: translateY(50px);
+        opacity: 0;
+    }
+    100% {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.animate-bounce-in {
+    animation: bounce-in 0.8s cubic-bezier(0.215, 0.61, 0.355, 1) both;
+}
+
+.animate-slide-up {
+    animation: slide-up 0.8s ease-out 0.5s both; /* Delay 0.5s biar muncul setelah teks LEVEL UP */
+}
+
+.animate-fade-in {
+    animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
 }
 </style>
