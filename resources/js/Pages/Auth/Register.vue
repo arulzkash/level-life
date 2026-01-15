@@ -1,10 +1,8 @@
 <script setup>
 import GuestLayout from '@/Layouts/GuestLayout.vue';
-import InputError from '@/Components/InputError.vue';
-import InputLabel from '@/Components/InputLabel.vue';
-import PrimaryButton from '@/Components/PrimaryButton.vue';
-import TextInput from '@/Components/TextInput.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
+
+defineOptions({ layout: GuestLayout });
 
 const form = useForm({
     name: '',
@@ -21,93 +19,81 @@ const submit = () => {
 </script>
 
 <template>
-    <GuestLayout>
-        <Head title="Register" />
+    <Head title="Begin Adventure" />
 
-        <form @submit.prevent="submit">
-            <div>
-                <InputLabel for="name" value="Name" />
+    <form @submit.prevent="submit" class="space-y-5">
+        <div>
+            <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Hero Name</label>
+            <input 
+                id="name" 
+                type="text" 
+                class="w-full bg-slate-950 border border-slate-700 text-slate-200 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all placeholder-slate-600"
+                v-model="form.name" 
+                required 
+                autofocus 
+                autocomplete="name"
+                placeholder="Your character name"
+            />
+            <div v-if="form.errors.name" class="text-red-400 text-xs mt-1">{{ form.errors.name }}</div>
+        </div>
 
-                <TextInput
-                    id="name"
-                    type="text"
-                    class="mt-1 block w-full"
-                    v-model="form.name"
-                    required
-                    autofocus
-                    autocomplete="name"
-                />
+        <div>
+            <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Email Scroll</label>
+            <input 
+                id="email" 
+                type="email" 
+                class="w-full bg-slate-950 border border-slate-700 text-slate-200 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all placeholder-slate-600"
+                v-model="form.email" 
+                required 
+                autocomplete="username"
+                placeholder="hero@example.com"
+            />
+            <div v-if="form.errors.email" class="text-red-400 text-xs mt-1">{{ form.errors.email }}</div>
+        </div>
 
-                <InputError class="mt-2" :message="form.errors.name" />
-            </div>
+        <div>
+            <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Secret Key (Password)</label>
+            <input 
+                id="password" 
+                type="password" 
+                class="w-full bg-slate-950 border border-slate-700 text-slate-200 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all placeholder-slate-600"
+                v-model="form.password" 
+                required 
+                autocomplete="new-password"
+            />
+            <div v-if="form.errors.password" class="text-red-400 text-xs mt-1">{{ form.errors.password }}</div>
+        </div>
 
-            <div class="mt-4">
-                <InputLabel for="email" value="Email" />
+        <div>
+            <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Confirm Secret Key</label>
+            <input 
+                id="password_confirmation" 
+                type="password" 
+                class="w-full bg-slate-950 border border-slate-700 text-slate-200 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all placeholder-slate-600"
+                v-model="form.password_confirmation" 
+                required 
+                autocomplete="new-password"
+            />
+            <div v-if="form.errors.password_confirmation" class="text-red-400 text-xs mt-1">{{ form.errors.password_confirmation }}</div>
+        </div>
 
-                <TextInput
-                    id="email"
-                    type="email"
-                    class="mt-1 block w-full"
-                    v-model="form.email"
-                    required
-                    autocomplete="username"
-                />
+        <div class="pt-2">
+            <button 
+                type="submit" 
+                :disabled="form.processing"
+                class="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold py-3 rounded-lg shadow-lg shadow-indigo-500/30 transition-all transform active:scale-95"
+            >
+                Start Adventure
+            </button>
+        </div>
 
-                <InputError class="mt-2" :message="form.errors.email" />
-            </div>
-
-            <div class="mt-4">
-                <InputLabel for="password" value="Password" />
-
-                <TextInput
-                    id="password"
-                    type="password"
-                    class="mt-1 block w-full"
-                    v-model="form.password"
-                    required
-                    autocomplete="new-password"
-                />
-
-                <InputError class="mt-2" :message="form.errors.password" />
-            </div>
-
-            <div class="mt-4">
-                <InputLabel
-                    for="password_confirmation"
-                    value="Confirm Password"
-                />
-
-                <TextInput
-                    id="password_confirmation"
-                    type="password"
-                    class="mt-1 block w-full"
-                    v-model="form.password_confirmation"
-                    required
-                    autocomplete="new-password"
-                />
-
-                <InputError
-                    class="mt-2"
-                    :message="form.errors.password_confirmation"
-                />
-            </div>
-
-            <div class="mt-4 flex items-center justify-end">
-                <Link
-                    :href="route('login')"
-                    class="rounded-md text-sm text-gray-600 underline hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                >
-                    Already registered?
+        <div class="text-center mt-6">
+            <p class="text-sm text-slate-500">
+                Already have a character? 
+                <Link :href="route('login')" class="text-indigo-400 hover:text-white font-bold transition-colors">
+                    Log In
                 </Link>
-
-                <PrimaryButton
-                    class="ms-4"
-                    :class="{ 'opacity-25': form.processing }"
-                    :disabled="form.processing"
-                >
-                    Register
-                </PrimaryButton>
-            </div>
-        </form>
-    </GuestLayout>
+            </p>
+        </div>
+    </form>
 </template>
