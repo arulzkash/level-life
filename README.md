@@ -3,6 +3,7 @@
 <img width="1892" height="954" alt="Screenshot 2026-01-17 100207" src="https://github.com/user-attachments/assets/9011f54c-4c54-49d3-b282-a387c41a8880" />
 
 
+
 **Level Life** is a web-based productivity application that transforms daily tasks, habits, and schedules into an engaging RPG-like experience. Built with **Laravel 11** and **Vue 3 (Inertia.js)**, this project demonstrates a monolithic architecture focused on handling business logic for gamification, virtual economy, and time management.
 
 ## 🚀 Overview
@@ -65,7 +66,7 @@ The application relies on a robust relational database structure designed for sc
 
 1.  **Clone the repository**
     ```bash
-    git clone [https://github.com/yourusername/level-life.git](https://github.com/yourusername/level-life.git)
+    git clone https://github.com/arulzkash/level-life.git
     cd level-life
     ```
 
