@@ -1,66 +1,106 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Level Life - Gamified Productivity System ⚔️
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+<img width="1892" height="954" alt="Screenshot 2026-01-17 100207" src="https://github.com/user-attachments/assets/9011f54c-4c54-49d3-b282-a387c41a8880" />
 
-## About Laravel
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+**Level Life** is a web-based productivity application that transforms daily tasks, habits, and schedules into an engaging RPG-like experience. Built with **Laravel 11** and **Vue 3 (Inertia.js)**, this project demonstrates a monolithic architecture focused on handling business logic for gamification, virtual economy, and time management.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## 🚀 Overview
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+The core problem this application solves is "productivity friction." By adding immediate feedback loops (XP, Gold, Level Ups) to mundane tasks, it encourages user consistency.
 
-## Learning Laravel
+As a **Backend-focused project**, the highlight lies in the logic governing the economy (earning/spending), streak calculations, and state management for repeatable quests versus one-time missions.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+## 🛠️ Tech Stack
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+* **Backend Framework:** Laravel 11 (PHP 8.2)
+* **Frontend:** Vue.js 3, Inertia.js (Monolith)
+* **Database:** MySQL / TiDB (Compatible)
+* **Styling:** Tailwind CSS
+* **Build Tool:** Vite
+* **Authentication:** Laravel Breeze
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## 🌟 Key Features & Architecture
 
-## Laravel Sponsors
+### 1. Gamification Engine (Backend Logic)
+* **Leveling System:** Automatic level calculation based on accumulated XP thresholds (exponential curve).
+* **Economy System:** A transaction-based logic where users earn coins via Quests and spend them in the Treasury.
+* **State Management:** Quests support complex states (`todo`, `in_progress`, `locked`, `done`) and `repeatable` logic (resetting daily).
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+### 2. Habit Tracking & Consistency
+* **Streak Algorithm:** Backend logic to calculate current and longest streaks based on daily completion logs.
+* **History Logs:** Tracks every completion by date (`habit_entries`), allowing for historical data visualization.
+* **Active Scope:** Efficient querying to only show habits relevant to the current date.
 
-### Premium Partners
+### 3. Time Management
+* **Time Blocks:** A dedicated module for scheduling day-to-day activities with specific start/end times (`time_blocks` table), distinct from the gamified quest system.
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+### 4. Data Integrity & Logging
+* **Audit Trails:** Dedicated `quest_completions` and `treasury_purchases` tables ensure that every XP gained and Coin spent is permanently recorded for history and balancing analysis.
 
-## Contributing
+## 🗄️ Database Schema
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+The application relies on a robust relational database structure designed for scalability and data integrity.
 
-## Code of Conduct
+### Core Tables
+* **`users`**: Core authentication (Standard Laravel).
+* **`profiles`**: Gamification stats linked 1:1 to User (`xp_total`, `coin_balance`, `current_streak`, `last_quest_completed_at`).
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### Quest System
+* **`quests`**: Task definitions. Attributes: `status`, `type` (Daily, Boss, etc), `xp_reward`, `coin_reward`, `is_repeatable`.
+* **`quest_completions`**: Ledger table for completed quests. Tracks `xp_awarded`, `coin_awarded`, and `completed_at` for history.
 
-## Security Vulnerabilities
+### Habit System
+* **`habits`**: Habit definitions (`start_date`, `end_date`).
+* **`habit_entries`**: Daily logs. Records `date` and `note` for each habit completion to calculate streaks.
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### Economy System
+* **`treasury_rewards`**: Items available for purchase in the shop (`cost_coin`). Supports Soft Deletes.
+* **`treasury_purchases`**: Transaction history. Records `qty`, `unit_cost_coin`, and total `cost_coin` at the time of purchase.
 
-## License
+### Scheduling
+* **`time_blocks`**: Daily schedule records (`start_time`, `end_time`, `title`).
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+## ⚙️ Installation & Setup
+
+1.  **Clone the repository**
+    ```bash
+    git clone [https://github.com/yourusername/level-life.git](https://github.com/yourusername/level-life.git)
+    cd level-life
+    ```
+
+2.  **Install PHP Dependencies**
+    ```bash
+    composer install
+    ```
+
+3.  **Install Node Dependencies**
+    ```bash
+    npm install
+    ```
+
+4.  **Environment Setup**
+    ```bash
+    cp .env.example .env
+    php artisan key:generate
+    ```
+    *Configure your database credentials in the `.env` file.*
+
+5.  **Database Migration**
+    ```bash
+    php artisan migrate
+    ```
+
+6.  **Run the Application**
+    ```bash
+    # Terminal 1 (Backend)
+    php artisan serve
+
+    # Terminal 2 (Frontend Hot Reload)
+    npm run dev
+    ```
+
+---
+
+**Author:** [Arulzkash]
+**Deployed App:** [https://levellife.my.id](https://levellife.my.id)
