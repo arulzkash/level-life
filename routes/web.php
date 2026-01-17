@@ -102,12 +102,4 @@ Route::middleware('auth')->group(function () {
         Route::patch('/{timeBlock}', [TimeBlockController::class, 'update']);
         Route::delete('/{timeBlock}', [TimeBlockController::class, 'destroy']);
     });
-
-    // TASKS
-    Route::prefix('tasks')->group(function () {
-        Route::get('/', [TaskController::class, 'index']);
-        Route::post('/', [TaskController::class, 'store']);
-        Route::patch('/{task}', [TaskController::class, 'toggle']);
-        Route::delete('/{task}', [TaskController::class, 'destroy']);
-    });
 });
