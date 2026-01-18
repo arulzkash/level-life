@@ -10,6 +10,7 @@ class LeaderboardController extends Controller
 {
     public function page(Request $request)
     {
+        
         $data = $this->buildLeaderboardData($request);
 
         return Inertia::render('Leaderboard/Index', [

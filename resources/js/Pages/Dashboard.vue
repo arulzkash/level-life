@@ -19,6 +19,7 @@ const props = defineProps({
     today: String,
     todayBlocks: Array,
     leaderboardData: Object,
+    topBadge: Object, // { name, icon, description }
 });
 
 // --- UI STATE ---
@@ -275,6 +276,42 @@ const triggerSlashEffect = () => {
         });
     }, 200);
 };
+
+const getBadgeIcon = (key) => {
+    const icons = {
+        // Streak Badges
+        streak_3: '👞', // Warm-up (Running shoe)
+        streak_7: '🔥', // Consistent (Fire)
+        streak_14: '⚔️', // Disciplined (Swords)
+        streak_30: '🛡️', // Iron Will (Shield)
+        streak_60: '💎', // Unbreakable (Diamond)
+        streak_100: '👑', // Legend (Crown)
+
+        // Recovery Badges
+        second_wind: '🍃', // Second Wind (Leaf/Wind)
+        comeback_kid: '❤️‍🔥', // Comeback Kid (Heart on fire)
+    };
+
+    // Default fallback if key not found
+    return icons[key] || '🎖️';
+};
+
+const getRankClass = (rank) => {
+    // Rank 1: Gold + Glow
+    if (rank === 1) {
+        return 'text-transparent bg-clip-text bg-gradient-to-b from-yellow-200 via-yellow-400 to-yellow-600 drop-shadow-[0_0_10px_rgba(234,179,8,0.6)]';
+    }
+    // Rank 2: Silver + Glow
+    if (rank === 2) {
+        return 'text-transparent bg-clip-text bg-gradient-to-b from-slate-100 via-slate-300 to-slate-500 drop-shadow-[0_0_10px_rgba(203,213,225,0.4)]';
+    }
+    // Rank 3: Bronze + Glow
+    if (rank === 3) {
+        return 'text-transparent bg-clip-text bg-gradient-to-b from-orange-200 via-orange-400 to-orange-700 drop-shadow-[0_0_10px_rgba(249,115,22,0.4)]';
+    }
+    // Rank 4+: Clean White (Standard but sharp)
+    return 'text-white drop-shadow-sm group-hover:text-indigo-200 transition-colors';
+};
 </script>
 
 <template>
@@ -319,60 +356,90 @@ const triggerSlashEffect = () => {
                         :percent="profile.level_data.progress_percent"
                     />
 
-                    <div class="flex flex-wrap items-stretch justify-center gap-4 md:justify-start">
-                        <StatCard
-                            label="Treasury"
-                            :value="profile.coin_balance"
-                            icon="🪙"
-                            colorClass="text-yellow-400"
-                        />
-                        <StatCard
-                            label="Streak"
-                            :value="profile.current_streak"
-                            icon="🔥"
-                            colorClass="text-orange-500"
-                        />
-                        <StatCard
-                            label="Habits"
-                            :value="`${habitSummary?.done_today}/${habitSummary?.total}`"
-                            icon="✅"
-                            colorClass="text-emerald-400"
-                        />
+                    <div class="grid grid-cols-6 gap-3 md:grid-cols-5 md:gap-4">
 
-                        <Link
-                            href="/leaderboard"
-                            class="group flex min-w-[140px] flex-col justify-between rounded-xl border border-slate-700 bg-slate-800/50 p-4 transition-all hover:border-indigo-500/50 hover:bg-slate-800"
-                        >
-                            <div class="flex items-start justify-between">
-                                <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                                    Rank
-                                </span>
-                                <span class="text-xs">🏆</span>
-                            </div>
+    <div class="col-span-2 flex flex-col items-center justify-center rounded-2xl border border-slate-700 bg-slate-800/50 p-3 text-center shadow-sm transition-all duration-300 hover:scale-105 hover:bg-slate-800 hover:shadow-lg hover:shadow-yellow-500/10 md:col-span-1 md:p-5">
+        <span class="text-[10px] font-bold uppercase tracking-widest text-slate-400 md:text-xs">Treasury</span>
+        <div class="mt-1 flex flex-col items-center justify-center gap-1 md:mt-2">
+            <span class="text-xl font-black text-yellow-400 md:text-3xl">{{ profile.coin_balance }}</span>
+            <span class="text-xs text-slate-500 md:text-sm">🪙 Gold</span>
+        </div>
+    </div>
 
-                            <div class="mt-2">
-                                <div class="text-2xl font-black text-white group-hover:text-indigo-300">
-                                    #{{ leaderboardData?.rank ?? '-' }}
-                                </div>
+    <div class="col-span-2 flex flex-col items-center justify-center rounded-2xl border border-slate-700 bg-slate-800/50 p-3 text-center shadow-sm transition-all duration-300 hover:scale-105 hover:bg-slate-800 hover:shadow-lg hover:shadow-orange-500/10 md:col-span-1 md:p-5">
+        <span class="text-[10px] font-bold uppercase tracking-widest text-slate-400 md:text-xs">Streak</span>
+        <div class="mt-1 flex flex-col items-center justify-center gap-1 md:mt-2">
+            <span class="text-xl font-black text-orange-500 md:text-3xl">{{ profile.current_streak }}</span>
+            <span class="text-xs text-slate-500 md:text-sm">🔥 Days</span>
+        </div>
+    </div>
 
-                                <div
-                                    v-if="leaderboardData?.rival && !leaderboardData?.rival?.is_king"
-                                    class="mt-1 text-[10px] text-slate-500"
-                                >
-                                    Hunt:
-                                    <span class="font-bold text-slate-300">
-                                        {{ leaderboardData.rival.name }}
-                                    </span>
-                                </div>
-                                <div
-                                    v-if="leaderboardData?.rival?.is_king"
-                                    class="mt-1 text-[10px] font-bold text-yellow-500"
-                                >
-                                    Defend the Throne!
-                                </div>
-                            </div>
-                        </Link>
-                    </div>
+    <div class="col-span-2 flex flex-col items-center justify-center rounded-2xl border border-slate-700 bg-slate-800/50 p-3 text-center shadow-sm transition-all duration-300 hover:scale-105 hover:bg-slate-800 hover:shadow-lg hover:shadow-emerald-500/10 md:col-span-1 md:p-5">
+        <span class="text-[10px] font-bold uppercase tracking-widest text-slate-400 md:text-xs">Habits</span>
+        <div class="mt-1 flex flex-col items-center justify-center gap-1 md:mt-2">
+            <span class="text-xl font-black text-emerald-400 md:text-3xl">
+                {{ habitSummary?.done_today }}<span class="text-lg text-slate-600">/{{ habitSummary?.total }}</span>
+            </span>
+            <span class="text-xs text-slate-500 md:text-sm">✅ Done</span>
+        </div>
+    </div>
+
+    <Link 
+        href="/leaderboard"
+        class="group col-span-3 flex flex-col items-center justify-between rounded-2xl border border-slate-700 bg-slate-800/50 p-3 text-center shadow-sm transition-all duration-300 hover:scale-105 hover:bg-slate-800 hover:shadow-lg hover:shadow-indigo-500/20 md:col-span-1 md:p-5"
+    >
+        <span class="text-[10px] font-bold uppercase tracking-widest text-slate-400 transition-colors group-hover:text-indigo-300 md:text-xs">
+            Global Rank
+        </span>
+        
+        <div class="mt-1 flex flex-col items-center justify-center md:mt-2">
+            <span 
+                class="text-3xl font-black md:text-4xl"
+                :class="getRankClass(leaderboardData?.rank)"
+            >
+                #{{ leaderboardData?.rank ?? '-' }}
+            </span>
+            
+            <div class="mt-1 flex items-center justify-center gap-1">
+                <span class="text-xs">🏆</span>
+                
+                <span v-if="leaderboardData?.rank === 1" class="text-[10px] font-bold text-yellow-500 md:text-xs">
+                    King
+                </span>
+                
+                <span v-else-if="leaderboardData?.rival" class="truncate text-[10px] text-slate-500 md:text-xs">
+                    Vs: <span class="text-slate-300 group-hover:text-white">{{ leaderboardData.rival.name }}</span>
+                </span>
+            </div>
+        </div>
+    </Link>
+
+    <div 
+        v-if="topBadge"
+        class="group col-span-3 flex flex-col items-center justify-between rounded-2xl border border-slate-700 bg-slate-800/50 p-3 text-center shadow-sm transition-all duration-300 hover:scale-105 hover:bg-slate-800 hover:shadow-lg hover:shadow-indigo-500/10 md:col-span-1 md:p-5"
+        title="Latest Achievement"
+    >
+        <div class="flex items-center gap-1.5">
+            <span class="text-[10px] font-bold uppercase tracking-widest text-slate-400 transition-colors group-hover:text-indigo-300 md:text-xs">Honor</span>
+        </div>
+        
+        <div class="mt-1 flex w-full flex-col items-center justify-center gap-1 md:mt-2">
+            <div class="flex items-center gap-2">
+                <span class="truncate text-sm font-black text-white group-hover:text-indigo-200 md:text-lg max-w-[120px]">
+                    {{ topBadge.name }}
+                </span>
+                <span class="text-sm filter grayscale transition-all group-hover:grayscale-0 md:text-lg">
+                    {{ getBadgeIcon(topBadge.key) }}
+                </span>
+            </div>
+            
+            <div class="line-clamp-2 text-[9px] leading-tight text-slate-500 group-hover:text-slate-400 md:text-[10px]">
+                {{ topBadge.description }}
+            </div>
+        </div>
+    </div>
+
+</div>
                 </div>
             </div>
 

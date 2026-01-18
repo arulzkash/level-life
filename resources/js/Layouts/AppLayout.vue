@@ -86,6 +86,14 @@ const showingNavigationDropdown = ref(false);
                             <Link href="/treasury" class="nav-item">Treasury</Link>
                             <Link href="/habits" class="nav-item">Habits</Link>
                             <Link href="/timeblocks" class="nav-item">Timeline</Link>
+                            <Link href="/leaderboard" class="nav-item group flex items-center gap-1.5">
+                                <span
+                                    class="text-yellow-500/80 transition-colors group-hover:text-yellow-400"
+                                >
+                                    🏆
+                                </span>
+                                Legends
+                            </Link>
 
                             <div class="group relative ml-1 flex h-16 items-center">
                                 <button class="nav-item flex cursor-default items-center gap-1">
@@ -237,7 +245,13 @@ const showingNavigationDropdown = ref(false);
                     >
                         Timeline
                     </Link>
-
+                    <Link
+                        href="/leaderboard"
+                        class="block border-l-4 border-transparent py-2 pl-3 pr-4 text-base font-medium text-slate-400 transition-colors hover:bg-slate-700 hover:text-white"
+                        @click="showingNavigationDropdown = false"
+                    >
+                        🏆 Hall of Legends
+                    </Link>
                     <div class="my-2 border-t border-slate-700"></div>
                     <div class="px-4 py-2 text-xs font-bold uppercase text-slate-500">Logs</div>
                     <Link

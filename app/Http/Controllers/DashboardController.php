@@ -140,6 +140,16 @@ class DashboardController extends Controller
             ];
         }
 
+        // --- BADGE SNIPPET ---
+        // Fetch the "Top" badge (Highest ID usually means latest, 
+        // or filter by 'rarity' if you have that column)
+        $topBadge = DB::table('user_badges')
+            ->join('badges', 'badges.id', '=', 'user_badges.badge_id')
+            ->where('user_badges.user_id', $user->id)
+            ->select('badges.name', 'badges.key', 'badges.description')
+            ->orderBy('user_badges.created_at', 'desc') // Get the Latest one
+            ->first();
+
 
         return Inertia::render('Dashboard', [
             'profile' => $profile,
@@ -154,6 +164,7 @@ class DashboardController extends Controller
                 ->get(),
             'todayBlocks' => $todayBlocks,
             'leaderboardData' => $leaderboardData,
+            'topBadge' => $topBadge,
         ]);
     }
 }
