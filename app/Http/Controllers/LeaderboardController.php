@@ -3,26 +3,35 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-
 use Illuminate\Support\Facades\DB;
+use Inertia\Inertia;
 
 class LeaderboardController extends Controller
 {
+    public function page(Request $request)
+    {
+        // Render page inertia, data ambil dari backend langsung (no UI fancy yet)
+        $data = $this->buildLeaderboardData($request);
+
+        return Inertia::render('Leaderboard/Index', [
+            'items' => $data['items'],
+            'me' => $data['me'],
+        ]);
+    }
+
     public function index(Request $request)
+    {
+        $data = $this->buildLeaderboardData($request);
+        return response()->json($data);
+    }
+
+    private function buildLeaderboardData(Request $request): array
     {
         $userId = $request->user()->id;
 
-        // limit default 50, max 100 biar aman
         $limit = (int) $request->query('limit', 50);
         $limit = max(1, min($limit, 100));
 
-        // ORDER sesuai konsep:
-        // streak_current DESC
-        // streak_best DESC
-        // last_active_date DESC
-        // users.id ASC (stabil)
-        //
-        // COALESCE biar null dianggap 0 (streak kosong jadi paling bawah)
         $orderSql = implode(', ', [
             'COALESCE(profiles.streak_current, 0) DESC',
             'COALESCE(profiles.streak_best, 0) DESC',
@@ -30,7 +39,6 @@ class LeaderboardController extends Controller
             'users.id ASC',
         ]);
 
-        // Subquery: bikin "rank" pakai ROW_NUMBER() (lebih rapi & cepat)
         $sub = DB::table('profiles')
             ->join('users', 'users.id', '=', 'profiles.user_id')
             ->select([
@@ -44,18 +52,10 @@ class LeaderboardController extends Controller
 
         $ranked = DB::query()->fromSub($sub, 'ranked');
 
-        // Top N
-        $rows = $ranked
-            ->orderBy('rank')
-            ->limit($limit)
-            ->get();
+        $rows = $ranked->orderBy('rank')->limit($limit)->get();
+        $meRow = $ranked->where('user_id', $userId)->first();
 
-        // Me (rank global)
-        $meRow = $ranked
-            ->where('user_id', $userId)
-            ->first();
-
-        $items = $rows->map(fn($r) => [
+        $items = $rows->map(fn ($r) => [
             'rank' => (int) $r->rank,
             'user' => [
                 'id' => (int) $r->user_id,
@@ -77,9 +77,9 @@ class LeaderboardController extends Controller
             'last_active_date' => $meRow->last_active_date,
         ] : null;
 
-        return response()->json([
+        return [
             'items' => $items,
             'me' => $me,
-        ]);
+        ];
     }
 }

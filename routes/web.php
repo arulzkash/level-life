@@ -105,4 +105,5 @@ Route::middleware('auth')->group(function () {
     });
 
     Route::get('/leaderboard', [LeaderboardController::class, 'index']);
+    Route::get('/api/leaderboard', [LeaderboardController::class, 'index']);
 });
