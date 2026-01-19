@@ -548,7 +548,7 @@ const computeWeekRangeLabel = () => {
             <!-- CHAMPION (mobile visible, compact, clear #1) -->
             <section
                 v-if="champion"
-                class="group relative overflow-hidden rounded-3xl border border-yellow-500/35 bg-gradient-to-br from-slate-900/85 to-slate-950/90 p-5 shadow-[0_0_30px_rgba(234,179,8,0.16)] transition-all"
+                class="shine group relative overflow-hidden rounded-3xl border border-yellow-500/25 bg-gradient-to-b from-slate-800/80 to-slate-900/70 p-5 shadow-[0_0_40px_rgba(234,179,8,0.10)] transition-all duration-300 hover:-translate-y-0.5 hover:scale-[1.01] hover:border-amber-300/35 hover:shadow-[0_0_60px_rgba(245,158,11,0.16)]"
             >
                 <div class="pointer-events-none absolute inset-0 z-0">
                     <div
@@ -558,6 +558,22 @@ const computeWeekRangeLabel = () => {
                         class="absolute -bottom-12 -left-12 h-48 w-48 rounded-full bg-orange-500/10 opacity-50 mix-blend-screen blur-[70px]"
                     ></div>
                     <div class="shine absolute inset-0 opacity-25 mix-blend-overlay"></div>
+                </div>
+
+                <div
+                    class="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+                >
+                    <div
+                        class="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(245,158,11,0.14),transparent_45%)]"
+                    ></div>
+                    <div
+                        class="absolute inset-0 bg-[radial-gradient(circle_at_70%_60%,rgba(99,102,241,0.12),transparent_50%)]"
+                    ></div>
+
+                    <!-- sweep -->
+                    <div
+                        class="via-white/12 absolute -left-1/3 top-0 h-full w-1/2 translate-x-[-120%] -skew-x-12 bg-gradient-to-r from-transparent to-transparent transition-transform duration-700 group-hover:translate-x-[220%]"
+                    ></div>
                 </div>
 
                 <div class="relative z-10 flex flex-col gap-4 sm:flex-row sm:items-center">
@@ -804,19 +820,38 @@ const computeWeekRangeLabel = () => {
                     <!-- Champion desktop -->
                     <div
                         v-if="champion"
-                        class="shine relative overflow-hidden rounded-3xl border border-yellow-500/25 bg-gradient-to-b from-slate-800/80 to-slate-900/70 p-5 shadow-[0_0_40px_rgba(234,179,8,0.10)]"
+                        class="shine group relative overflow-hidden rounded-3xl border border-yellow-500/25 bg-gradient-to-b from-slate-800/80 to-slate-900/70 p-5 shadow-[0_0_40px_rgba(234,179,8,0.10)] transition-all duration-300 hover:-translate-y-0.5 hover:scale-[1.01] hover:border-amber-300/35 hover:shadow-[0_0_60px_rgba(245,158,11,0.16)]"
                     >
                         <div
                             class="absolute -right-28 -top-28 h-64 w-64 rounded-full bg-yellow-500/10 blur-[90px]"
                         ></div>
+                        <div
+                            class="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+                        >
+                            <div
+                                class="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(245,158,11,0.14),transparent_45%)]"
+                            ></div>
+                            <div
+                                class="absolute inset-0 bg-[radial-gradient(circle_at_70%_60%,rgba(99,102,241,0.12),transparent_50%)]"
+                            ></div>
+
+                            <!-- sweep -->
+                            <div
+                                class="via-white/12 absolute -left-1/3 top-0 h-full w-1/2 translate-x-[-120%] -skew-x-12 bg-gradient-to-r from-transparent to-transparent transition-transform duration-700 group-hover:translate-x-[220%]"
+                            ></div>
+                        </div>
 
                         <div class="relative z-10 flex items-center justify-between gap-6">
                             <div class="flex min-w-0 items-center gap-4">
                                 <div
-                                    class="flex h-14 w-14 items-center justify-center rounded-2xl border border-yellow-500/30 bg-slate-950/70 text-2xl shadow"
+                                    class="flex h-14 w-14 items-center justify-center rounded-2xl border border-yellow-500/30 bg-slate-950/70 text-2xl shadow transition-transform duration-300 group-hover:scale-110"
+
                                     title="Champion"
                                 >
                                     👑
+                                    <span class="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 shadow-[0_0_26px_rgba(245,158,11,0.18)]"></span>
+
+                                    
                                 </div>
 
                                 <div class="min-w-0">
@@ -984,7 +1019,7 @@ const computeWeekRangeLabel = () => {
                                                 <button
                                                     type="button"
                                                     data-lore-trigger="1"
-                                                    class="relative z-20 inline-flex cursor-default touch-manipulation items-center gap-1.5 rounded-full border border-white/10 bg-slate-900/40 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-slate-200 active:scale-[0.98] transition-all duration-300 group-hover:border-white/20 group-hover:bg-slate-900/55 group-hover:shadow-[0_0_18px_rgba(255,255,255,0.08)]"
+                                                    class="relative z-20 inline-flex cursor-default touch-manipulation items-center gap-1.5 rounded-full border border-white/10 bg-slate-900/40 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-slate-200 transition-all duration-300 active:scale-[0.98] group-hover:border-white/20 group-hover:bg-slate-900/55 group-hover:shadow-[0_0_18px_rgba(255,255,255,0.08)]"
                                                     @pointerenter="
                                                         (e) => e.pointerType === 'mouse' && openLore(e, row)
                                                     "
@@ -1116,7 +1151,7 @@ const computeWeekRangeLabel = () => {
         <!-- ===================== -->
         <div
             v-if="meRow"
-           class="fixed bottom-0 left-0 z-50 w-full border-t border-indigo-500/20 bg-slate-900/85 p-3 shadow-[0_-5px_25px_rgba(0,0,0,0.3)] backdrop-blur-md md:hidden"
+            class="fixed bottom-0 left-0 z-50 w-full border-t border-indigo-500/20 bg-slate-900/85 p-3 shadow-[0_-5px_25px_rgba(0,0,0,0.3)] backdrop-blur-md md:hidden"
         >
             <div
                 class="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-indigo-500/50 to-transparent"
