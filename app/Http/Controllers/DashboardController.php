@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
+use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
@@ -96,9 +97,11 @@ class DashboardController extends Controller
             ->groupBy('user_id');
 
         // 2) active_days_last_7d
+        $weekStart = $now->copy()->startOfWeek(Carbon::MONDAY)->startOfDay();
+
         $active7Query = DB::table('quest_completions')
             ->select('user_id', DB::raw('COUNT(DISTINCT DATE(completed_at)) as active_days_last_7d'))
-            ->where('completed_at', '>=', $now->copy()->subDays(6)->startOfDay())
+            ->where('completed_at', '>=', $weekStart)
             ->groupBy('user_id');
 
         $leaderboard = DB::table('profiles')

@@ -68,20 +68,11 @@ class QuestController extends Controller
 
         // --- CORE LOGIC: STREAK & FREEZE SYSTEM (LAZY UPDATE) ---
         $profile = $request->user()->profile;
-        
+
         // PENTING: Gunakan startOfDay untuk komparasi tanggal murni
-        $today = now()->startOfDay(); 
-        
-        // 1. Weekly Freeze Reset Logic
-        // Cek apakah minggu sudah berganti sejak terakhir kali freeze dipakai?
-        // (Default start of week: Senin)
-        $currentWeekStart = now()->startOfWeek(Carbon::MONDAY)->toDateString();
-        
-        if ($profile->freezes_used_week_start !== $currentWeekStart) {
-            // Reset jatah freeze mingguan karena sudah masuk minggu baru
-            $profile->freezes_used_week_start = $currentWeekStart;
-            $profile->freezes_used_count = 0;
-        }
+        $today = now()->startOfDay();
+
+
 
         // 2. Streak Calculation
         if ($profile->last_active_date) {
@@ -95,26 +86,66 @@ class QuestController extends Controller
                 // Kasus B: Login besoknya (Perfect Streak).
                 $profile->streak_current++;
             } else {
-                // Kasus C: Ada Gap (Bolong).
-                // diff 2 hari = bolong 1 hari (kemarin).
-                // diff 3 hari = bolong 2 hari.
-                $daysMissed = $diffInDays - 1; 
-                
-                // Cek sisa freeze minggu ini
-                // Limit misal: 2 freeze per minggu
-                $freezesLeft = max(0, 2 - $profile->freezes_used_count);
+                // Kasus C: Ada Gap (Bolong)
+                $weekStartOf = function (Carbon $d) {
+                    return $d->copy()->startOfWeek(Carbon::MONDAY)->toDateString();
+                };
 
-                if ($daysMissed <= $freezesLeft) {
-                    // --> SELAMAT! Streak lanjut pakai Freeze.
-                    $profile->streak_current++; 
-                    $profile->freezes_used_count += $daysMissed;
-                    $profile->freezes_used_total += $daysMissed;
-                    // Catat bahwa streak ini "diselamatkan" sampai hari ini
-                    $profile->streak_maintained_through = $today->toDateString();
-                } else {
-                    // --> GAME OVER. Reset Streak.
+                // rentang hari yang miss: (lastActive+1) .. (today-1)
+                $missStart = $lastActive->copy()->addDay()->startOfDay();
+                $missEnd = $today->copy()->subDay()->startOfDay();
+
+                // Pastikan window freeze start ada (kalau null, anggap minggu lastActive)
+                if (!$profile->freezes_used_week_start) {
+                    $profile->freezes_used_week_start = $weekStartOf($lastActive);
+                    $profile->freezes_used_count = (int) ($profile->freezes_used_count ?? 0);
+                }
+
+                $freezeFailed = false;
+
+                if ($missStart->lte($missEnd)) {
+                    $cursor = $missStart->copy();
+
+                    while ($cursor->lte($missEnd)) {
+                        $ws = $weekStartOf($cursor);
+                        $weekStartDate = Carbon::parse($ws)->startOfDay();
+                        $weekEndDate = $weekStartDate->copy()->addDays(6)->startOfDay();
+
+                        // segment minggu ini: cursor .. min(missEnd, weekEnd)
+                        $segEnd = $weekEndDate->lt($missEnd) ? $weekEndDate : $missEnd;
+                        $daysInThisWeek = $cursor->diffInDays($segEnd) + 1; // inclusive
+
+                        // kalau kita sedang “mengonsumsi” minggu berbeda, reset count untuk minggu tsb
+                        if ($profile->freezes_used_week_start !== $ws) {
+                            $profile->freezes_used_week_start = $ws;
+                            $profile->freezes_used_count = 0;
+                        }
+
+                        $used = (int) ($profile->freezes_used_count ?? 0);
+                        $left = max(0, 2 - $used);
+
+                        if ($daysInThisWeek > $left) {
+                            $freezeFailed = true;
+                            break;
+                        }
+
+                        // consume sekaligus untuk minggu ini
+                        $profile->freezes_used_count = $used + $daysInThisWeek;
+                        $profile->freezes_used_total = (int) ($profile->freezes_used_total ?? 0) + $daysInThisWeek;
+
+                        // maju ke minggu berikutnya
+                        $cursor = $segEnd->copy()->addDay();
+                    }
+                }
+
+                if ($freezeFailed) {
+                    // fail => streak putus, tapi karena hari ini aktif, restart ke 1
                     $profile->streak_current = 1;
-                    $profile->streak_resets_total++;
+                    $profile->streak_resets_total = (int) ($profile->streak_resets_total ?? 0) + 1;
+                } else {
+                    // succeed => streak lanjut, hari ini aktif => +1
+                    $profile->streak_current++;
+                    $profile->streak_maintained_through = $today->toDateString();
                 }
             }
         } else {
@@ -122,9 +153,16 @@ class QuestController extends Controller
             $profile->streak_current = 1;
         }
 
+        // Setelah streak dihitung, pastikan window freeze sekarang adalah minggu hari ini
+        $currentWeekStart = $today->copy()->startOfWeek(Carbon::MONDAY)->toDateString();
+        if ($profile->freezes_used_week_start !== $currentWeekStart) {
+            $profile->freezes_used_week_start = $currentWeekStart;
+            $profile->freezes_used_count = 0;
+        }
+
         // 3. Save State
         $profile->last_active_date = $today->toDateString();
-        
+
         // Update Best Streak Record
         if ($profile->streak_current > $profile->streak_best) {
             $profile->streak_best = $profile->streak_current;

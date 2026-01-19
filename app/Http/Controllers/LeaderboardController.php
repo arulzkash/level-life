@@ -5,12 +5,13 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
+use Carbon\Carbon;
 
 class LeaderboardController extends Controller
 {
     public function page(Request $request)
     {
-        
+
         $data = $this->buildLeaderboardData($request);
 
         return Inertia::render('Leaderboard/Index', [
@@ -32,7 +33,7 @@ class LeaderboardController extends Controller
         $now = now();
         $today = $now->toDateString();
         $yesterday = $now->copy()->subDay()->toDateString();
-        
+
         // Batas toleransi "Ghost" (AFK)
         $ghostThresholdDate = $now->copy()->subDays(4)->toDateString();
 
@@ -41,10 +42,14 @@ class LeaderboardController extends Controller
             ->select('user_id', DB::raw('MAX(completed_at) as last_active_at'))
             ->groupBy('user_id');
 
+
         // 2. Hitung Konsistensi 7 Hari
+
+        $weekStart = $now->copy()->startOfWeek(Carbon::MONDAY)->startOfDay();
+
         $active7Query = DB::table('quest_completions')
             ->select('user_id', DB::raw('COUNT(DISTINCT DATE(completed_at)) as active_days_last_7d'))
-            ->where('completed_at', '>=', $now->copy()->subDays(6)->startOfDay())
+            ->where('completed_at', '>=', $weekStart)
             ->groupBy('user_id');
 
         // 3. Main Query
@@ -98,7 +103,7 @@ class LeaderboardController extends Controller
 
         // Cari Data "Saya"
         $myRank = $rankedList->firstWhere('user_id', $userId);
-        
+
         if (!$myRank) {
             // Kalau gak masuk top 50, query manual
             $myRank = DB::table('profiles')
@@ -108,18 +113,19 @@ class LeaderboardController extends Controller
                 })
                 ->where('profiles.user_id', $userId)
                 ->select([
-                    'profiles.user_id', 'users.name', 
-                    'profiles.streak_current as effective_streak', 
+                    'profiles.user_id',
+                    'users.name',
+                    'profiles.streak_current as effective_streak',
                     'profiles.streak_best',
                     'profiles.last_active_date',
                     'last_log.last_active_at'
                 ])
                 ->addSelect(DB::raw("'Unknown' as status"))
                 ->first();
-            
+
             if ($myRank) {
                 $myRank->rank = '-';
-                $myRank->active_days_last_7d = 0; 
+                $myRank->active_days_last_7d = 0;
             }
         }
 
@@ -128,7 +134,7 @@ class LeaderboardController extends Controller
         $badges = DB::table('user_badges')
             ->join('badges', 'badges.id', '=', 'user_badges.badge_id')
             ->whereIn('user_badges.user_id', $visibleUserIds)
-            ->where('badges.category', 'streak') 
+            ->where('badges.category', 'streak')
             ->select('user_badges.user_id', 'badges.name', 'badges.key', 'badges.description')
             ->orderBy('badges.id', 'desc')
             ->get()
@@ -137,7 +143,7 @@ class LeaderboardController extends Controller
         $mapFunction = function ($row) use ($badges) {
             if (!$row) return null;
             $badge = isset($badges[$row->user_id]) ? $badges[$row->user_id]->first() : null;
-            
+
             return [
                 'rank' => $row->rank,
                 'user' => [
@@ -150,7 +156,7 @@ class LeaderboardController extends Controller
                 'active_days_last_7d' => (int) ($row->active_days_last_7d ?? 0),
                 'last_active_at' => $row->last_active_at, // Ini yang penting buat time ago
                 'badge_top' => $badge ? [
-                    'name' => $badge->name, 
+                    'name' => $badge->name,
                     'category' => 'streak',
                     'key' => $badge->key,
                     'description' => $badge->description,
