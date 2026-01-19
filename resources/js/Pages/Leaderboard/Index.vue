@@ -186,6 +186,65 @@ const metricChipText = (row) => {
     return '—';
 };
 
+// --- Mini-meter (progress to next milestone) ---
+const STREAK_MILESTONES = [3, 7, 14, 30, 60, 100];
+
+const meterFillClass = (tier) => {
+    const map = {
+        common: 'bg-slate-300/20',
+        uncommon: 'bg-emerald-300/30',
+        rare: 'bg-sky-300/30',
+        epic: 'bg-purple-300/30',
+        legendary: 'bg-amber-300/35',
+    };
+    return map[tier] || map.common;
+};
+
+const meterInfo = (row) => {
+    // returns { pct: number (0-100), hint: string }
+    if (!row) return { pct: 0, hint: '' };
+
+    // Current / Best -> progress to next streak milestone
+    if (currentView.value === 'current' || currentView.value === 'best') {
+        const val = currentView.value === 'current' ? (row.streak_current ?? 0) : (row.streak_best ?? 0);
+
+        // already at/above max
+        const maxM = STREAK_MILESTONES[STREAK_MILESTONES.length - 1];
+        if (val >= maxM) return { pct: 100, hint: 'MAX' };
+
+        let prev = 0;
+        let next = STREAK_MILESTONES[0];
+        for (let i = 0; i < STREAK_MILESTONES.length; i++) {
+            const m = STREAK_MILESTONES[i];
+            if (val < m) {
+                next = m;
+                prev = i === 0 ? 0 : STREAK_MILESTONES[i - 1];
+                break;
+            }
+        }
+
+        const span = Math.max(1, next - prev);
+        const pct = Math.max(0, Math.min(100, ((val - prev) / span) * 100));
+        return { pct, hint: `Next ${next}` };
+    }
+
+    // Active7 -> progress 0..7
+    if (currentView.value === 'active7') {
+        const d = Math.max(0, Math.min(7, row.active_days_last_7d ?? 0));
+        return { pct: (d / 7) * 100, hint: `${d}/7` };
+    }
+
+    // Recent -> freshness bar (NOW full -> 24h empty)
+    if (currentView.value === 'recent') {
+        if (!row.last_active_at) return { pct: 0, hint: '—' };
+        const diff = nowMs.value - new Date(row.last_active_at).getTime();
+        const pct = Math.max(0, Math.min(100, (1 - diff / (24 * 60 * 60 * 1000)) * 100));
+        return { pct, hint: 'Fresh' };
+    }
+
+    return { pct: 0, hint: '' };
+};
+
 // --- Sorting (dynamic rank per filter) ---
 const sortedItems = computed(() => {
     const list = [...(props.items || [])];
@@ -538,10 +597,22 @@ const weekRangeLabel = computed(() => {
                             >
                                 {{ metricCfg(champion).label }}
                             </div>
-                            <div class="flex justify-end">
+                            <div class="flex flex-col items-end gap-1">
                                 <div :class="rarityChipClass(metricTier(champion))" class="text-3xl">
                                     <span class="opacity-90">{{ metricIcon }}</span>
                                     <span>{{ metricChipText(champion) }}</span>
+                                </div>
+
+                                <div class="h-1 w-24 overflow-hidden rounded-full bg-white/10">
+                                    <div
+                                        class="h-full rounded-full"
+                                        :class="meterFillClass(metricTier(champion))"
+                                        :style="{ width: `${meterInfo(champion).pct}%` }"
+                                    ></div>
+                                </div>
+
+                                <div class="text-[9px] font-bold text-slate-500">
+                                    {{ meterInfo(champion).hint }}
                                 </div>
                             </div>
                         </div>
@@ -660,12 +731,26 @@ const weekRangeLabel = computed(() => {
                     </div>
 
                     <div class="relative z-10 text-right">
-                        <div
-                            :class="rarityChipClass(metricTier(row))"
-                            class="origin-right text-base transition-transform group-hover:scale-110"
-                        >
-                            <span class="opacity-90">{{ metricIcon }}</span>
-                            <span>{{ metricChipText(row) }}</span>
+                        <div class="flex flex-col items-end gap-1">
+                            <div
+                                :class="rarityChipClass(metricTier(row))"
+                                class="origin-right text-base transition-transform group-hover:scale-110"
+                            >
+                                <span class="opacity-90">{{ metricIcon }}</span>
+                                <span>{{ metricChipText(row) }}</span>
+                            </div>
+
+                            <div class="h-1 w-20 overflow-hidden rounded-full bg-white/10">
+                                <div
+                                    class="h-full rounded-full"
+                                    :class="meterFillClass(metricTier(row))"
+                                    :style="{ width: `${meterInfo(row).pct}%` }"
+                                ></div>
+                            </div>
+
+                            <div class="text-[8px] font-bold text-slate-600">
+                                {{ meterInfo(row).hint }}
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -765,10 +850,22 @@ const weekRangeLabel = computed(() => {
                                 <div class="text-[10px] font-black uppercase tracking-widest text-slate-500">
                                     {{ metricCfg(champion).label }}
                                 </div>
-                                <div class="mt-2 flex justify-end">
+                                <div class="mt-2 flex flex-col items-end gap-1">
                                     <div :class="rarityChipClass(metricTier(champion))" class="text-3xl">
                                         <span class="opacity-90">{{ metricIcon }}</span>
                                         <span>{{ metricChipText(champion) }}</span>
+                                    </div>
+
+                                    <div class="h-1 w-28 overflow-hidden rounded-full bg-white/10">
+                                        <div
+                                            class="h-full rounded-full"
+                                            :class="meterFillClass(metricTier(champion))"
+                                            :style="{ width: `${meterInfo(champion).pct}%` }"
+                                        ></div>
+                                    </div>
+
+                                    <div class="text-[10px] font-bold text-slate-500">
+                                        {{ meterInfo(champion).hint }}
                                     </div>
                                 </div>
                             </div>
@@ -913,10 +1010,22 @@ const weekRangeLabel = computed(() => {
                                         >
                                             {{ metricCfg(row).label }}
                                         </div>
-                                        <div class="mt-2 flex justify-end">
+                                        <div class="mt-2 flex flex-col items-end gap-1">
                                             <div :class="rarityChipClass(metricTier(row))" class="text-xl">
                                                 <span class="opacity-90">{{ metricIcon }}</span>
                                                 <span>{{ metricChipText(row) }}</span>
+                                            </div>
+
+                                            <div class="h-1 w-24 overflow-hidden rounded-full bg-white/10">
+                                                <div
+                                                    class="h-full rounded-full"
+                                                    :class="meterFillClass(metricTier(row))"
+                                                    :style="{ width: `${meterInfo(row).pct}%` }"
+                                                ></div>
+                                            </div>
+
+                                            <div class="text-[10px] font-bold text-slate-500">
+                                                {{ meterInfo(row).hint }}
                                             </div>
                                         </div>
                                     </div>
@@ -1040,10 +1149,22 @@ const weekRangeLabel = computed(() => {
                     <div class="mb-0.5 text-[9px] font-bold uppercase tracking-wider text-slate-500">
                         {{ metricCfg(meRow).label }}
                     </div>
-                    <div class="flex justify-end">
+                    <div class="flex flex-col items-end gap-1">
                         <div :class="rarityChipClass(metricTier(meRow))" class="text-lg">
                             <span class="opacity-90">{{ metricIcon }}</span>
                             <span>{{ metricChipText(meRow) }}</span>
+                        </div>
+
+                        <div class="h-1 w-20 overflow-hidden rounded-full bg-white/10">
+                            <div
+                                class="h-full rounded-full"
+                                :class="meterFillClass(metricTier(meRow))"
+                                :style="{ width: `${meterInfo(meRow).pct}%` }"
+                            ></div>
+                        </div>
+
+                        <div class="text-[9px] font-bold text-slate-500">
+                            {{ meterInfo(meRow).hint }}
                         </div>
                     </div>
                 </div>
