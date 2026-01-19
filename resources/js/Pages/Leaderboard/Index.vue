@@ -917,7 +917,7 @@ const computeWeekRangeLabel = () => {
                             <div
                                 v-for="row in rankedItems"
                                 :key="row.user?.id + '-' + row.dynamicRank"
-                                class="group relative overflow-hidden rounded-2xl border bg-slate-900/35 p-4 transition-all duration-300 hover:bg-slate-900/55"
+                                class="group relative overflow-hidden rounded-2xl border bg-slate-900/35 p-4 transition-all duration-300 hover:-translate-y-0.5 hover:scale-[1.01] hover:border-indigo-400/30 hover:bg-slate-900/55 hover:shadow-[0_0_26px_rgba(99,102,241,0.14)]"
                                 :class="
                                     isMe(row)
                                         ? 'border-indigo-500/35 shadow-[0_0_22px_rgba(99,102,241,0.16)]'
@@ -933,6 +933,13 @@ const computeWeekRangeLabel = () => {
                                 <div
                                     class="absolute -right-24 -top-24 h-56 w-56 rounded-full bg-white/5 opacity-0 blur-[90px] transition-opacity duration-300 group-hover:opacity-100"
                                 ></div>
+                                <div
+                                    class="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+                                >
+                                    <div
+                                        class="absolute -left-1/3 top-0 h-full w-1/2 translate-x-[-120%] -skew-x-12 bg-gradient-to-r from-transparent via-white/10 to-transparent transition-transform duration-700 group-hover:translate-x-[220%]"
+                                    ></div>
+                                </div>
 
                                 <div class="relative z-10 flex items-center justify-between gap-6">
                                     <div class="flex min-w-0 items-center gap-3">
@@ -977,7 +984,7 @@ const computeWeekRangeLabel = () => {
                                                 <button
                                                     type="button"
                                                     data-lore-trigger="1"
-                                                    class="relative z-20 inline-flex cursor-default touch-manipulation items-center gap-1.5 rounded-full border border-white/10 bg-slate-900/40 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-slate-200 active:scale-[0.98]"
+                                                    class="relative z-20 inline-flex cursor-default touch-manipulation items-center gap-1.5 rounded-full border border-white/10 bg-slate-900/40 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-slate-200 active:scale-[0.98] transition-all duration-300 group-hover:border-white/20 group-hover:bg-slate-900/55 group-hover:shadow-[0_0_18px_rgba(255,255,255,0.08)]"
                                                     @pointerenter="
                                                         (e) => e.pointerType === 'mouse' && openLore(e, row)
                                                     "
@@ -1032,12 +1039,17 @@ const computeWeekRangeLabel = () => {
                                             {{ metricCfg(row).label }}
                                         </div>
                                         <div class="mt-2 flex flex-col items-end gap-1">
-                                            <div :class="rarityChipClass(metricTier(row))" class="text-xl">
+                                            <div
+                                                :class="rarityChipClass(metricTier(row))"
+                                                class="text-xl transition-transform duration-300 group-hover:scale-105 group-hover:brightness-110"
+                                            >
                                                 <span class="opacity-90">{{ metricIcon }}</span>
                                                 <span>{{ metricChipText(row) }}</span>
                                             </div>
 
-                                            <div class="h-1 w-24 overflow-hidden rounded-full bg-white/10">
+                                            <div
+                                                class="group-hover:bg-white/18 h-1 w-24 overflow-hidden rounded-full bg-white/10 transition-colors duration-300"
+                                            >
                                                 <div
                                                     class="h-full rounded-full"
                                                     :class="meterFillClass(metricTier(row))"
@@ -1104,7 +1116,7 @@ const computeWeekRangeLabel = () => {
         <!-- ===================== -->
         <div
             v-if="meRow"
-            class="bg-slate-900/92 fixed bottom-0 left-0 z-50 w-full border-t border-indigo-500/20 p-3 shadow-[0_-5px_25px_rgba(0,0,0,0.3)] md:hidden"
+           class="fixed bottom-0 left-0 z-50 w-full border-t border-indigo-500/20 bg-slate-900/85 p-3 shadow-[0_-5px_25px_rgba(0,0,0,0.3)] backdrop-blur-md md:hidden"
         >
             <div
                 class="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-indigo-500/50 to-transparent"
