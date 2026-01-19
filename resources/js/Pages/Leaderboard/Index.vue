@@ -248,12 +248,32 @@ const meterInfo = (row) => {
         return { pct: (d / 7) * 100, hint: `${d}/7` };
     }
 
-    // Recent -> freshness bar (NOW full -> 24h empty)
+    // Recent -> momentum decay (NOW full -> 24h empty)
     if (currentView.value === 'recent') {
-        if (!row.last_active_at) return { pct: 0, hint: '—' };
+        if (!row.last_active_at) {
+            return { pct: 0, hint: 'Stopped' };
+        }
+
         const diff = nowMs.value - new Date(row.last_active_at).getTime();
-        const pct = Math.max(0, Math.min(100, (1 - diff / (24 * 60 * 60 * 1000)) * 100));
-        return { pct, hint: 'Fresh' };
+        const dayMs = 24 * 60 * 60 * 1000;
+
+        const pct = Math.max(0, Math.min(100, (1 - diff / dayMs) * 100));
+
+        let hint = 'Stopped';
+
+        if (diff <= 30 * 60 * 1000) {
+            hint = 'On fire';
+        } else if (diff <= 3 * 60 * 60 * 1000) {
+            hint = 'Strong momentum';
+        } else if (diff <= 8 * 60 * 60 * 1000) {
+            hint = 'Steady';
+        } else if (diff <= 16 * 60 * 60 * 1000) {
+            hint = 'Fading';
+        } else if (diff <= dayMs) {
+            hint = 'Lost momentum';
+        }
+
+        return { pct, hint };
     }
 
     return { pct: 0, hint: '' };
@@ -845,13 +865,12 @@ const computeWeekRangeLabel = () => {
                             <div class="flex min-w-0 items-center gap-4">
                                 <div
                                     class="flex h-14 w-14 items-center justify-center rounded-2xl border border-yellow-500/30 bg-slate-950/70 text-2xl shadow transition-transform duration-300 group-hover:scale-110"
-
                                     title="Champion"
                                 >
                                     👑
-                                    <span class="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 shadow-[0_0_26px_rgba(245,158,11,0.18)]"></span>
-
-                                    
+                                    <span
+                                        class="absolute inset-0 rounded-2xl opacity-0 shadow-[0_0_26px_rgba(245,158,11,0.18)] transition-opacity duration-300 group-hover:opacity-100"
+                                    ></span>
                                 </div>
 
                                 <div class="min-w-0">
