@@ -107,8 +107,16 @@ const sortedItems = computed(() => {
 
     const sortFn = (a, b) => {
         if (currentView.value === 'current') {
-            const d = (b.streak_current ?? 0) - (a.streak_current ?? 0);
-            return d !== 0 ? d : new Date(b.last_active_at || 0) - new Date(a.last_active_at || 0);
+            const d1 = (b.streak_current ?? 0) - (a.streak_current ?? 0);
+            if (d1 !== 0) return d1;
+
+            const d2 = (b.streak_best ?? 0) - (a.streak_best ?? 0);
+            if (d2 !== 0) return d2;
+
+            const d3 = (b.active_days_last_7d ?? 0) - (a.active_days_last_7d ?? 0);
+            if (d3 !== 0) return d3;
+
+            return new Date(b.last_active_at || 0) - new Date(a.last_active_at || 0);
         }
         if (currentView.value === 'best') {
             const d = (b.streak_best ?? 0) - (a.streak_best ?? 0);
@@ -257,51 +265,61 @@ onBeforeUnmount(() => {
 <template>
     <Head title="Hall of Legends" />
 
-    <div class="flex min-h-screen flex-col text-gray-200 pb-[90px] md:pb-10 font-sans antialiased overflow-x-hidden">
+    <div
+        class="flex min-h-screen flex-col overflow-x-hidden pb-[90px] font-sans text-gray-200 antialiased md:pb-10"
+    >
         <!-- ===================== -->
         <!-- STICKY HEADER (mobile-first) -->
         <!-- ===================== -->
-        <div class="sticky top-0 z-40 border-b border-slate-800/50 bg-slate-950/70 backdrop-blur-xl transition-all duration-300">
-            <div class="mx-auto flex max-w-4xl flex-col gap-3 p-4 md:flex-row md:items-center md:justify-between">
+        <div
+            class="sticky top-0 z-40 border-b border-slate-800/50 bg-slate-950/70 backdrop-blur-xl transition-all duration-300"
+        >
+            <div
+                class="mx-auto flex max-w-4xl flex-col gap-3 p-4 md:flex-row md:items-center md:justify-between"
+            >
                 <div class="flex items-center justify-between">
-                    <h1 class="flex items-center gap-2 text-xl font-black tracking-tight text-white drop-shadow-sm">
-                        <span class="text-2xl filter drop-shadow-[0_0_5px_rgba(255,255,255,0.3)]">🏰</span>
+                    <h1
+                        class="flex items-center gap-2 text-xl font-black tracking-tight text-white drop-shadow-sm"
+                    >
+                        <span class="text-2xl drop-shadow-[0_0_5px_rgba(255,255,255,0.3)] filter">🏰</span>
                         Hall of Legends
                     </h1>
 
                     <div class="flex items-center gap-2">
                         <span
-                            class="hidden md:inline-flex items-center gap-2 rounded-full border border-slate-700/60 bg-slate-900/50 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-slate-300"
+                            class="hidden items-center gap-2 rounded-full border border-slate-700/60 bg-slate-900/50 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-slate-300 md:inline-flex"
                         >
                             👥 {{ contendersCount }} contenders
                         </span>
 
                         <Link
                             href="/dashboard"
-                            class="md:hidden text-[10px] font-bold uppercase tracking-wider text-indigo-300 hover:text-indigo-200 bg-indigo-500/10 px-2 py-1 rounded-full border border-indigo-500/20"
+                            class="rounded-full border border-indigo-500/20 bg-indigo-500/10 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-indigo-300 hover:text-indigo-200 md:hidden"
                         >
                             Cmd Center
                         </Link>
                     </div>
                 </div>
 
-                <div class="flex gap-2 overflow-x-auto pb-1 scrollbar-hide md:pb-0 mask-linear-x">
+                <div class="scrollbar-hide mask-linear-x flex gap-2 overflow-x-auto pb-1 md:pb-0">
                     <button
                         v-for="v in viewOptions"
                         :key="v.key"
                         @click="currentView = v.key"
-                        class="group relative flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-black uppercase tracking-wider transition-all duration-300 overflow-hidden"
-                        :class="currentView === v.key
-                            ? 'bg-indigo-500/20 border-indigo-400/50 text-indigo-100 shadow-[0_0_15px_rgba(99,102,241,0.28)]'
-                            : 'bg-slate-900/60 border-slate-700/50 text-slate-400 hover:border-slate-500 hover:text-slate-200 hover:bg-slate-800'"
+                        class="group relative flex shrink-0 items-center gap-1.5 overflow-hidden rounded-full border px-3 py-1.5 text-[11px] font-black uppercase tracking-wider transition-all duration-300"
+                        :class="
+                            currentView === v.key
+                                ? 'border-indigo-400/50 bg-indigo-500/20 text-indigo-100 shadow-[0_0_15px_rgba(99,102,241,0.28)]'
+                                : 'border-slate-700/50 bg-slate-900/60 text-slate-400 hover:border-slate-500 hover:bg-slate-800 hover:text-slate-200'
+                        "
                     >
                         <div
                             class="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/10 to-transparent transition-transform duration-700 group-hover:translate-x-full"
                             :class="{ 'translate-x-full': currentView === v.key }"
                         ></div>
-                        <span class="relative z-10 filter drop-shadow-sm">{{ v.icon }}</span>
-                        <span class="hidden sm:inline relative z-10">{{ v.label }}</span>
-                        <span class="sm:hidden relative z-10">{{ v.mobileLabel }}</span>
+                        <span class="relative z-10 drop-shadow-sm filter">{{ v.icon }}</span>
+                        <span class="relative z-10 hidden sm:inline">{{ v.label }}</span>
+                        <span class="relative z-10 sm:hidden">{{ v.mobileLabel }}</span>
                     </button>
                 </div>
             </div>
@@ -310,40 +328,46 @@ onBeforeUnmount(() => {
         <!-- ===================== -->
         <!-- MOBILE MAIN (keep “old” feel) -->
         <!-- ===================== -->
-        <main class="mx-auto w-full max-w-3xl flex-1 px-4 py-6 space-y-6 md:hidden">
+        <main class="mx-auto w-full max-w-3xl flex-1 space-y-6 px-4 py-6 md:hidden">
             <!-- CHAMPION (mobile visible, compact, clear #1) -->
             <section
                 v-if="champion"
-                class="relative group rounded-3xl border border-yellow-500/35 bg-gradient-to-br from-slate-900/85 to-slate-950/90 p-5 shadow-[0_0_30px_rgba(234,179,8,0.16)] transition-all overflow-hidden"
+                class="group relative overflow-hidden rounded-3xl border border-yellow-500/35 bg-gradient-to-br from-slate-900/85 to-slate-950/90 p-5 shadow-[0_0_30px_rgba(234,179,8,0.16)] transition-all"
             >
                 <div class="pointer-events-none absolute inset-0 z-0">
-                    <div class="absolute -right-12 -top-12 h-48 w-48 rounded-full bg-yellow-500/10 blur-[70px] mix-blend-screen"></div>
-                    <div class="absolute -left-12 -bottom-12 h-48 w-48 rounded-full bg-orange-500/10 blur-[70px] mix-blend-screen opacity-50"></div>
+                    <div
+                        class="absolute -right-12 -top-12 h-48 w-48 rounded-full bg-yellow-500/10 mix-blend-screen blur-[70px]"
+                    ></div>
+                    <div
+                        class="absolute -bottom-12 -left-12 h-48 w-48 rounded-full bg-orange-500/10 opacity-50 mix-blend-screen blur-[70px]"
+                    ></div>
                     <div class="shine absolute inset-0 opacity-25 mix-blend-overlay"></div>
                 </div>
 
                 <div class="relative z-10 flex flex-col gap-4 sm:flex-row sm:items-center">
-                    <div class="flex items-center gap-4 flex-1">
+                    <div class="flex flex-1 items-center gap-4">
                         <div
-                            class="relative flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-tl from-yellow-600/30 to-slate-900 border border-yellow-400/45 text-3xl shadow-lg ring-2 ring-yellow-500/10 ring-offset-2 ring-offset-slate-950"
+                            class="relative flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border border-yellow-400/45 bg-gradient-to-tl from-yellow-600/30 to-slate-900 text-3xl shadow-lg ring-2 ring-yellow-500/10 ring-offset-2 ring-offset-slate-950"
                         >
                             👑
                             <div
-                                class="absolute -bottom-2 -right-1 rounded-full bg-gradient-to-r from-yellow-500 to-orange-500 px-2 py-0.5 text-[10px] font-black text-slate-950 shadow-sm border border-yellow-300/50"
+                                class="absolute -bottom-2 -right-1 rounded-full border border-yellow-300/50 bg-gradient-to-r from-yellow-500 to-orange-500 px-2 py-0.5 text-[10px] font-black text-slate-950 shadow-sm"
                             >
                                 #1
                             </div>
                         </div>
 
                         <div class="min-w-0 flex-1 space-y-1">
-                            <h2 class="truncate text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-100 via-yellow-200 to-orange-200 filter drop-shadow-sm">
+                            <h2
+                                class="truncate bg-gradient-to-r from-yellow-100 via-yellow-200 to-orange-200 bg-clip-text text-xl font-black text-transparent drop-shadow-sm filter"
+                            >
                                 {{ champion.user?.name || 'Unknown' }}
                             </h2>
 
                             <div class="flex flex-wrap items-center gap-2">
                                 <span
                                     :class="statusCfg(champion.status).cls"
-                                    class="inline-flex items-center gap-1 rounded px-1.5 py-[2px] text-[9px] font-black uppercase tracking-wider border shadow-sm"
+                                    class="inline-flex items-center gap-1 rounded border px-1.5 py-[2px] text-[9px] font-black uppercase tracking-wider shadow-sm"
                                 >
                                     <span class="text-[10px]">{{ statusCfg(champion.status).icon }}</span>
                                     {{ statusCfg(champion.status).label }}
@@ -354,7 +378,7 @@ onBeforeUnmount(() => {
                                     v-if="champion.badge_top"
                                     type="button"
                                     data-lore-trigger="1"
-                                    class="relative z-20 inline-flex items-center gap-1 rounded border border-slate-700/50 bg-slate-950/40 px-1.5 py-[2px] text-[9px] font-bold uppercase text-slate-300 transition-transform active:scale-[0.98] touch-manipulation"
+                                    class="relative z-20 inline-flex touch-manipulation items-center gap-1 rounded border border-slate-700/50 bg-slate-950/40 px-1.5 py-[2px] text-[9px] font-bold uppercase text-slate-300 transition-transform active:scale-[0.98]"
                                     @pointerdown.stop.prevent="(e) => toggleLore(e, champion)"
                                     @click.stop.prevent="(e) => toggleLore(e, champion)"
                                 >
@@ -369,12 +393,19 @@ onBeforeUnmount(() => {
                         </div>
                     </div>
 
-                    <div class="flex items-end gap-4 bg-slate-900/30 p-2 rounded-xl border border-slate-800/50">
-                        <div class="text-right flex-1">
-                            <div class="text-[9px] font-bold uppercase tracking-widest text-yellow-500/60 mb-0.5">
+                    <div
+                        class="flex items-end gap-4 rounded-xl border border-slate-800/50 bg-slate-900/30 p-2"
+                    >
+                        <div class="flex-1 text-right">
+                            <div
+                                class="mb-0.5 text-[9px] font-bold uppercase tracking-widest text-yellow-500/60"
+                            >
                                 {{ metricCfg(champion).label }}
                             </div>
-                            <div :class="metricCfg(champion).color" class="text-4xl font-black leading-none tracking-tight filter drop-shadow-sm">
+                            <div
+                                :class="metricCfg(champion).color"
+                                class="text-4xl font-black leading-none tracking-tight drop-shadow-sm filter"
+                            >
                                 {{ metricCfg(champion).val }}
                             </div>
                         </div>
@@ -384,39 +415,49 @@ onBeforeUnmount(() => {
                 <div
                     class="relative z-10 mt-4 rounded-xl border border-yellow-500/10 bg-gradient-to-r from-yellow-900/10 to-slate-900/20 p-2.5 text-center text-[11px] font-medium text-yellow-200/70 backdrop-blur-sm"
                 >
-                    🎯 <span class="font-bold text-yellow-100">Keep the crown.</span> Don’t break the chain.
+                    🎯
+                    <span class="font-bold text-yellow-100">Keep the crown.</span>
+                    Don’t break the chain.
                 </div>
             </section>
 
             <!-- ROSTER (compact list, fits better in 1 screen) -->
-            <section class="space-y-2.5 relative z-10">
+            <section class="relative z-10 space-y-2.5">
                 <div
                     v-if="rankedItems.length <= 1"
-                    class="py-8 text-center text-slate-500 bg-slate-900/30 rounded-2xl border border-slate-800/50 border-dashed"
+                    class="rounded-2xl border border-dashed border-slate-800/50 bg-slate-900/30 py-8 text-center text-slate-500"
                 >
-                    <div class="text-3xl mb-2 opacity-50">👥</div>
+                    <div class="mb-2 text-3xl opacity-50">👥</div>
                     <p class="text-sm font-medium">Waiting for more contenders.</p>
                 </div>
 
                 <div
                     v-for="row in rankedItems.slice(1, 51)"
                     :key="row.user?.id + '-' + row.dynamicRank"
-                    class="group relative flex transform items-center gap-3 rounded-xl border p-3 transition-all duration-300 hover:scale-[1.012] hover:-translate-y-0.5 backdrop-blur-sm"
+                    class="group relative flex transform items-center gap-3 rounded-xl border p-3 backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5 hover:scale-[1.012]"
                     :class="getRankStyle(row.dynamicRank, isMe(row))"
                 >
-                    <div class="pointer-events-none absolute inset-0 z-0 overflow-hidden rounded-xl opacity-0 transition-opacity duration-500 group-hover:opacity-100">
-                        <div class="absolute -right-10 -top-10 h-32 w-32 bg-white/5 blur-[50px] mix-blend-overlay"></div>
+                    <div
+                        class="pointer-events-none absolute inset-0 z-0 overflow-hidden rounded-xl opacity-0 transition-opacity duration-500 group-hover:opacity-100"
+                    >
+                        <div
+                            class="absolute -right-10 -top-10 h-32 w-32 bg-white/5 mix-blend-overlay blur-[50px]"
+                        ></div>
                     </div>
 
                     <div
-                        class="relative z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border bg-slate-950/80 text-sm font-black font-mono shadow-sm transition-transform group-hover:scale-110"
-                        :class="row.dynamicRank <= 3 ? 'border-transparent bg-transparent text-xl' : 'border-slate-700/50 text-slate-500'"
+                        class="relative z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border bg-slate-950/80 font-mono text-sm font-black shadow-sm transition-transform group-hover:scale-110"
+                        :class="
+                            row.dynamicRank <= 3
+                                ? 'border-transparent bg-transparent text-xl'
+                                : 'border-slate-700/50 text-slate-500'
+                        "
                     >
                         {{ getRankIcon(row.dynamicRank) }}
                     </div>
 
-                    <div class="relative z-10 min-w-0 flex-1 flex flex-col justify-center">
-                        <div class="flex items-center gap-2 mb-0.5">
+                    <div class="relative z-10 flex min-w-0 flex-1 flex-col justify-center">
+                        <div class="mb-0.5 flex items-center gap-2">
                             <div
                                 class="truncate text-sm font-bold text-slate-200 transition-colors group-hover:text-white"
                                 :class="{ '!text-indigo-200': isMe(row) }"
@@ -424,13 +465,16 @@ onBeforeUnmount(() => {
                                 {{ row.user?.name || 'Unknown' }}
                                 <span
                                     v-if="isMe(row)"
-                                    class="ml-1 text-[9px] font-black text-indigo-300 uppercase tracking-wider bg-indigo-500/10 px-1 rounded border border-indigo-500/20"
+                                    class="ml-1 rounded border border-indigo-500/20 bg-indigo-500/10 px-1 text-[9px] font-black uppercase tracking-wider text-indigo-300"
                                 >
                                     (YOU)
                                 </span>
                             </div>
 
-                            <span v-if="row.status && row.status !== 'Cold' && row.status !== 'Unknown'" class="text-xs">
+                            <span
+                                v-if="row.status && row.status !== 'Cold' && row.status !== 'Unknown'"
+                                class="text-xs"
+                            >
                                 {{ statusCfg(row.status).icon }}
                             </span>
                         </div>
@@ -438,7 +482,7 @@ onBeforeUnmount(() => {
                         <div class="flex items-center gap-2">
                             <span
                                 :class="statusCfg(row.status).cls"
-                                class="inline-flex items-center gap-1 rounded px-1.5 py-[1px] text-[8px] border font-black uppercase tracking-wider"
+                                class="inline-flex items-center gap-1 rounded border px-1.5 py-[1px] text-[8px] font-black uppercase tracking-wider"
                             >
                                 {{ statusCfg(row.status).label }}
                             </span>
@@ -447,7 +491,7 @@ onBeforeUnmount(() => {
                             <button
                                 type="button"
                                 data-lore-trigger="1"
-                                class="relative z-20 inline-flex items-center gap-1 rounded border border-slate-700/50 bg-slate-950/40 px-1.5 py-[1px] text-[9px] font-bold uppercase text-slate-400 hover:text-slate-300 hover:border-slate-600 transition-colors active:scale-[0.98] touch-manipulation"
+                                class="relative z-20 inline-flex touch-manipulation items-center gap-1 rounded border border-slate-700/50 bg-slate-950/40 px-1.5 py-[1px] text-[9px] font-bold uppercase text-slate-400 transition-colors hover:border-slate-600 hover:text-slate-300 active:scale-[0.98]"
                                 @pointerdown.stop.prevent="(e) => toggleLore(e, row)"
                                 @click.stop.prevent="(e) => toggleLore(e, row)"
                             >
@@ -456,11 +500,17 @@ onBeforeUnmount(() => {
                         </div>
 
                         <!-- Detail hanya di tab tertentu -->
-                        <div v-if="currentView === 'recent'" class="mt-1 text-[10px] font-bold text-slate-600">
+                        <div
+                            v-if="currentView === 'recent'"
+                            class="mt-1 text-[10px] font-bold text-slate-600"
+                        >
                             {{ formatDetailTime(row.last_active_at) }}
                         </div>
 
-                        <div v-if="currentView === 'active7'" class="mt-1 text-[10px] font-bold text-slate-600">
+                        <div
+                            v-if="currentView === 'active7'"
+                            class="mt-1 text-[10px] font-bold text-slate-600"
+                        >
                             Active: {{ row.active_days_last_7d ?? 0 }}/7
                         </div>
 
@@ -476,11 +526,13 @@ onBeforeUnmount(() => {
                     <div class="relative z-10 text-right">
                         <div
                             :class="metricCfg(row).color"
-                            class="font-mono text-lg font-black leading-none filter drop-shadow-sm transition-transform group-hover:scale-110 origin-right"
+                            class="origin-right font-mono text-lg font-black leading-none drop-shadow-sm filter transition-transform group-hover:scale-110"
                         >
                             {{ metricCfg(row).val }}
                         </div>
-                        <div class="text-[8px] font-bold uppercase text-slate-600 mt-0.5">{{ metricCfg(row).unit }}</div>
+                        <div class="mt-0.5 text-[8px] font-bold uppercase text-slate-600">
+                            {{ metricCfg(row).unit }}
+                        </div>
                     </div>
                 </div>
             </section>
@@ -489,8 +541,11 @@ onBeforeUnmount(() => {
         <!-- ===================== -->
         <!-- DESKTOP MAIN (keep PC like “now”) -->
         <!-- ===================== -->
-        <div class="mx-auto hidden md:block w-full max-w-7xl px-4 md:px-8 py-8">
-            <div v-if="rankedItems.length === 0" class="rounded-3xl border border-dashed border-slate-700 bg-slate-800/30 p-12 text-center">
+        <div class="mx-auto hidden w-full max-w-7xl px-4 py-8 md:block md:px-8">
+            <div
+                v-if="rankedItems.length === 0"
+                class="rounded-3xl border border-dashed border-slate-700 bg-slate-800/30 p-12 text-center"
+            >
                 <div class="mb-3 text-6xl">🕸️</div>
                 <div class="text-lg font-bold text-slate-300">No contenders yet.</div>
                 <div class="mt-1 text-sm text-slate-500">Complete quests to enter the Hall.</div>
@@ -503,17 +558,26 @@ onBeforeUnmount(() => {
                         v-if="champion"
                         class="shine relative overflow-hidden rounded-3xl border border-yellow-500/25 bg-gradient-to-b from-slate-800/80 to-slate-900/70 p-5 shadow-[0_0_40px_rgba(234,179,8,0.10)]"
                     >
-                        <div class="absolute -right-28 -top-28 h-64 w-64 rounded-full bg-yellow-500/10 blur-[90px]"></div>
+                        <div
+                            class="absolute -right-28 -top-28 h-64 w-64 rounded-full bg-yellow-500/10 blur-[90px]"
+                        ></div>
 
                         <div class="relative z-10 flex items-center justify-between gap-6">
-                            <div class="flex items-center gap-4 min-w-0">
-                                <div class="flex h-14 w-14 items-center justify-center rounded-2xl border border-yellow-500/30 bg-slate-950/70 text-2xl shadow" title="Champion">
+                            <div class="flex min-w-0 items-center gap-4">
+                                <div
+                                    class="flex h-14 w-14 items-center justify-center rounded-2xl border border-yellow-500/30 bg-slate-950/70 text-2xl shadow"
+                                    title="Champion"
+                                >
                                     👑
                                 </div>
 
                                 <div class="min-w-0">
                                     <div class="flex flex-wrap items-center gap-2">
-                                        <div class="text-sm font-black uppercase tracking-widest text-yellow-300">#1 Champion</div>
+                                        <div
+                                            class="text-sm font-black uppercase tracking-widest text-yellow-300"
+                                        >
+                                            #1 Champion
+                                        </div>
 
                                         <span
                                             class="inline-flex items-center gap-1.5 rounded-full border px-2 py-1 text-[10px] font-black uppercase tracking-widest"
@@ -528,8 +592,10 @@ onBeforeUnmount(() => {
                                             v-if="champion.badge_top"
                                             type="button"
                                             data-lore-trigger="1"
-                                            class="relative z-20 inline-flex cursor-default items-center gap-1.5 rounded-full border border-white/10 bg-slate-900/40 px-2 py-1 text-[10px] font-black uppercase tracking-widest text-slate-200 active:scale-[0.98] touch-manipulation"
-                                            @pointerenter="(e) => e.pointerType === 'mouse' && openLore(e, champion)"
+                                            class="relative z-20 inline-flex cursor-default touch-manipulation items-center gap-1.5 rounded-full border border-white/10 bg-slate-900/40 px-2 py-1 text-[10px] font-black uppercase tracking-widest text-slate-200 active:scale-[0.98]"
+                                            @pointerenter="
+                                                (e) => e.pointerType === 'mouse' && openLore(e, champion)
+                                            "
                                             @pointerleave="(e) => e.pointerType === 'mouse' && closeLore()"
                                             @pointerdown.stop.prevent="(e) => toggleLore(e, champion)"
                                             @click.stop.prevent="(e) => toggleLore(e, champion)"
@@ -543,7 +609,8 @@ onBeforeUnmount(() => {
                                     </div>
 
                                     <div v-if="currentView === 'recent'" class="mt-1 text-xs text-slate-500">
-                                        Last seen {{ formatAgo(champion.last_active_at) }} • {{ formatDetailTime(champion.last_active_at) }}
+                                        Last seen {{ formatAgo(champion.last_active_at) }} •
+                                        {{ formatDetailTime(champion.last_active_at) }}
                                     </div>
 
                                     <div v-if="currentView === 'active7'" class="mt-1 text-xs text-slate-500">
@@ -556,7 +623,10 @@ onBeforeUnmount(() => {
                                 <div class="text-[10px] font-black uppercase tracking-widest text-slate-500">
                                     {{ metricCfg(champion).label }}
                                 </div>
-                                <div class="mt-1 font-mono text-4xl font-black leading-none" :class="metricCfg(champion).color">
+                                <div
+                                    class="mt-1 font-mono text-4xl font-black leading-none"
+                                    :class="metricCfg(champion).color"
+                                >
                                     {{ metricCfg(champion).val }}
                                 </div>
                             </div>
@@ -566,14 +636,18 @@ onBeforeUnmount(() => {
                         <div
                             class="relative z-10 mt-4 rounded-2xl border border-yellow-500/10 bg-gradient-to-r from-yellow-900/10 to-slate-900/20 p-3 text-center text-sm font-medium text-yellow-200/70 backdrop-blur-sm"
                         >
-                            🎯 <span class="font-bold text-yellow-100">Keep the crown.</span> Don’t break the chain.
+                            🎯
+                            <span class="font-bold text-yellow-100">Keep the crown.</span>
+                            Don’t break the chain.
                         </div>
                     </div>
 
                     <!-- Roster desktop -->
                     <div class="rounded-3xl border border-slate-700 bg-slate-800/50 p-3 shadow-xl">
                         <div class="flex items-center justify-between px-2 pb-2">
-                            <div class="text-xs font-black uppercase tracking-widest text-slate-400">Full roster</div>
+                            <div class="text-xs font-black uppercase tracking-widest text-slate-400">
+                                Full roster
+                            </div>
                             <div class="text-[10px] font-black uppercase tracking-widest text-slate-500">
                                 Sorted by: {{ viewOptions.find((v) => v.key === currentView)?.label }}
                             </div>
@@ -596,7 +670,9 @@ onBeforeUnmount(() => {
                                               : 'border-slate-700/70 hover:border-slate-600'
                                 "
                             >
-                                <div class="absolute -right-24 -top-24 h-56 w-56 rounded-full bg-white/5 opacity-0 blur-[90px] transition-opacity duration-300 group-hover:opacity-100"></div>
+                                <div
+                                    class="absolute -right-24 -top-24 h-56 w-56 rounded-full bg-white/5 opacity-0 blur-[90px] transition-opacity duration-300 group-hover:opacity-100"
+                                ></div>
 
                                 <div class="relative z-10 flex items-center justify-between gap-6">
                                     <div class="flex min-w-0 items-center gap-3">
@@ -615,7 +691,9 @@ onBeforeUnmount(() => {
                                             #{{ row.dynamicRank }}
                                         </div>
 
-                                        <div class="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-slate-900 text-sm font-black text-white">
+                                        <div
+                                            class="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-slate-900 text-sm font-black text-white"
+                                        >
                                             {{ (row.user?.name || 'U').slice(0, 1).toUpperCase() }}
                                         </div>
 
@@ -629,7 +707,9 @@ onBeforeUnmount(() => {
                                                     class="inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[9px] font-black uppercase tracking-widest"
                                                     :class="statusCfg(row.status).cls"
                                                 >
-                                                    <span class="text-[11px]">{{ statusCfg(row.status).icon }}</span>
+                                                    <span class="text-[11px]">
+                                                        {{ statusCfg(row.status).icon }}
+                                                    </span>
                                                     {{ statusCfg(row.status).label }}
                                                 </span>
 
@@ -637,9 +717,13 @@ onBeforeUnmount(() => {
                                                 <button
                                                     type="button"
                                                     data-lore-trigger="1"
-                                                    class="relative z-20 inline-flex cursor-default items-center gap-1.5 rounded-full border border-white/10 bg-slate-900/40 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-slate-200 active:scale-[0.98] touch-manipulation"
-                                                    @pointerenter="(e) => e.pointerType === 'mouse' && openLore(e, row)"
-                                                    @pointerleave="(e) => e.pointerType === 'mouse' && closeLore()"
+                                                    class="relative z-20 inline-flex cursor-default touch-manipulation items-center gap-1.5 rounded-full border border-white/10 bg-slate-900/40 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-slate-200 active:scale-[0.98]"
+                                                    @pointerenter="
+                                                        (e) => e.pointerType === 'mouse' && openLore(e, row)
+                                                    "
+                                                    @pointerleave="
+                                                        (e) => e.pointerType === 'mouse' && closeLore()
+                                                    "
                                                     @pointerdown.stop.prevent="(e) => toggleLore(e, row)"
                                                     @click.stop.prevent="(e) => toggleLore(e, row)"
                                                 >
@@ -654,24 +738,45 @@ onBeforeUnmount(() => {
                                                 </span>
                                             </div>
 
-                                            <div v-if="currentView === 'recent'" class="mt-1 text-xs text-slate-500">
-                                                Last seen {{ formatAgo(row.last_active_at) }} • {{ formatDetailTime(row.last_active_at) }}
+                                            <div
+                                                v-if="currentView === 'recent'"
+                                                class="mt-1 text-xs text-slate-500"
+                                            >
+                                                Last seen {{ formatAgo(row.last_active_at) }} •
+                                                {{ formatDetailTime(row.last_active_at) }}
                                             </div>
 
-                                            <div v-if="currentView === 'active7'" class="mt-1 text-xs text-slate-500">
+                                            <div
+                                                v-if="currentView === 'active7'"
+                                                class="mt-1 text-xs text-slate-500"
+                                            >
                                                 Active: {{ row.active_days_last_7d ?? 0 }}/7
                                             </div>
 
                                             <!-- CLIMB HINT (Streak view only) -->
-                                            <div v-if="currentView === 'current' && row.dynamicRank > 1" class="mt-1 text-xs font-semibold text-slate-500">
-                                                ▲ +{{ streakToBeat(row) }} streak to beat #{{ row.dynamicRank - 1 }}
+                                            <div
+                                                v-if="currentView === 'current' && row.dynamicRank > 1"
+                                                class="mt-1 text-xs font-semibold text-slate-500"
+                                            >
+                                                ▲ +{{ streakToBeat(row) }} streak to beat #{{
+                                                    row.dynamicRank - 1
+                                                }}
                                             </div>
                                         </div>
                                     </div>
 
-                                    <div class="rounded-2xl border border-slate-700 bg-slate-950/35 px-4 py-3 text-right">
-                                        <div class="text-[9px] font-black uppercase tracking-widest text-slate-500">{{ metricCfg(row).label }}</div>
-                                        <div class="mt-1 font-mono text-2xl font-black leading-none" :class="metricCfg(row).color">
+                                    <div
+                                        class="rounded-2xl border border-slate-700 bg-slate-950/35 px-4 py-3 text-right"
+                                    >
+                                        <div
+                                            class="text-[9px] font-black uppercase tracking-widest text-slate-500"
+                                        >
+                                            {{ metricCfg(row).label }}
+                                        </div>
+                                        <div
+                                            class="mt-1 font-mono text-2xl font-black leading-none"
+                                            :class="metricCfg(row).color"
+                                        >
                                             {{ metricCfg(row).val }}
                                         </div>
                                     </div>
@@ -679,10 +784,14 @@ onBeforeUnmount(() => {
 
                                 <!-- progress only in ACTIVE 7D -->
                                 <div v-if="currentView === 'active7'" class="relative z-10 mt-3">
-                                    <div class="h-2 w-full overflow-hidden rounded-full border border-slate-700 bg-slate-950/40">
+                                    <div
+                                        class="h-2 w-full overflow-hidden rounded-full border border-slate-700 bg-slate-950/40"
+                                    >
                                         <div
                                             class="h-full rounded-full bg-purple-500/60 transition-all"
-                                            :style="{ width: `${Math.min(100, ((row.active_days_last_7d ?? 0) / 7) * 100)}%` }"
+                                            :style="{
+                                                width: `${Math.min(100, ((row.active_days_last_7d ?? 0) / 7) * 100)}%`,
+                                            }"
                                         ></div>
                                     </div>
                                 </div>
@@ -692,9 +801,11 @@ onBeforeUnmount(() => {
                 </section>
 
                 <!-- Right rail (light) -->
-                <aside class="hidden lg:block lg:col-span-4">
+                <aside class="hidden lg:col-span-4 lg:block">
                     <div class="rounded-3xl border border-slate-700 bg-slate-800/50 p-5 shadow-xl">
-                        <div class="text-xs font-black uppercase tracking-widest text-slate-400">Quick links</div>
+                        <div class="text-xs font-black uppercase tracking-widest text-slate-400">
+                            Quick links
+                        </div>
                         <div class="mt-3 grid grid-cols-2 gap-3">
                             <Link
                                 href="/quests"
@@ -723,33 +834,43 @@ onBeforeUnmount(() => {
         <!-- ===================== -->
         <div
             v-if="meRow"
-            class="fixed bottom-0 left-0 z-50 w-full border-t border-indigo-500/20 bg-slate-900/85 p-3 backdrop-blur-md shadow-[0_-5px_25px_rgba(0,0,0,0.3)] md:hidden"
+            class="fixed bottom-0 left-0 z-50 w-full border-t border-indigo-500/20 bg-slate-900/85 p-3 shadow-[0_-5px_25px_rgba(0,0,0,0.3)] backdrop-blur-md md:hidden"
         >
-            <div class="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-indigo-500/50 to-transparent"></div>
+            <div
+                class="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-indigo-500/50 to-transparent"
+            ></div>
 
             <div class="mx-auto flex max-w-3xl items-center justify-between">
                 <div class="flex items-center gap-3">
-                    <div class="flex h-11 w-11 shrink-0 flex-col items-center justify-center rounded-xl border border-indigo-500/30 bg-gradient-to-br from-indigo-500/10 to-slate-950 shadow-sm relative overflow-hidden group">
-                        <div class="absolute inset-0 bg-indigo-500/20 blur-md opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                        <span class="text-[8px] font-black uppercase text-indigo-300/70 relative z-10">Rank</span>
-                        <span class="text-lg font-black leading-none text-indigo-200 relative z-10 filter drop-shadow-sm">
+                    <div
+                        class="group relative flex h-11 w-11 shrink-0 flex-col items-center justify-center overflow-hidden rounded-xl border border-indigo-500/30 bg-gradient-to-br from-indigo-500/10 to-slate-950 shadow-sm"
+                    >
+                        <div
+                            class="absolute inset-0 bg-indigo-500/20 opacity-0 blur-md transition-opacity group-hover:opacity-100"
+                        ></div>
+                        <span class="relative z-10 text-[8px] font-black uppercase text-indigo-300/70">
+                            Rank
+                        </span>
+                        <span
+                            class="relative z-10 text-lg font-black leading-none text-indigo-200 drop-shadow-sm filter"
+                        >
                             {{ meRow.dynamicRank }}
                         </span>
                     </div>
 
                     <div class="min-w-0">
-                        <div class="text-sm font-black text-white flex items-center gap-2">
+                        <div class="flex items-center gap-2 text-sm font-black text-white">
                             <span class="truncate">{{ meRow.user?.name || 'You' }}</span>
                             <span
                                 :class="statusCfg(meRow.status).cls"
-                                class="rounded px-1.5 py-[1px] text-[8px] border font-black uppercase tracking-wider"
+                                class="rounded border px-1.5 py-[1px] text-[8px] font-black uppercase tracking-wider"
                             >
                                 {{ statusCfg(meRow.status).label }}
                             </span>
                         </div>
 
                         <!-- Subtext super ringkas -->
-                        <div class="text-[10px] font-medium text-slate-400 flex items-center gap-1 mt-0.5">
+                        <div class="mt-0.5 flex items-center gap-1 text-[10px] font-medium text-slate-400">
                             <span v-if="meRow.dynamicRank === 1">👑 Defend your throne.</span>
                             <span v-else-if="currentView === 'current'">🔥 Keep the chain alive.</span>
                             <span v-else-if="currentView === 'best'">🏆 Beat your record.</span>
@@ -758,22 +879,31 @@ onBeforeUnmount(() => {
                         </div>
 
                         <!-- Detail hanya pada tab tertentu -->
-                        <div v-if="currentView === 'recent'" class="mt-0.5 text-[10px] font-bold text-slate-500">
+                        <div
+                            v-if="currentView === 'recent'"
+                            class="mt-0.5 text-[10px] font-bold text-slate-500"
+                        >
                             {{ formatDetailTime(meRow.last_active_at) }}
                         </div>
 
                         <!-- CLIMB HINT (Streak view only) -->
-                        <div v-if="currentView === 'current' && meRow.dynamicRank > 1" class="mt-0.5 text-[10px] font-bold text-slate-500">
+                        <div
+                            v-if="currentView === 'current' && meRow.dynamicRank > 1"
+                            class="mt-0.5 text-[10px] font-bold text-slate-500"
+                        >
                             ▲ +{{ streakToBeat(meRow) }} streak to beat #{{ meRow.dynamicRank - 1 }}
                         </div>
                     </div>
                 </div>
 
                 <div class="text-right">
-                    <div class="text-[9px] font-bold uppercase tracking-wider text-slate-500 mb-0.5">
+                    <div class="mb-0.5 text-[9px] font-bold uppercase tracking-wider text-slate-500">
                         {{ metricCfg(meRow).label }}
                     </div>
-                    <div :class="metricCfg(meRow).color" class="font-mono text-2xl font-black leading-none filter drop-shadow-sm">
+                    <div
+                        :class="metricCfg(meRow).color"
+                        class="font-mono text-2xl font-black leading-none drop-shadow-sm filter"
+                    >
                         {{ metricCfg(meRow).val }}
                     </div>
                 </div>
@@ -792,14 +922,18 @@ onBeforeUnmount(() => {
                     :style="{
                         left: lore.x + 'px',
                         top: lore.y + 'px',
-                        maxWidth: Math.min(360, (typeof window !== 'undefined' ? window.innerWidth : 360) - 16) + 'px',
+                        maxWidth:
+                            Math.min(360, (typeof window !== 'undefined' ? window.innerWidth : 360) - 16) +
+                            'px',
                     }"
                 >
                     <div class="text-[10px] font-black uppercase tracking-widest text-slate-400">Lore</div>
                     <div class="mt-1 leading-relaxed text-slate-200">
                         {{ lore.desc }}
                     </div>
-                    <div class="mt-2 text-[10px] font-bold uppercase tracking-widest text-slate-600 md:hidden">
+                    <div
+                        class="mt-2 text-[10px] font-bold uppercase tracking-widest text-slate-600 md:hidden"
+                    >
                         tap outside to close
                     </div>
                 </div>
@@ -823,14 +957,20 @@ onBeforeUnmount(() => {
     animation: shine-anim 4s infinite linear;
 }
 @keyframes shine-anim {
-    0% { background-position: 250% 0; }
-    100% { background-position: -250% 0; }
+    0% {
+        background-position: 250% 0;
+    }
+    100% {
+        background-position: -250% 0;
+    }
 }
 
 /* Tooltip transition */
 .fade-enter-active,
 .fade-leave-active {
-    transition: opacity 0.15s ease, transform 0.15s ease;
+    transition:
+        opacity 0.15s ease,
+        transform 0.15s ease;
 }
 .fade-enter-from,
 .fade-leave-to {
@@ -839,8 +979,13 @@ onBeforeUnmount(() => {
 }
 
 /* Utilities */
-.scrollbar-hide::-webkit-scrollbar { display: none; }
-.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+.scrollbar-hide::-webkit-scrollbar {
+    display: none;
+}
+.scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
 .mask-linear-x {
     -webkit-mask-image: linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%);
     mask-image: linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%);

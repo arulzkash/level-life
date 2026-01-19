@@ -357,89 +357,131 @@ const getRankClass = (rank) => {
                     />
 
                     <div class="grid grid-cols-6 gap-3 md:grid-cols-5 md:gap-4">
+                        <div
+                            class="col-span-2 flex flex-col items-center justify-center rounded-2xl border border-slate-700 bg-slate-800/50 p-3 text-center shadow-sm transition-all duration-300 hover:scale-105 hover:bg-slate-800 hover:shadow-lg hover:shadow-yellow-500/10 md:col-span-1 md:p-5"
+                        >
+                            <span
+                                class="text-[10px] font-bold uppercase tracking-widest text-slate-400 md:text-xs"
+                            >
+                                Treasury
+                            </span>
+                            <div class="mt-1 flex flex-col items-center justify-center gap-1 md:mt-2">
+                                <span class="text-xl font-black text-yellow-400 md:text-3xl">
+                                    {{ profile.coin_balance }}
+                                </span>
+                                <span class="text-xs text-slate-500 md:text-sm">🪙 Gold</span>
+                            </div>
+                        </div>
 
-    <div class="col-span-2 flex flex-col items-center justify-center rounded-2xl border border-slate-700 bg-slate-800/50 p-3 text-center shadow-sm transition-all duration-300 hover:scale-105 hover:bg-slate-800 hover:shadow-lg hover:shadow-yellow-500/10 md:col-span-1 md:p-5">
-        <span class="text-[10px] font-bold uppercase tracking-widest text-slate-400 md:text-xs">Treasury</span>
-        <div class="mt-1 flex flex-col items-center justify-center gap-1 md:mt-2">
-            <span class="text-xl font-black text-yellow-400 md:text-3xl">{{ profile.coin_balance }}</span>
-            <span class="text-xs text-slate-500 md:text-sm">🪙 Gold</span>
-        </div>
-    </div>
+                        <div
+                            class="col-span-2 flex flex-col items-center justify-center rounded-2xl border border-slate-700 bg-slate-800/50 p-3 text-center shadow-sm transition-all duration-300 hover:scale-105 hover:bg-slate-800 hover:shadow-lg hover:shadow-orange-500/10 md:col-span-1 md:p-5"
+                        >
+                            <span
+                                class="text-[10px] font-bold uppercase tracking-widest text-slate-400 md:text-xs"
+                            >
+                                Streak
+                            </span>
+                            <div class="mt-1 flex flex-col items-center justify-center gap-1 md:mt-2">
+                                <span class="text-xl font-black text-orange-500 md:text-3xl">
+                                    {{ profile.current_streak }}
+                                </span>
+                                <span class="text-xs text-slate-500 md:text-sm">🔥 Days</span>
+                            </div>
+                        </div>
 
-    <div class="col-span-2 flex flex-col items-center justify-center rounded-2xl border border-slate-700 bg-slate-800/50 p-3 text-center shadow-sm transition-all duration-300 hover:scale-105 hover:bg-slate-800 hover:shadow-lg hover:shadow-orange-500/10 md:col-span-1 md:p-5">
-        <span class="text-[10px] font-bold uppercase tracking-widest text-slate-400 md:text-xs">Streak</span>
-        <div class="mt-1 flex flex-col items-center justify-center gap-1 md:mt-2">
-            <span class="text-xl font-black text-orange-500 md:text-3xl">{{ profile.current_streak }}</span>
-            <span class="text-xs text-slate-500 md:text-sm">🔥 Days</span>
-        </div>
-    </div>
+                        <div
+                            class="col-span-2 flex flex-col items-center justify-center rounded-2xl border border-slate-700 bg-slate-800/50 p-3 text-center shadow-sm transition-all duration-300 hover:scale-105 hover:bg-slate-800 hover:shadow-lg hover:shadow-emerald-500/10 md:col-span-1 md:p-5"
+                        >
+                            <span
+                                class="text-[10px] font-bold uppercase tracking-widest text-slate-400 md:text-xs"
+                            >
+                                Habits
+                            </span>
+                            <div class="mt-1 flex flex-col items-center justify-center gap-1 md:mt-2">
+                                <span class="text-xl font-black text-emerald-400 md:text-3xl">
+                                    {{ habitSummary?.done_today }}
+                                    <span class="text-lg text-slate-600">/{{ habitSummary?.total }}</span>
+                                </span>
+                                <span class="text-xs text-slate-500 md:text-sm">✅ Done</span>
+                            </div>
+                        </div>
 
-    <div class="col-span-2 flex flex-col items-center justify-center rounded-2xl border border-slate-700 bg-slate-800/50 p-3 text-center shadow-sm transition-all duration-300 hover:scale-105 hover:bg-slate-800 hover:shadow-lg hover:shadow-emerald-500/10 md:col-span-1 md:p-5">
-        <span class="text-[10px] font-bold uppercase tracking-widest text-slate-400 md:text-xs">Habits</span>
-        <div class="mt-1 flex flex-col items-center justify-center gap-1 md:mt-2">
-            <span class="text-xl font-black text-emerald-400 md:text-3xl">
-                {{ habitSummary?.done_today }}<span class="text-lg text-slate-600">/{{ habitSummary?.total }}</span>
-            </span>
-            <span class="text-xs text-slate-500 md:text-sm">✅ Done</span>
-        </div>
-    </div>
+                        <Link
+                            href="/leaderboard"
+                            class="group col-span-3 flex flex-col items-center justify-between rounded-2xl border border-slate-700 bg-slate-800/50 p-3 text-center shadow-sm transition-all duration-300 hover:scale-105 hover:bg-slate-800 hover:shadow-lg hover:shadow-indigo-500/20 md:col-span-1 md:p-5"
+                        >
+                            <span
+                                class="text-[10px] font-bold uppercase tracking-widest text-slate-400 transition-colors group-hover:text-indigo-300 md:text-xs"
+                            >
+                                Global Rank
+                            </span>
 
-    <Link 
-        href="/leaderboard"
-        class="group col-span-3 flex flex-col items-center justify-between rounded-2xl border border-slate-700 bg-slate-800/50 p-3 text-center shadow-sm transition-all duration-300 hover:scale-105 hover:bg-slate-800 hover:shadow-lg hover:shadow-indigo-500/20 md:col-span-1 md:p-5"
-    >
-        <span class="text-[10px] font-bold uppercase tracking-widest text-slate-400 transition-colors group-hover:text-indigo-300 md:text-xs">
-            Global Rank
-        </span>
-        
-        <div class="mt-1 flex flex-col items-center justify-center md:mt-2">
-            <span 
-                class="text-3xl font-black md:text-4xl"
-                :class="getRankClass(leaderboardData?.rank)"
-            >
-                #{{ leaderboardData?.rank ?? '-' }}
-            </span>
-            
-            <div class="mt-1 flex items-center justify-center gap-1">
-                <span class="text-xs">🏆</span>
-                
-                <span v-if="leaderboardData?.rank === 1" class="text-[10px] font-bold text-yellow-500 md:text-xs">
-                    King
-                </span>
-                
-                <span v-else-if="leaderboardData?.rival" class="truncate text-[10px] text-slate-500 md:text-xs">
-                    Vs: <span class="text-slate-300 group-hover:text-white">{{ leaderboardData.rival.name }}</span>
-                </span>
-            </div>
-        </div>
-    </Link>
+                            <div class="mt-1 flex flex-col items-center justify-center md:mt-2">
+                                <span
+                                    class="text-3xl font-black md:text-4xl"
+                                    :class="getRankClass(leaderboardData?.rank)"
+                                >
+                                    #{{ leaderboardData?.rank ?? '-' }}
+                                </span>
 
-    <div 
-        v-if="topBadge"
-        class="group col-span-3 flex flex-col items-center justify-between rounded-2xl border border-slate-700 bg-slate-800/50 p-3 text-center shadow-sm transition-all duration-300 hover:scale-105 hover:bg-slate-800 hover:shadow-lg hover:shadow-indigo-500/10 md:col-span-1 md:p-5"
-        title="Latest Achievement"
-    >
-        <div class="flex items-center gap-1.5">
-            <span class="text-[10px] font-bold uppercase tracking-widest text-slate-400 transition-colors group-hover:text-indigo-300 md:text-xs">Honor</span>
-        </div>
-        
-        <div class="mt-1 flex w-full flex-col items-center justify-center gap-1 md:mt-2">
-            <div class="flex items-center gap-2">
-                <span class="truncate text-sm font-black text-white group-hover:text-indigo-200 md:text-lg max-w-[120px]">
-                    {{ topBadge.name }}
-                </span>
-                <span class="text-sm filter grayscale transition-all group-hover:grayscale-0 md:text-lg">
-                    {{ getBadgeIcon(topBadge.key) }}
-                </span>
-            </div>
-            
-            <div class="line-clamp-2 text-[9px] leading-tight text-slate-500 group-hover:text-slate-400 md:text-[10px]">
-                {{ topBadge.description }}
-            </div>
-        </div>
-    </div>
+                                <div class="mt-1 flex items-center justify-center gap-1">
+                                    <span class="text-xs">🏆</span>
 
-</div>
+                                    <span
+                                        v-if="leaderboardData?.rank === 1"
+                                        class="text-[10px] font-bold text-yellow-500 md:text-xs"
+                                    >
+                                        King
+                                    </span>
+
+                                    <span
+                                        v-else-if="leaderboardData?.rival"
+                                        class="truncate text-[10px] text-slate-500 md:text-xs"
+                                    >
+                                        Vs:
+                                        <span class="text-slate-300 group-hover:text-white">
+                                            {{ leaderboardData.rival.name }}
+                                        </span>
+                                    </span>
+                                </div>
+                            </div>
+                        </Link>
+
+                        <div
+                            v-if="topBadge"
+                            class="group col-span-3 flex flex-col items-center justify-between rounded-2xl border border-slate-700 bg-slate-800/50 p-3 text-center shadow-sm transition-all duration-300 hover:scale-105 hover:bg-slate-800 hover:shadow-lg hover:shadow-indigo-500/10 md:col-span-1 md:p-5"
+                            title="Latest Achievement"
+                        >
+                            <div class="flex items-center gap-1.5">
+                                <span
+                                    class="text-[10px] font-bold uppercase tracking-widest text-slate-400 transition-colors group-hover:text-indigo-300 md:text-xs"
+                                >
+                                    Honor
+                                </span>
+                            </div>
+
+                            <div class="mt-1 flex w-full flex-col items-center justify-center gap-1 md:mt-2">
+                                <div class="flex items-center gap-2">
+                                    <span
+                                        class="max-w-[120px] truncate text-sm font-black text-white group-hover:text-indigo-200 md:text-lg"
+                                    >
+                                        {{ topBadge.name }}
+                                    </span>
+                                    <span
+                                        class="text-sm grayscale filter transition-all group-hover:grayscale-0 md:text-lg"
+                                    >
+                                        {{ getBadgeIcon(topBadge.key) }}
+                                    </span>
+                                </div>
+
+                                <div
+                                    class="line-clamp-2 text-[9px] leading-tight text-slate-500 group-hover:text-slate-400 md:text-[10px]"
+                                >
+                                    {{ topBadge.description }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 

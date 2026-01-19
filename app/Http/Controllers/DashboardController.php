@@ -87,31 +87,48 @@ class DashboardController extends Controller
                 'note' => $b->note,
             ]);
 
-        // --- LEADERBOARD SNIPPET ---
-        // 1. Calculate My Effective Streak & Rank
-        // (Reuse the logic from LeaderboardController slightly simplified for performance)
+        $now = now();
+        $ghostThresholdDate = $now->copy()->subDays(4)->toDateString();
 
-        $ghostThresholdDate = now()->subDays(4)->toDateString();
+        // 1) last_active_at (timestamp detik)
+        $lastActiveQuery = DB::table('quest_completions')
+            ->select('user_id', DB::raw('MAX(completed_at) as last_active_at'))
+            ->groupBy('user_id');
 
-        // Get Top 50 (or enough to find me) - utilizing cache is recommended in production, 
-        // but for now, we run a similar optimized query.
+        // 2) active_days_last_7d
+        $active7Query = DB::table('quest_completions')
+            ->select('user_id', DB::raw('COUNT(DISTINCT DATE(completed_at)) as active_days_last_7d'))
+            ->where('completed_at', '>=', $now->copy()->subDays(6)->startOfDay())
+            ->groupBy('user_id');
+
         $leaderboard = DB::table('profiles')
             ->join('users', 'users.id', '=', 'profiles.user_id')
+            ->leftJoinSub($lastActiveQuery, 'last_log', function ($join) {
+                $join->on('profiles.user_id', '=', 'last_log.user_id');
+            })
+            ->leftJoinSub($active7Query, 'active7', function ($join) {
+                $join->on('profiles.user_id', '=', 'active7.user_id');
+            })
             ->select([
                 'profiles.user_id',
                 'users.name',
                 'profiles.streak_current',
-                'profiles.last_active_date'
+                'profiles.streak_best',
+                'profiles.last_active_date',
+                'last_log.last_active_at',
             ])
+            ->selectRaw('COALESCE(active7.active_days_last_7d, 0) as active_days_last_7d')
             ->selectRaw("
-            CASE 
-                WHEN profiles.last_active_date < ? THEN 0 
-                ELSE COALESCE(profiles.streak_current, 0) 
-            END as effective_streak
-        ", [$ghostThresholdDate])
+        CASE
+            WHEN profiles.last_active_date < ? THEN 0
+            ELSE COALESCE(profiles.streak_current, 0)
+        END as effective_streak
+    ", [$ghostThresholdDate])
             ->orderByDesc('effective_streak')
             ->orderByDesc('profiles.streak_best')
-            ->limit(100) // Limit query load
+            ->orderByDesc('active_days_last_7d')
+            ->orderByDesc('last_active_at')
+            ->limit(100) // tetap boleh 100, ranking urutannya sudah sama
             ->get();
 
         // Find Me
