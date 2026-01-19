@@ -529,7 +529,7 @@ const computeWeekRangeLabel = () => {
                     </div>
                 </div>
 
-                <div class="scrollbar-hide mask-linear-x flex gap-2 overflow-x-auto pb-1 md:pb-0">
+                <div class="scrollbar-hide mask-linear-x flex gap-2 overflow-x-auto px-1 pb-1 md:pb-0">
                     <button
                         v-for="v in viewOptions"
                         :key="v.key"
@@ -1138,7 +1138,74 @@ const computeWeekRangeLabel = () => {
 
                 <!-- Right rail (light) -->
                 <aside class="hidden lg:col-span-4 lg:block">
-                    <div class="rounded-3xl border border-slate-700 bg-slate-800/50 p-5 shadow-xl">
+                    <div
+                        v-if="meRow"
+                        class="rounded-3xl border border-indigo-500/20 bg-slate-900/50 p-5 shadow-xl transition-transform duration-300 hover:-translate-y-0.5 hover:border-indigo-400/30 hover:bg-slate-900/60"
+                    >
+                        <div class="text-xs font-black uppercase tracking-widest text-slate-400">
+                            Your position
+                        </div>
+
+                        <div class="mt-3 flex items-center justify-between gap-4">
+                            <div class="flex min-w-0 items-center gap-3">
+                                <div
+                                    class="flex h-12 w-12 flex-col items-center justify-center rounded-xl border border-indigo-500/30 bg-slate-950/60 text-center"
+                                >
+                                    <div class="text-[9px] font-black uppercase text-indigo-300/70">
+                                        Rank
+                                    </div>
+                                    <div class="text-lg font-black text-indigo-200">
+                                        {{ meRow.dynamicRank }}
+                                    </div>
+                                </div>
+
+                                <div class="min-w-0">
+                                    <div class="truncate text-sm font-black text-white">
+                                        {{ meRow.user?.name || 'You' }}
+                                    </div>
+                                    <div
+                                        class="mt-1 inline-flex items-center gap-1 rounded border px-1.5 py-[1px] text-[9px] font-black uppercase tracking-wider"
+                                        :class="statusCfg(meRow.status).cls"
+                                    >
+                                        <span class="text-[10px]">{{ statusCfg(meRow.status).icon }}</span>
+                                        {{ statusCfg(meRow.status).label }}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="text-right">
+                                <div class="text-[9px] font-bold uppercase tracking-wider text-slate-500">
+                                    {{ metricCfg(meRow).label }}
+                                </div>
+                                <div class="mt-2 flex flex-col items-end gap-1">
+                                    <div :class="rarityChipClass(metricTier(meRow))" class="text-lg">
+                                        <span class="opacity-90">{{ metricIcon }}</span>
+                                        <span>{{ metricChipText(meRow) }}</span>
+                                    </div>
+
+                                    <div class="h-1 w-20 overflow-hidden rounded-full bg-white/10">
+                                        <div
+                                            class="h-full rounded-full"
+                                            :class="meterFillClass(metricTier(meRow))"
+                                            :style="{ width: `${meterInfo(meRow).pct}%` }"
+                                        ></div>
+                                    </div>
+
+                                    <div class="text-[9px] font-bold text-slate-500">
+                                        {{ meterInfo(meRow).hint }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div v-if="meRow.dynamicRank === '-'" class="mt-3 text-xs text-slate-500">
+                            Outside top 50. Keep the chain alive to climb back in.
+                        </div>
+                    </div>
+
+                    <div
+                        class="mt-5 rounded-3xl border border-slate-700 bg-slate-800/50 p-5 shadow-xl transition-transform duration-300 hover:-translate-y-0.5 hover:border-slate-500/70 hover:bg-slate-800/70"
+                    >
                         <div class="text-xs font-black uppercase tracking-widest text-slate-400">
                             Quick links
                         </div>
@@ -1336,7 +1403,7 @@ const computeWeekRangeLabel = () => {
     scrollbar-width: none;
 }
 .mask-linear-x {
-    -webkit-mask-image: linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%);
-    mask-image: linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, black 2%, black 98%, transparent 100%);
+    mask-image: linear-gradient(to right, transparent 0%, black 2%, black 98%, transparent 100%);
 }
 </style>
