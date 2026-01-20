@@ -9,6 +9,7 @@ defineOptions({ layout: AppLayout });
 const props = defineProps({
     items: Array,
     me: Object,
+    inheritAttrs: false,
 });
 
 const currentView = ref('current');
@@ -423,11 +424,14 @@ const onScrollClose = () => {
 
 onMounted(() => {
     computeWeekRangeLabel();
+    computeShowJumpTop();
     document.addEventListener('pointerdown', onOutside, { capture: true });
     window.addEventListener('keydown', onEsc);
     window.addEventListener('scroll', onScrollClose, { passive: true, capture: true });
     window.addEventListener('resize', onScrollClose, { passive: true });
 
+    window.addEventListener('scroll', computeShowJumpTop, { passive: true });
+    window.addEventListener('resize', computeShowJumpTop, { passive: true });
     // PERF: ticker only for "recent"
     if (currentView.value === 'recent') startNowTicker();
 });
@@ -437,6 +441,9 @@ onBeforeUnmount(() => {
     window.removeEventListener('keydown', onEsc);
     window.removeEventListener('scroll', onScrollClose, { capture: true });
     window.removeEventListener('resize', onScrollClose);
+
+    window.removeEventListener('scroll', computeShowJumpTop);
+    window.removeEventListener('resize', computeShowJumpTop);
 });
 
 watch(currentView, (v) => {
@@ -482,6 +489,16 @@ const computeWeekRangeLabel = () => {
 
     const fmt = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' });
     weekRangeLabel.value = `This week · ${fmt.format(start)} – ${fmt.format(end)}`;
+};
+
+const showJumpTop = ref(false);
+
+const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+
+const computeShowJumpTop = () => {
+    showJumpTop.value = (window.scrollY || 0) > 320;
 };
 </script>
 
@@ -747,7 +764,7 @@ const computeWeekRangeLabel = () => {
                                 type="button"
                                 data-lore-trigger="1"
                                 class="relative z-20 inline-flex touch-manipulation items-center gap-1 rounded border border-slate-700/50 bg-slate-950/40 px-1.5 py-[1px] text-[9px] font-bold uppercase text-slate-400 transition-colors hover:border-slate-600 hover:text-slate-300 active:scale-[0.98]"
-                                    @click.stop="(e) => openLore(e, row)"
+                                @click.stop="(e) => openLore(e, row)"
                             >
                                 {{ badgeLabel(row) }}
                             </button>
@@ -1323,6 +1340,15 @@ const computeWeekRangeLabel = () => {
                 </div>
             </div>
         </div>
+
+        <button
+            v-if="showJumpTop"
+            type="button"
+            @click="scrollToTop"
+            class="fixed bottom-[110px] right-4 z-50 flex items-center gap-2 rounded-full border border-indigo-400/25 bg-slate-950/80 px-3 py-2 text-xs font-black uppercase tracking-widest text-indigo-200 shadow-[0_0_20px_rgba(99,102,241,0.14)] transition-all hover:-translate-y-0.5 hover:border-indigo-300/35 hover:bg-slate-950/90 hover:shadow-[0_0_28px_rgba(99,102,241,0.18)] active:scale-[0.98] md:bottom-6"
+        >
+            <span class="text-sm text-indigo-300">↑</span>
+        </button>
 
         <!-- ===================== -->
         <!-- TELEPORTED LORE TOOLTIP -->
