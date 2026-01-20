@@ -735,10 +735,7 @@ const computeWeekRangeLabel = () => {
                                 </span>
                             </div>
 
-                            <span
-                                v-if="row.status && row.status !== 'Cold' && row.status !== 'Unknown'"
-                                class="text-xs"
-                            >
+                            <span v-if="row.status && row.status !== 'Unknown'" class="text-xs">
                                 {{ statusCfg(row.status).icon }}
                             </span>
                         </div>
@@ -946,6 +943,19 @@ const computeWeekRangeLabel = () => {
                             </div>
                         </div>
 
+                        <div v-if="currentView === 'active7'" class="relative z-10 mt-3">
+                            <div
+                                class="h-2.5 w-full overflow-hidden rounded-full border border-purple-500/20 bg-slate-950/40"
+                            >
+                                <div
+                                    class="h-full rounded-full bg-purple-500/60"
+                                    :style="{
+                                        width: `${Math.min(100, ((champion.active_days_last_7d ?? 0) / 7) * 100)}%`,
+                                    }"
+                                ></div>
+                            </div>
+                        </div>
+
                         <!-- PC: Keep the crown callout -->
                         <div
                             class="relative z-10 mt-4 rounded-2xl border border-yellow-500/10 bg-gradient-to-r from-yellow-900/10 to-slate-900/20 p-3 text-center text-sm font-medium text-yellow-200/70 backdrop-blur-sm"
@@ -969,7 +979,7 @@ const computeWeekRangeLabel = () => {
 
                         <div class="space-y-2">
                             <div
-                                v-for="row in rankedItems"
+                                v-for="row in rankedItems.slice(1, 51)"
                                 :key="row.user?.id + '-' + row.dynamicRank"
                                 class="group relative overflow-hidden rounded-2xl border bg-slate-900/35 p-4 transition-all duration-300 hover:-translate-y-0.5 hover:scale-[1.01] hover:border-indigo-400/30 hover:bg-slate-900/55 hover:shadow-[0_0_26px_rgba(99,102,241,0.14)]"
                                 :class="
@@ -1151,9 +1161,7 @@ const computeWeekRangeLabel = () => {
                                 <div
                                     class="flex h-12 w-12 flex-col items-center justify-center rounded-xl border border-indigo-500/30 bg-slate-950/60 text-center"
                                 >
-                                    <div class="text-[9px] font-black uppercase text-indigo-300/70">
-                                        Rank
-                                    </div>
+                                    <div class="text-[9px] font-black uppercase text-indigo-300/70">Rank</div>
                                     <div class="text-lg font-black text-indigo-200">
                                         {{ meRow.dynamicRank }}
                                     </div>
