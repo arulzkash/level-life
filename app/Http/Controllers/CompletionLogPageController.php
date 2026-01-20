@@ -53,6 +53,14 @@ class CompletionLogPageController extends Controller
 
         $query->orderBy($sort, $dir);
 
+        $groupSummaries = (clone $query)
+            ->selectRaw('DATE(completed_at) as d, COUNT(*) as c, SUM(xp_awarded) as xp, SUM(coin_awarded) as gold')
+            ->groupBy('d')
+            ->get()
+            ->keyBy('d')
+            ->map(fn($r) => ['count' => (int)$r->c, 'xp' => (int)$r->xp, 'gold' => (int)$r->gold])
+            ->toArray();
+
         return Inertia::render('Logs/Completions', [
             'logs' => $query->paginate(20)->withQueryString(),
             'filters' => [
@@ -63,6 +71,7 @@ class CompletionLogPageController extends Controller
                 'sort' => $sort,
                 'dir' => $dir,
             ],
+            'group_summaries' => $groupSummaries,
         ]);
     }
 }

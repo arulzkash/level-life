@@ -58,6 +58,15 @@ class TreasuryLogPageController extends Controller
 
         $query->orderBy($sort, $dir);
 
+        $groupSummaries = (clone $query)
+            ->selectRaw('DATE(purchased_at) as d, COUNT(*) as c, SUM(qty) as qty, SUM(cost_coin) as spent')
+            ->groupBy('d')
+            ->get()
+            ->keyBy('d')
+            ->map(fn($r) => ['count' => (int)$r->c, 'qty' => (int)$r->qty, 'spent' => (int)$r->spent])
+            ->toArray();
+
+
         return Inertia::render('Logs/Treasury', [
             'logs' => $query->paginate(20)->withQueryString(),
             'filters' => [
@@ -73,6 +82,7 @@ class TreasuryLogPageController extends Controller
                 ->select('id', 'name')
                 ->orderBy('name')
                 ->get(),
+            'group_summaries' => $groupSummaries,
         ]);
     }
 }

@@ -9,7 +9,28 @@ const props = defineProps({
     logs: Object,
     filters: Object,
     rewardOptions: Array,
+    group_summaries: Object,
 });
+
+const JAKARTA_TZ = 'Asia/Jakarta';
+const jakartaDateKeyFormatter = new Intl.DateTimeFormat('en-CA', {
+    timeZone: JAKARTA_TZ,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+});
+const jakartaLongDateFormatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: JAKARTA_TZ,
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+});
+
+const toJakartaDateKey = (value) => jakartaDateKeyFormatter.format(new Date(value));
+const dateFromKey = (key) => {
+    const [y, m, d] = key.split('-').map(Number);
+    return new Date(Date.UTC(y, m - 1, d));
+};
 
 // --- EDIT NOTE LOGIC ---
 const editingId = ref(null);
@@ -78,7 +99,7 @@ const groupedLogs = computed(() => {
     if (!props.logs.data) return {};
     const groups = {};
     props.logs.data.forEach((log) => {
-        const dateKey = new Date(log.purchased_at).toDateString();
+        const dateKey = toJakartaDateKey(log.purchased_at);
         if (!groups[dateKey]) groups[dateKey] = [];
         groups[dateKey].push(log);
     });
@@ -88,43 +109,42 @@ const groupedLogs = computed(() => {
 const formatTime = (iso) => new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
 const formatGroupDate = (dateStr) => {
-    const d = new Date(dateStr);
-    const today = new Date();
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
+    const d = dateFromKey(dateStr);
+    const now = new Date();
+    const todayKey = toJakartaDateKey(now);
+    const yesterdayKey = toJakartaDateKey(new Date(now.getTime() - 86400000));
 
-    if (d.toDateString() === today.toDateString()) return "Today's Expenses";
-    if (d.toDateString() === yesterday.toDateString()) return "Yesterday's Spending";
-    return d.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' });
+    if (dateStr === todayKey) return "Today's Expenses";
+    if (dateStr === yesterdayKey) return "Yesterday's Spending";
+    return jakartaLongDateFormatter.format(d);
 };
 
-const groupTotals = (groupLogs) => {
-    let count = 0;
-    let qty = 0;
-    let spent = 0;
+const groupTotals = (dateKey, groupLogs) => {
+    const s = props.group_summaries?.[dateKey];
+    if (s) return s;
 
+    // fallback kalau ga ada (misalnya belum disupply)
+    let count = 0,
+        qty = 0,
+        spent = 0;
     for (const log of groupLogs || []) {
         count += 1;
         qty += Number(log.qty || 0);
         spent += Number(log.cost_coin || 0);
     }
-
     return { count, qty, spent };
 };
 
-const isSameDay = (a, b) => a.toDateString() === b.toDateString();
-
 const dateTone = (dateKey) => {
-    const d = new Date(dateKey);
-    const today = new Date();
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
+    const now = new Date();
+    const todayKey = toJakartaDateKey(now);
+    const yesterdayKey = toJakartaDateKey(new Date(now.getTime() - 86400000));
 
-    if (isSameDay(d, today)) {
+    if (dateKey === todayKey) {
         return 'border-yellow-400/55 text-yellow-200 shadow-[0_0_16px_rgba(234,179,8,0.12)]';
     }
 
-    if (isSameDay(d, yesterday)) {
+    if (dateKey === yesterdayKey) {
         return 'border-slate-600 text-slate-200 shadow-none';
     }
 
@@ -282,16 +302,16 @@ const dateTone = (dateKey) => {
                             <div
                                 class="inline-flex items-center gap-2 rounded-full border border-slate-700 bg-slate-900 px-3 py-2 text-[11px] font-bold text-slate-300"
                             >
-                                <span class="font-mono">🎁 {{ groupTotals(groupLogs).count }}</span>
+                                <span class="font-mono">🎁 {{ groupTotals(dateKey, groupLogs).count }}</span>
                                 <span class="hidden text-slate-700 sm:inline">•</span>
 
                                 <span class="font-mono text-slate-200">
-                                    🧾 x{{ groupTotals(groupLogs).qty }}
+                                    🧾 x{{ groupTotals(dateKey, groupLogs).qty }}
                                 </span>
                                 <span class="hidden text-slate-700 sm:inline">•</span>
 
                                 <span class="font-mono text-yellow-300">
-                                    💰 -{{ groupTotals(groupLogs).spent }} G
+                                    💰 -{{ groupTotals(dateKey, groupLogs).spent }} G
                                 </span>
                             </div>
                         </div>

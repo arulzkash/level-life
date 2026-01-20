@@ -8,7 +8,28 @@ defineOptions({ layout: AppLayout });
 const props = defineProps({
     logs: Object,
     filters: Object,
+    group_summaries: Object,
 });
+
+const JAKARTA_TZ = 'Asia/Jakarta';
+const jakartaDateKeyFormatter = new Intl.DateTimeFormat('en-CA', {
+    timeZone: JAKARTA_TZ,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+});
+const jakartaLongDateFormatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: JAKARTA_TZ,
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+});
+
+const toJakartaDateKey = (value) => jakartaDateKeyFormatter.format(new Date(value));
+const dateFromKey = (key) => {
+    const [y, m, d] = key.split('-').map(Number);
+    return new Date(Date.UTC(y, m - 1, d));
+};
 
 // --- HELPER: QUEST STYLES ---
 const getQuestVisuals = (type) => {
@@ -133,7 +154,7 @@ const groupedLogs = computed(() => {
     if (!props.logs.data) return {};
     const groups = {};
     props.logs.data.forEach((log) => {
-        const dateKey = new Date(log.completed_at).toDateString();
+        const dateKey = toJakartaDateKey(log.completed_at);
         if (!groups[dateKey]) groups[dateKey] = [];
         groups[dateKey].push(log);
     });
@@ -144,52 +165,51 @@ const formatTime = (iso) => new Date(iso).toLocaleTimeString([], { hour: '2-digi
 
 // --- UPDATE LOGIC DATE ---
 const formatGroupDate = (dateStr) => {
-    const d = new Date(dateStr);
-    const today = new Date();
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
+    const d = dateFromKey(dateStr);
+    const now = new Date();
+    const todayKey = toJakartaDateKey(now);
+    const yesterdayKey = toJakartaDateKey(new Date(now.getTime() - 86400000));
 
     // Cek apakah tanggalnya sama persis dengan hari ini
-    if (d.toDateString() === today.toDateString()) {
+    if (dateStr === todayKey) {
         return "Today's Conquests";
     }
 
     // Cek apakah tanggalnya sama persis dengan kemarin
-    if (d.toDateString() === yesterday.toDateString()) {
+    if (dateStr === yesterdayKey) {
         return "Yesterday's Feats";
     }
 
     // Sisanya format lengkap
-    return d.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' });
+    return jakartaLongDateFormatter.format(d);
 };
 
-const groupTotals = (groupLogs) => {
-    let count = 0;
-    let xp = 0;
-    let gold = 0;
+const groupTotals = (dateKey, groupLogs) => {
+    const s = props.group_summaries?.[dateKey];
+    if (s) return s;
 
+    // fallback kalau ga ada (misalnya belum disupply)
+    let count = 0,
+        xp = 0,
+        gold = 0;
     for (const log of groupLogs || []) {
         count += 1;
         xp += Number(log.xp_awarded || 0);
         gold += Number(log.coin_awarded || 0);
     }
-
     return { count, xp, gold };
 };
 
-const isSameDay = (a, b) => a.toDateString() === b.toDateString();
-
 const dateTone = (dateKey) => {
-    const d = new Date(dateKey);
-    const today = new Date();
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
+    const now = new Date();
+    const todayKey = toJakartaDateKey(now);
+    const yesterdayKey = toJakartaDateKey(new Date(now.getTime() - 86400000));
 
-    if (isSameDay(d, today)) {
+    if (dateKey === todayKey) {
         return 'border-indigo-400/45 text-indigo-200 shadow-[0_0_16px_rgba(99,102,241,0.12)]';
     }
 
-    if (isSameDay(d, yesterday)) {
+    if (dateKey === yesterdayKey) {
         return 'border-slate-600 text-slate-200 shadow-none ';
     }
 
@@ -327,16 +347,16 @@ const dateTone = (dateKey) => {
                             <div
                                 class="inline-flex items-center gap-2 rounded-full border border-slate-700 bg-slate-900 px-3 py-2 text-[11px] font-bold text-slate-300"
                             >
-                                <span class="font-mono">🗡️ {{ groupTotals(groupLogs).count }}</span>
+                                <span class="font-mono">🗡️ {{ groupTotals(dateKey, groupLogs).count }}</span>
                                 <span class="hidden text-slate-700 sm:inline">•</span>
 
                                 <span class="font-mono text-indigo-300">
-                                    ✨ +{{ groupTotals(groupLogs).xp }}
+                                    ✨ +{{ groupTotals(dateKey, groupLogs).xp }}
                                 </span>
                                 <span class="hidden text-slate-700 sm:inline">•</span>
 
                                 <span class="font-mono text-yellow-300">
-                                    💰 +{{ groupTotals(groupLogs).gold }}
+                                    💰 +{{ groupTotals(dateKey, groupLogs).gold }}
                                 </span>
                             </div>
                         </div>
