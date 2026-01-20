@@ -403,11 +403,6 @@ const closeLore = () => {
     lore.value.open = false;
 };
 
-const toggleLore = async (e, row) => {
-    if (lore.value.open) return closeLore();
-    return openLore(e, row);
-};
-
 const onOutside = (ev) => {
     if (!lore.value.open) return;
 
@@ -631,8 +626,7 @@ const computeWeekRangeLabel = () => {
                                     type="button"
                                     data-lore-trigger="1"
                                     class="relative z-20 inline-flex touch-manipulation items-center gap-1 rounded border border-slate-700/50 bg-slate-950/40 px-1.5 py-[2px] text-[9px] font-bold uppercase text-slate-300 transition-transform active:scale-[0.98]"
-                                    @pointerdown.stop.prevent="(e) => toggleLore(e, champion)"
-                                    @click.stop.prevent="(e) => toggleLore(e, champion)"
+                                    @click.stop="(e) => openLore(e, champion)"
                                 >
                                     {{ badgeLabel(champion) }}
                                 </button>
@@ -753,8 +747,7 @@ const computeWeekRangeLabel = () => {
                                 type="button"
                                 data-lore-trigger="1"
                                 class="relative z-20 inline-flex touch-manipulation items-center gap-1 rounded border border-slate-700/50 bg-slate-950/40 px-1.5 py-[1px] text-[9px] font-bold uppercase text-slate-400 transition-colors hover:border-slate-600 hover:text-slate-300 active:scale-[0.98]"
-                                @pointerdown.stop.prevent="(e) => toggleLore(e, row)"
-                                @click.stop.prevent="(e) => toggleLore(e, row)"
+                                    @click.stop="(e) => openLore(e, row)"
                             >
                                 {{ badgeLabel(row) }}
                             </button>
@@ -896,8 +889,7 @@ const computeWeekRangeLabel = () => {
                                                 (e) => e.pointerType === 'mouse' && openLore(e, champion)
                                             "
                                             @pointerleave="(e) => e.pointerType === 'mouse' && closeLore()"
-                                            @pointerdown.stop.prevent="(e) => toggleLore(e, champion)"
-                                            @click.stop.prevent="(e) => toggleLore(e, champion)"
+                                            @click.stop="(e) => openLore(e, champion)"
                                         >
                                             {{ badgeLabel(champion) }}
                                         </button>
@@ -1055,8 +1047,7 @@ const computeWeekRangeLabel = () => {
                                                     @pointerleave="
                                                         (e) => e.pointerType === 'mouse' && closeLore()
                                                     "
-                                                    @pointerdown.stop.prevent="(e) => toggleLore(e, row)"
-                                                    @click.stop.prevent="(e) => toggleLore(e, row)"
+                                                    @click.stop="(e) => openLore(e, row)"
                                                 >
                                                     {{ badgeLabel(row) }}
                                                 </button>
