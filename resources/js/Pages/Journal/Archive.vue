@@ -66,7 +66,7 @@ const nextMonth = computed(() => {
 });
 
 const openDay = (dateKey) => {
-    router.get('/journal', { date: dateKey }, { preserveScroll: true, preserveState: false });
+    router.get('/journal', { date: dateKey }, { preserveScroll: false, preserveState: false });
 };
 
 const goToday = () => {
@@ -147,7 +147,7 @@ const clearSearch = () => {
 </script>
 
 <template>
-    <Head title="Journal Archive" />
+    <Head title="Chronicles" />
 
     <div class="min-h-screen bg-slate-900 pb-20 text-slate-200">
         
@@ -158,9 +158,9 @@ const clearSearch = () => {
                         🗓️
                     </div>
                     <div>
-                        <div class="text-lg font-black tracking-tight text-white md:text-2xl">Journal Archive</div>
+                        <div class="text-lg font-black tracking-tight text-white md:text-2xl">Chronicles</div>
                         <div class="hidden text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500 md:block">
-                            Browse your chronicles
+                            Browse past entries from your journey.
                         </div>
                     </div>
                 </div>
@@ -169,7 +169,7 @@ const clearSearch = () => {
                     href="/journal"
                     class="inline-flex items-center justify-center rounded-xl bg-sky-600 px-4 py-2 text-sm font-bold text-white shadow-lg shadow-sky-500/15 hover:bg-sky-500"
                 >
-                    Open Journal
+                    Open Log
                 </Link>
             </div>
         </div>
