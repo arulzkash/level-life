@@ -10,12 +10,9 @@ const props = defineProps({
     month: String, // YYYY-MM
     todayKey: String, // YYYY-MM-DD (Jakarta)
     filledDays: Array, // ["YYYY-MM-DD", ...]
-    recent: Array, // optional
-    entries: Array,
-    query: String,
+    entries: Array, // [{ id,date,title,mood_emoji,is_favorite,headline,rewarded_at }, ...]
+    query: String, // current q
 });
-
-const filledSet = computed(() => new Set(props.filledDays || []));
 
 const pad2 = (n) => String(n).padStart(2, '0');
 
@@ -24,7 +21,7 @@ const parseMonth = (ym) => {
     return { y, m };
 };
 
-// pakai UTC biar ga geser timezone client
+// UTC calendar math (biar ga geser timezone client)
 const daysInMonth = (y, m) => new Date(Date.UTC(y, m, 0)).getUTCDate(); // m = 1..12
 const firstDowMondayIndex = (y, m) => {
     // 0=Mon .. 6=Sun
@@ -36,7 +33,7 @@ const firstDowMondayIndex = (y, m) => {
 const monthLabel = computed(() => {
     const { y, m } = parseMonth(props.month);
     const d = new Date(Date.UTC(y, m - 1, 1));
-    return d.toLocaleDateString([], { month: 'long', year: 'numeric' });
+    return d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 });
 
 const cells = computed(() => {
@@ -68,12 +65,8 @@ const nextMonth = computed(() => {
     return `${d.getUTCFullYear()}-${pad2(d.getUTCMonth() + 1)}`;
 });
 
-const goMonth = (ym) => {
-    router.get(
-        '/journal/archive',
-        { month: ym, q: searchQuery.value || undefined },
-        { preserveScroll: true, preserveState: true }
-    );
+const openDay = (dateKey) => {
+    router.get('/journal', { date: dateKey }, { preserveScroll: true, preserveState: false });
 };
 
 const goToday = () => {
@@ -81,12 +74,8 @@ const goToday = () => {
     goMonth(`${y}-${m}`);
 };
 
-const openDay = (dateKey) => {
-    router.get('/journal', { date: dateKey }, { preserveScroll: true, preserveState: false });
-};
-
+// --- search (server-side) ---
 const searchQuery = ref(props.query ?? '');
-
 watch(
     () => props.query,
     (v) => {
@@ -95,191 +84,284 @@ watch(
     }
 );
 
+const goMonth = (ym) => {
+    router.get(
+        '/journal/archive',
+        { month: ym, q: searchQuery.value || undefined },
+        { preserveScroll: true, preserveState: true }
+    );
+};
+
 const runSearch = debounce(() => {
     router.get(
         '/journal/archive',
         { month: props.month, q: searchQuery.value || undefined },
         { preserveScroll: true, preserveState: true }
     );
-}, 300);
+}, 250);
 
 watch(searchQuery, () => runSearch());
+
+// --- derived maps / sets ---
+const filledSet = computed(() => new Set(props.filledDays || []));
+
+const entriesByDate = computed(() => {
+    const map = new Map();
+    for (const e of props.entries || []) map.set(e.date, e);
+    return map;
+});
+
+// --- quick filters (client-side) ---
+const filter = ref('all'); // all | fav | rewarded
+
+const filteredEntries = computed(() => {
+    const list = props.entries || [];
+    if (filter.value === 'fav') return list.filter((e) => !!e.is_favorite);
+    if (filter.value === 'rewarded') return list.filter((e) => !!e.rewarded_at);
+    return list;
+});
+
+const stats = computed(() => {
+    const list = props.entries || [];
+    const fav = list.reduce((n, e) => n + (e.is_favorite ? 1 : 0), 0);
+    const rewarded = list.reduce((n, e) => n + (e.rewarded_at ? 1 : 0), 0);
+    return {
+        filled: (props.filledDays || []).length,
+        entries: list.length,
+        fav,
+        rewarded,
+    };
+});
+
+const clearSearch = () => {
+    if (!searchQuery.value) return;
+    searchQuery.value = '';
+};
 </script>
 
 <template>
     <Head title="Journal Archive" />
 
-    <div class="mx-auto max-w-5xl space-y-6 p-4 text-gray-200 md:p-8">
-        <!-- Header -->
-        <div class="flex items-center gap-3 border-b border-slate-700 pb-4">
-            <div
-                class="flex h-12 w-12 items-center justify-center rounded-lg bg-slate-700 text-2xl shadow-lg shadow-slate-500/10"
-            >
-                🗓️
-            </div>
-            <div class="flex-1">
-                <h1 class="text-3xl font-black tracking-tight text-white">Journal Archive</h1>
-                <p class="text-sm text-slate-400">See which days you wrote. Tap a day to open editor.</p>
-            </div>
-            <Link
-                href="/journal"
-                class="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-bold text-white shadow-lg hover:bg-indigo-500"
-            >
-                Open Journal
-            </Link>
-        </div>
-
-        <!-- Month controls -->
-        <div class="flex items-center justify-between rounded-xl border border-slate-700 bg-slate-800 p-4">
-            <div class="flex items-center gap-2">
-                <button
-                    @click="goMonth(prevMonth)"
-                    class="rounded bg-slate-700 px-3 py-2 text-sm font-bold hover:bg-slate-600"
-                >
-                    ←
-                </button>
-                <div class="text-lg font-black text-white">{{ monthLabel }}</div>
-                <button
-                    @click="goMonth(nextMonth)"
-                    class="rounded bg-slate-700 px-3 py-2 text-sm font-bold hover:bg-slate-600"
-                >
-                    →
-                </button>
-            </div>
-
-            <div class="flex items-center gap-2">
-                <div class="text-xs text-slate-400">
-                    Filled:
-                    <span class="font-bold text-slate-200">{{ filledDays?.length || 0 }}</span>
-                </div>
-                <button
-                    @click="goToday"
-                    class="rounded bg-slate-700 px-3 py-2 text-sm font-bold hover:bg-slate-600"
-                >
-                    Today
-                </button>
-            </div>
-        </div>
-
-        <!-- Calendar -->
-        <div class="rounded-xl border border-slate-700 bg-slate-800 p-4">
-            <div class="grid grid-cols-7 gap-2 text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                <div class="text-center">Mon</div>
-                <div class="text-center">Tue</div>
-                <div class="text-center">Wed</div>
-                <div class="text-center">Thu</div>
-                <div class="text-center">Fri</div>
-                <div class="text-center">Sat</div>
-                <div class="text-center">Sun</div>
-            </div>
-
-            <div class="mt-3 grid grid-cols-7 gap-2">
-                <div v-for="c in cells" :key="c.key" class="min-h-[44px]">
-                    <div v-if="c.kind === 'empty'" class="h-full rounded-lg border border-transparent"></div>
-
-                    <button
-                        v-else
-                        @click="openDay(c.dateKey)"
-                        class="relative h-full w-full rounded-lg border px-2 py-2 text-left transition-all"
-                        :class="[
-                            c.dateKey === todayKey
-                                ? 'border-indigo-400/60 bg-indigo-500/10'
-                                : 'border-slate-700 bg-slate-900/30 hover:bg-slate-900/50',
-                        ]"
-                    >
-                        <div class="flex items-start justify-between">
-                            <div class="text-sm font-black text-slate-200">{{ c.day }}</div>
-
-                            <!-- dot filled -->
-                            <div
-                                v-if="filledSet.has(c.dateKey)"
-                                class="mt-1 h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.25)]"
-                                title="Entry exists"
-                            ></div>
-                        </div>
-
-                        <div v-if="c.dateKey === todayKey" class="mt-1 text-[10px] font-bold text-indigo-200">
-                            Today
-                        </div>
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Entries list (main browsing) -->
-        <div class="rounded-xl border border-slate-700 bg-slate-800 p-4">
-            <div class="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                <div class="text-xs font-bold uppercase tracking-wider text-slate-400">
-                    Entries this month
-                </div>
-                <div class="text-xs text-slate-500">{{ entries?.length || 0 }} entries</div>
-            </div>
-
-            <div class="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                <div class="flex w-full items-center gap-2 sm:max-w-md">
-                    <input
-                        v-model="searchQuery"
-                        class="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-200 placeholder-slate-500 outline-none transition-all focus:ring-1 focus:ring-indigo-500"
-                        placeholder="Search keyword in title/body/sections"
-                    />
-                    <button
-                        v-if="searchQuery"
-                        @click="searchQuery = ''"
-                        class="rounded bg-slate-700 px-3 py-2 text-xs font-bold text-slate-200 hover:bg-slate-600"
-                    >
-                        Clear
-                    </button>
-                </div>
-            </div>
-
-            <div v-if="(entries?.length || 0) === 0" class="text-sm italic text-slate-500">
-                No entries this month yet.
-            </div>
-
-            <div v-else class="space-y-2">
-                <button
-                    v-for="e in entries"
-                    :key="e.id"
-                    @click="openDay(e.date)"
-                    class="w-full rounded-lg border border-slate-700 bg-slate-900/30 px-3 py-3 text-left hover:bg-slate-900/50"
-                >
-                    <div class="flex items-start justify-between gap-3">
-                        <div class="min-w-0">
-                            <div class="flex items-center gap-2">
-                                <div v-if="e.mood_emoji" class="text-base">{{ e.mood_emoji }}</div>
-                                <div class="truncate text-sm font-bold text-slate-200">
-                                    {{ e.title }}
-                                </div>
-                                <span
-                                    v-if="e.is_favorite"
-                                    class="rounded bg-amber-500/15 px-2 py-0.5 text-[10px] font-bold text-amber-200"
-                                >
-                                    fav
-                                </span>
-                                <span
-                                    v-if="e.date === todayKey"
-                                    class="rounded bg-indigo-500/15 px-2 py-0.5 text-[10px] font-bold text-indigo-200"
-                                >
-                                    Today
-                                </span>
-                            </div>
-                            <div class="mt-1 font-mono text-[11px] text-slate-500">
-                                {{ e.date }}
-                            </div>
-                            <div class="mt-1 truncate text-sm text-slate-400">
-                                {{ e.headline || '...' }}
-                            </div>
-                        </div>
-
-                        <div class="shrink-0 text-[11px] text-slate-500">
-                            <span v-if="e.rewarded_at" class="text-emerald-300">rewarded</span>
-                            <span v-else>-</span>
+    <div class="min-h-screen bg-slate-900 pb-20 text-slate-200">
+        
+        <div class="sticky top-0 z-40 border-b border-slate-800 bg-slate-900/80 backdrop-blur-md">
+            <div class="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 md:py-4">
+                <div class="flex items-center gap-3">
+                    <div class="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-700 bg-slate-900 text-xl shadow-lg shadow-slate-950/40 md:h-11 md:w-11 md:text-2xl">
+                        🗓️
+                    </div>
+                    <div>
+                        <div class="text-lg font-black tracking-tight text-white md:text-2xl">Journal Archive</div>
+                        <div class="hidden text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500 md:block">
+                            Browse your chronicles
                         </div>
                     </div>
-                </button>
+                </div>
+
+                <Link
+                    href="/journal"
+                    class="inline-flex items-center justify-center rounded-xl bg-sky-600 px-4 py-2 text-sm font-bold text-white shadow-lg shadow-sky-500/15 hover:bg-sky-500"
+                >
+                    Open Journal
+                </Link>
             </div>
         </div>
 
-        
+        <div class="mx-auto mt-6 grid max-w-6xl grid-cols-1 gap-6 px-4 md:grid-cols-12">
+            
+            <div class="md:col-span-5">
+                <div class="rounded-2xl border border-slate-800 bg-gradient-to-br from-slate-800/80 to-slate-900/70 p-5 shadow-xl shadow-slate-950/40 ring-1 ring-sky-500/10">
+                    
+                    <div class="mb-5 flex items-center justify-between">
+                        <button
+                            @click="goMonth(prevMonth)"
+                            class="rounded-xl border border-slate-700 bg-slate-900/40 px-3 py-2 text-sm font-bold text-slate-300 hover:bg-slate-800 hover:text-white"
+                        >
+                            ◀
+                        </button>
+
+                        <div class="text-center">
+                            <div class="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">
+                                Month
+                            </div>
+                            <div class="text-lg font-black text-sky-400 uppercase tracking-widest md:text-xl">
+                                {{ monthLabel }}
+                            </div>
+                        </div>
+
+                        <button
+                            @click="goMonth(nextMonth)"
+                            class="rounded-xl border border-slate-700 bg-slate-900/40 px-3 py-2 text-sm font-bold text-slate-300 hover:bg-slate-800 hover:text-white"
+                        >
+                            ▶
+                        </button>
+                    </div>
+
+                    <div class="mb-5 grid grid-cols-4 gap-2">
+                        <div class="rounded-xl border border-slate-800 bg-slate-950/20 p-2 text-center md:p-3 md:text-left">
+                            <div class="text-[9px] font-bold uppercase tracking-wider text-slate-500 md:text-[10px]">Filled</div>
+                            <div class="mt-1 text-base font-black text-white md:text-lg">{{ stats.filled }}</div>
+                        </div>
+                        <div class="rounded-xl border border-slate-800 bg-slate-950/20 p-2 text-center md:p-3 md:text-left">
+                            <div class="text-[9px] font-bold uppercase tracking-wider text-slate-500 md:text-[10px]">Entries</div>
+                            <div class="mt-1 text-base font-black text-white md:text-lg">{{ stats.entries }}</div>
+                        </div>
+                        <div class="rounded-xl border border-slate-800 bg-slate-950/20 p-2 text-center md:p-3 md:text-left">
+                            <div class="text-[9px] font-bold uppercase tracking-wider text-slate-500 md:text-[10px]">Fav</div>
+                            <div class="mt-1 text-base font-black text-white md:text-lg">{{ stats.fav }}</div>
+                        </div>
+                        <button
+                            @click="goToday"
+                            class="rounded-xl border border-sky-500/30 bg-sky-500/10 p-2 text-center hover:bg-sky-500/15 md:p-3 md:text-left"
+                            title="Jump to current month"
+                        >
+                            <div class="text-[9px] font-bold uppercase tracking-wider text-sky-300 md:text-[10px]">Today</div>
+                            <div class="mt-1 font-mono text-[10px] text-sky-200 md:text-[11px]">{{ todayKey }}</div>
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-7 gap-1 text-center text-[10px] font-bold uppercase tracking-wider text-slate-500 md:gap-2 md:text-[11px]">
+                        <div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div><div>Sun</div>
+                    </div>
+
+                    <div class="mt-3 grid grid-cols-7 gap-1 md:gap-2">
+                        <div v-for="c in cells" :key="c.key" class="aspect-square">
+                            <div v-if="c.kind === 'empty'" class="h-full w-full rounded-xl border border-transparent"></div>
+
+                            <button
+                                v-else
+                                @click="openDay(c.dateKey)"
+                                class="relative h-full w-full overflow-hidden rounded-lg border transition-all md:rounded-xl"
+                                :class="[
+                                    c.dateKey === todayKey
+                                        ? 'border-sky-400/60 bg-sky-500/10 ring-1 ring-sky-400/30'
+                                        : filledSet.has(c.dateKey)
+                                            ? 'border-slate-600 bg-slate-800/60 hover:bg-slate-700/60'
+                                            : 'border-slate-800 bg-slate-950/20 hover:bg-slate-900/40',
+                                ]"
+                            >
+                                <div class="absolute left-1 top-1 text-[10px] font-black text-slate-200/90 md:left-2 md:top-2 md:text-[11px]">
+                                    {{ c.day }}
+                                </div>
+
+                                <div v-if="entriesByDate.get(c.dateKey)?.is_favorite" class="absolute right-1 top-1 text-[9px] text-amber-300 md:right-2 md:top-2 md:text-[11px]">
+                                    ⭐
+                                </div>
+
+                                <div class="flex h-full w-full items-center justify-center">
+                                    <div v-if="entriesByDate.get(c.dateKey)?.mood_emoji" class="text-lg md:text-2xl">
+                                        {{ entriesByDate.get(c.dateKey).mood_emoji }}
+                                    </div>
+                                    <div v-else-if="filledSet.has(c.dateKey)" class="h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.4)] md:h-2 md:w-2"></div>
+                                </div>
+
+                                <div v-if="c.dateKey === todayKey" class="absolute bottom-1 left-1 rounded bg-sky-500/15 px-1 py-0.5 text-[8px] font-bold text-sky-200 md:bottom-2 md:left-2 md:px-2 md:text-[10px]">
+                                    Today
+                                </div>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="mt-5 flex flex-wrap items-center gap-2">
+                        <button @click="filter = 'all'" class="chip" :class="filter === 'all' ? 'chip-on' : 'chip-off'">All</button>
+                        <button @click="filter = 'fav'" class="chip" :class="filter === 'fav' ? 'chip-on' : 'chip-off'">⭐ Fav</button>
+                        <button @click="filter = 'rewarded'" class="chip" :class="filter === 'rewarded' ? 'chip-on' : 'chip-off'">✅ Rewarded</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="md:col-span-7">
+                <div class="rounded-2xl border border-slate-800 bg-gradient-to-br from-slate-800/70 to-slate-900/60 p-4 shadow-xl shadow-slate-950/40 ring-1 ring-sky-500/10 md:p-5">
+                    
+                    <div class="mb-4 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+                        <div>
+                            <div class="text-sm font-black uppercase tracking-widest text-slate-400">Entries List</div>
+                            <div class="text-[11px] text-slate-500">
+                                Month: <span class="font-mono text-slate-300">{{ month }}</span>
+                            </div>
+                        </div>
+                        <div class="text-[11px] text-slate-500">
+                            Showing: <span class="font-bold text-white">{{ filteredEntries.length }}</span>
+                        </div>
+                    </div>
+
+                    <div class="mb-5 relative">
+                        <input
+                            v-model="searchQuery"
+                            class="w-full rounded-xl border border-slate-700 bg-slate-950/40 px-4 py-3 text-sm text-slate-200 placeholder-slate-500 outline-none transition-all focus:border-sky-500 focus:ring-1 focus:ring-sky-500"
+                            placeholder="Search title, body, or sections..."
+                        />
+                        <button
+                            v-if="searchQuery"
+                            @click="clearSearch"
+                            class="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg border border-slate-700 bg-slate-900 px-2 py-1 text-[10px] font-bold text-slate-300 hover:bg-slate-800"
+                        >
+                            CLEAR
+                        </button>
+                    </div>
+
+                    <div v-if="filteredEntries.length === 0" class="rounded-xl border border-slate-800 bg-slate-950/20 p-6 text-center">
+                        <div class="text-lg font-black text-white">No entries found</div>
+                        <div class="mt-1 text-sm text-slate-500">Try adjusting your search or filters.</div>
+                    </div>
+
+                    <div v-else class="space-y-3">
+                        <button
+                            v-for="e in filteredEntries"
+                            :key="e.id"
+                            @click="openDay(e.date)"
+                            class="group w-full overflow-hidden rounded-2xl border border-slate-800 bg-slate-950/15 text-left transition-all hover:-translate-y-0.5 hover:border-slate-700 hover:bg-slate-900/30 hover:shadow-lg hover:shadow-sky-500/10"
+                        >
+                            <div class="flex gap-3 p-4">
+                                <div class="mt-1 h-auto w-1 shrink-0 rounded-full bg-gradient-to-b from-sky-400 via-blue-600 to-sky-500 opacity-80 md:w-1.5"></div>
+
+                                <div class="min-w-0 flex-1">
+                                    <div class="flex flex-wrap items-center gap-2">
+                                        <div v-if="e.mood_emoji" class="text-lg md:text-xl">{{ e.mood_emoji }}</div>
+                                        <div class="min-w-0 truncate text-sm font-black text-white md:text-base">
+                                            {{ e.title }}
+                                        </div>
+                                        
+                                        <span v-if="e.is_favorite" class="rounded-lg bg-amber-500/15 px-1.5 py-0.5 text-[9px] font-bold text-amber-200 md:text-[10px]">fav</span>
+                                        <span v-if="e.date === todayKey" class="rounded-lg bg-sky-500/15 px-1.5 py-0.5 text-[9px] font-bold text-sky-200 md:text-[10px]">Today</span>
+                                        <span v-if="e.rewarded_at" class="rounded-lg bg-emerald-500/12 px-1.5 py-0.5 text-[9px] font-bold text-emerald-200 md:text-[10px]">rewarded</span>
+                                    </div>
+
+                                    <div class="mt-1 font-mono text-[10px] text-slate-500 md:text-[11px]">
+                                        {{ e.date }}
+                                    </div>
+
+                                    <div class="mt-2 line-clamp-2 text-xs text-slate-300/90 md:text-sm">
+                                        {{ e.headline || '…' }}
+                                    </div>
+                                </div>
+                            </div>
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
     </div>
 </template>
+
+<style scoped>
+.chip {
+    @apply rounded-xl border px-3 py-1.5 text-xs font-bold transition-all;
+}
+.chip-off {
+    @apply border-slate-700 bg-slate-900/40 text-slate-300 hover:bg-slate-800 hover:text-white;
+}
+.chip-on {
+    @apply border-sky-500/40 bg-sky-500/10 text-sky-200 shadow-[0_0_16px_rgba(14,165,233,0.12)];
+}
+
+/* clamp helper */
+.line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+</style>
