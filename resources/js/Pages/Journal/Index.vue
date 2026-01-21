@@ -136,6 +136,8 @@ const draftKey = computed(() => `journal:draft:${props.date}`);
 const form = useForm({
     date: props.date,
     title: props.entry?.title ?? '',
+    mood_emoji: props.entry?.mood_emoji ?? '',
+    is_favorite: props.entry?.is_favorite ?? false,
     body: props.entry?.body ?? '',
     sections: props.entry?.sections ?? [],
     // user-set reward (today only, one-time)
@@ -155,6 +157,8 @@ const saveDraftLocal = debounce(() => {
     const payload = {
         date: form.date,
         title: form.title,
+        mood_emoji: form.mood_emoji,
+        is_favorite: form.is_favorite,
         body: form.body,
         sections: form.sections,
         savedAt: Date.now(),
@@ -163,7 +167,7 @@ const saveDraftLocal = debounce(() => {
 }, 500);
 
 watch(
-    () => [form.title, form.body, form.sections],
+    () => [form.title, form.mood_emoji, form.is_favorite, form.body, form.sections],
     () => saveDraftLocal(),
     { deep: true }
 );
@@ -176,6 +180,8 @@ const restoreDraft = () => {
     try {
         const d = JSON.parse(raw);
         form.title = d.title ?? '';
+        form.mood_emoji = d.mood_emoji ?? '';
+        form.is_favorite = !!d.is_favorite;
         form.body = d.body ?? '';
         form.sections = d.sections ?? [];
         hasLocalDraft.value = false;
@@ -195,13 +201,14 @@ onMounted(() => {
         const d = JSON.parse(raw);
         const serverBody = props.entry?.body ?? '';
         const serverSections = JSON.stringify(props.entry?.sections ?? []);
-        const localSections = JSON.stringify(d.sections ?? []);
-        if ((d.body ?? '') !== serverBody || localSections !== serverSections) {
-            hasLocalDraft.value = true;
-        }
         const serverTitle = props.entry?.title ?? '';
+        const serverMood = props.entry?.mood_emoji ?? '';
+        const serverFav = !!props.entry?.is_favorite;
+        const localSections = JSON.stringify(d.sections ?? []);
         if (
             (d.title ?? '') !== serverTitle ||
+            (d.mood_emoji ?? '') !== serverMood ||
+            !!d.is_favorite !== serverFav ||
             (d.body ?? '') !== serverBody ||
             localSections !== serverSections
         ) {
@@ -475,6 +482,39 @@ onBeforeUnmount(() => {
                 placeholder='e.g. "Shipping day", "Feeling low", "Big win"'
                 maxlength="160"
             />
+        </div>
+
+        <div class="grid gap-3 rounded-xl border border-slate-700 bg-slate-800 p-4 sm:grid-cols-2">
+            <div class="space-y-2">
+                <div class="text-xs font-bold uppercase tracking-wider text-slate-400">Mood (emoji)</div>
+                <input
+                    v-model="form.mood_emoji"
+                    class="input-dark w-full"
+                    placeholder="🙂"
+                    maxlength="16"
+                    list="mood-suggestions"
+                />
+                <datalist id="mood-suggestions">
+                    <option value="🙂"></option>
+                    <option value="😀"></option>
+                    <option value="😐"></option>
+                    <option value="😢"></option>
+                    <option value="😡"></option>
+                    <option value="😴"></option>
+                    <option value="🤩"></option>
+                </datalist>
+            </div>
+            <div class="space-y-2">
+                <div class="text-xs font-bold uppercase tracking-wider text-slate-400">Favorite</div>
+                <label class="flex items-center gap-2 text-sm text-slate-200">
+                    <input
+                        type="checkbox"
+                        v-model="form.is_favorite"
+                        class="h-4 w-4 rounded border-slate-600 bg-slate-900 text-amber-400 focus:ring-1 focus:ring-amber-400"
+                    />
+                    Mark as favorite
+                </label>
+            </div>
         </div>
 
         <!-- Free writing -->

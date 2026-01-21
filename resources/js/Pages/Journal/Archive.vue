@@ -1,7 +1,8 @@
 <script setup>
 import { Head, router, Link } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
-import { computed } from 'vue';
+import { computed, ref, watch } from 'vue';
+import debounce from 'lodash/debounce';
 
 defineOptions({ layout: AppLayout });
 
@@ -9,7 +10,9 @@ const props = defineProps({
     month: String, // YYYY-MM
     todayKey: String, // YYYY-MM-DD (Jakarta)
     filledDays: Array, // ["YYYY-MM-DD", ...]
+    recent: Array, // optional
     entries: Array,
+    query: String,
 });
 
 const filledSet = computed(() => new Set(props.filledDays || []));
@@ -66,7 +69,11 @@ const nextMonth = computed(() => {
 });
 
 const goMonth = (ym) => {
-    router.get('/journal/archive', { month: ym }, { preserveScroll: true, preserveState: true });
+    router.get(
+        '/journal/archive',
+        { month: ym, q: searchQuery.value || undefined },
+        { preserveScroll: true, preserveState: true }
+    );
 };
 
 const goToday = () => {
@@ -77,6 +84,26 @@ const goToday = () => {
 const openDay = (dateKey) => {
     router.get('/journal', { date: dateKey }, { preserveScroll: true, preserveState: false });
 };
+
+const searchQuery = ref(props.query ?? '');
+
+watch(
+    () => props.query,
+    (v) => {
+        const next = v ?? '';
+        if (next !== searchQuery.value) searchQuery.value = next;
+    }
+);
+
+const runSearch = debounce(() => {
+    router.get(
+        '/journal/archive',
+        { month: props.month, q: searchQuery.value || undefined },
+        { preserveScroll: true, preserveState: true }
+    );
+}, 300);
+
+watch(searchQuery, () => runSearch());
 </script>
 
 <template>
@@ -181,11 +208,28 @@ const openDay = (dateKey) => {
 
         <!-- Entries list (main browsing) -->
         <div class="rounded-xl border border-slate-700 bg-slate-800 p-4">
-            <div class="mb-3 flex items-center justify-between">
+            <div class="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div class="text-xs font-bold uppercase tracking-wider text-slate-400">
                     Entries this month
                 </div>
                 <div class="text-xs text-slate-500">{{ entries?.length || 0 }} entries</div>
+            </div>
+
+            <div class="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div class="flex w-full items-center gap-2 sm:max-w-md">
+                    <input
+                        v-model="searchQuery"
+                        class="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-200 placeholder-slate-500 outline-none transition-all focus:ring-1 focus:ring-indigo-500"
+                        placeholder="Search keyword in title/body/sections"
+                    />
+                    <button
+                        v-if="searchQuery"
+                        @click="searchQuery = ''"
+                        class="rounded bg-slate-700 px-3 py-2 text-xs font-bold text-slate-200 hover:bg-slate-600"
+                    >
+                        Clear
+                    </button>
+                </div>
             </div>
 
             <div v-if="(entries?.length || 0) === 0" class="text-sm italic text-slate-500">
@@ -202,9 +246,16 @@ const openDay = (dateKey) => {
                     <div class="flex items-start justify-between gap-3">
                         <div class="min-w-0">
                             <div class="flex items-center gap-2">
+                                <div v-if="e.mood_emoji" class="text-base">{{ e.mood_emoji }}</div>
                                 <div class="truncate text-sm font-bold text-slate-200">
                                     {{ e.title }}
                                 </div>
+                                <span
+                                    v-if="e.is_favorite"
+                                    class="rounded bg-amber-500/15 px-2 py-0.5 text-[10px] font-bold text-amber-200"
+                                >
+                                    fav
+                                </span>
                                 <span
                                     v-if="e.date === todayKey"
                                     class="rounded bg-indigo-500/15 px-2 py-0.5 text-[10px] font-bold text-indigo-200"

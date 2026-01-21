@@ -10,6 +10,8 @@ class JournalEntry extends Model
         'user_id',
         'date',
         'title', // +++
+        'mood_emoji',
+        'is_favorite',
         'body',
         'sections',
         'xp_awarded',
@@ -21,6 +23,7 @@ class JournalEntry extends Model
     protected $casts = [
         'date' => 'date',
         'sections' => 'array',
+        'is_favorite' => 'boolean',
         'rewarded_at' => 'datetime',
     ];
 

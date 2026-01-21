@@ -24,6 +24,8 @@ class JournalPageController extends Controller
         return [
             'id' => $entry->id,
             'title' => $entry->title,
+            'mood_emoji' => $entry->mood_emoji,
+            'is_favorite' => (bool)($entry->is_favorite ?? false),
             'date' => $entry->date?->toDateString(),
             'body' => $entry->body,
             'sections' => $entry->sections ?? [],
@@ -72,6 +74,8 @@ class JournalPageController extends Controller
         $data = $request->validate([
             'date' => ['required', 'date_format:Y-m-d'],
             'title' => ['nullable', 'string', 'max:160'],
+            'mood_emoji' => ['nullable', 'string', 'max:16'],
+            'is_favorite' => ['nullable', 'boolean'],
             'body' => ['nullable', 'string'],
             'sections' => ['nullable', 'array'],
 
@@ -110,6 +114,8 @@ class JournalPageController extends Controller
 
                 // content always editable
                 $entry->title = $data['title'] ?? null;
+                $entry->mood_emoji = $data['mood_emoji'] ?? null;
+                $entry->is_favorite = (bool)($data['is_favorite'] ?? false);
                 $entry->body = $data['body'] ?? null;
                 $entry->sections = $data['sections'] ?? null;
 
@@ -136,6 +142,9 @@ class JournalPageController extends Controller
                 ->firstOrFail();
 
             $entry->update([
+                'title' => $data['title'] ?? null,
+                'mood_emoji' => $data['mood_emoji'] ?? null,
+                'is_favorite' => (bool)($data['is_favorite'] ?? false),
                 'body' => $data['body'] ?? null,
                 'sections' => $data['sections'] ?? null,
             ]);

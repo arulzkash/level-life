@@ -20,6 +20,7 @@ class JournalArchivePageController extends Controller
 
         // month = YYYY-MM (Jakarta). default = bulan ini (Jakarta)
         $month = $request->query('month', Carbon::now('Asia/Jakarta')->format('Y-m'));
+        $q = trim((string)$request->query('q', ''));
         if (!preg_match('/^\d{4}-\d{2}$/', $month)) {
             $month = Carbon::now('Asia/Jakarta')->format('Y-m');
         }
@@ -59,14 +60,35 @@ class JournalArchivePageController extends Controller
         };
 
         // Entries list untuk bulan ini (main UX)
-        $entries = JournalEntry::where('user_id', $user->id)
+        $entriesCollection = JournalEntry::where('user_id', $user->id)
             ->whereBetween('date', [$start, $end])
             ->orderByDesc('date')
-            ->get(['id', 'date', 'title', 'rewarded_at', 'body', 'sections'])
-            ->map(fn($e) => [
+            ->get(['id', 'date', 'title', 'mood_emoji', 'is_favorite', 'rewarded_at', 'body', 'sections']);
+
+        if ($q !== '') {
+            $needle = mb_strtolower($q);
+            $entriesCollection = $entriesCollection->filter(function (JournalEntry $e) use ($needle) {
+                $sectionText = collect($e->sections ?? [])
+                    ->map(fn($s) => trim((string)($s['title'] ?? '') . ' ' . (string)($s['content'] ?? '')))
+                    ->filter()
+                    ->implode(' ');
+
+                $haystack = trim(
+                    (string)($e->title ?? '') . ' ' .
+                    (string)($e->body ?? '') . ' ' .
+                    $sectionText
+                );
+
+                return mb_stripos(mb_strtolower($haystack), $needle) !== false;
+            });
+        }
+
+        $entries = $entriesCollection->map(fn($e) => [
                 'id' => $e->id,
                 'date' => $e->date->toDateString(),
                 'title' => trim((string)($e->title ?? '')) !== '' ? $e->title : $e->date->toDateString(),
+                'mood_emoji' => $e->mood_emoji,
+                'is_favorite' => (bool)($e->is_favorite ?? false),
                 'headline' => $makeHeadline($e),
                 'rewarded_at' => optional($e->rewarded_at)?->toISOString(),
             ])
@@ -78,6 +100,7 @@ class JournalArchivePageController extends Controller
             'todayKey' => $this->todayKey(),   // YYYY-MM-DD
             'filledDays' => $filledDays,       // array of YYYY-MM-DD
             'entries' => $entries,
+            'query' => $q,
         ]);
     }
 }
