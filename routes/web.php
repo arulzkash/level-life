@@ -15,6 +15,7 @@ use App\Http\Controllers\CompletionLogController;
 use App\Http\Controllers\CompletionLogPageController;
 use App\Http\Controllers\HabitController;
 use App\Http\Controllers\HabitPageController;
+use App\Http\Controllers\JournalArchivePageController;
 use App\Http\Controllers\JournalPageController;
 use App\Http\Controllers\JournalTemplateController;
 use App\Http\Controllers\LeaderboardController;
@@ -116,6 +117,9 @@ Route::middleware('auth')->group(function () {
 
     Route::post('/journal/templates', [JournalTemplateController::class, 'store'])->name('journal.templates.store');
     Route::delete('/journal/templates/{template}', [JournalTemplateController::class, 'destroy'])->name('journal.templates.destroy');
+
+    Route::get('/journal/archive', [JournalArchivePageController::class, 'index']);
+
 
     Route::match(['GET', 'HEAD'], '/journal/ping', fn() => response('', 204))->name('journal.ping');
 
