@@ -1,5 +1,5 @@
 <script setup>
-import { Head, useForm, router } from '@inertiajs/vue3';
+import { Head, useForm, router, Link } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { computed, onMounted, ref, watch } from 'vue';
 import debounce from 'lodash/debounce';
@@ -367,6 +367,13 @@ onBeforeUnmount(() => {
                     One entry per day. Sections optional. Reward today only (one-time).
                 </p>
             </div>
+            <Link
+                href="/journal/archive"
+                class="rounded-lg bg-slate-700 px-4 py-2 text-sm font-bold text-slate-200 hover:bg-slate-600"
+            >
+                Archive
+            </Link>
+        
         </div>
 
         <!-- Draft banner -->
