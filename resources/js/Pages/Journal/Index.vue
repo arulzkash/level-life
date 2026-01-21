@@ -1,10 +1,8 @@
 <script setup>
 import { Head, useForm, router, Link } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onMounted, ref, watch, onBeforeUnmount, nextTick } from 'vue';
 import debounce from 'lodash/debounce';
-import { onBeforeUnmount } from 'vue';
-import { nextTick } from 'vue';
 
 defineOptions({ layout: AppLayout });
 
@@ -16,7 +14,9 @@ const props = defineProps({
     title: String,
 });
 
-// ---------- Templates (PLAIN names) ----------
+// ---------- Constants ----------
+const MOOD_OPTIONS = ['🙂', '😀', '😐', '😢', '😡', '😴', '🤩', '🔥', '🧠'];
+
 const TEMPLATES = [
     {
         name: 'Daily Review',
@@ -30,6 +30,7 @@ const TEMPLATES = [
         ],
     },
 
+
     {
         name: 'Morning Plan',
         sections: [
@@ -41,6 +42,7 @@ const TEMPLATES = [
         ],
     },
 
+
     {
         name: '2-Min Check-in',
         sections: [
@@ -49,6 +51,7 @@ const TEMPLATES = [
             { title: 'One next step', content: '' },
         ],
     },
+
 
     {
         name: 'Gratitude',
@@ -59,10 +62,12 @@ const TEMPLATES = [
         ],
     },
 
+
     {
         name: 'Brain Dump',
         sections: [{ title: 'Stream of thoughts (no filter)', content: '' }],
     },
+
 
     {
         name: 'CBT Thought Record',
@@ -77,6 +82,7 @@ const TEMPLATES = [
         ],
     },
 
+
     {
         name: 'Stoic Reflection',
         sections: [
@@ -86,6 +92,7 @@ const TEMPLATES = [
             { title: 'What to improve tomorrow', content: '' },
         ],
     },
+
 
     {
         name: 'Health & Energy',
@@ -98,6 +105,7 @@ const TEMPLATES = [
         ],
     },
 
+
     {
         name: 'Idea to Ship',
         sections: [
@@ -107,6 +115,7 @@ const TEMPLATES = [
             { title: 'Things to research', content: '' },
         ],
     },
+
 
     {
         name: 'Weekly Review',
@@ -121,8 +130,10 @@ const TEMPLATES = [
     },
 ];
 
+
 const selectedTemplateId = ref('');
 const showMyTemplates = ref(false);
+const showTemplateSelector = ref(false); // Toggle untuk panel template
 
 // ---------- Helpers ----------
 const newId = () => {
@@ -140,7 +151,6 @@ const form = useForm({
     is_favorite: props.entry?.is_favorite ?? false,
     body: props.entry?.body ?? '',
     sections: props.entry?.sections ?? [],
-    // user-set reward (today only, one-time)
     xp_reward: 0,
     coin_reward: 0,
 });
@@ -152,7 +162,7 @@ const goToDate = (d) => {
     router.get('/journal', { date: d }, { preserveScroll: true, preserveState: false });
 };
 
-// ---------- Local draft autosave (anti Render sleep) ----------
+// ---------- Local draft autosave ----------
 const saveDraftLocal = debounce(() => {
     const payload = {
         date: form.date,
@@ -193,25 +203,14 @@ const clearDraft = () => {
     hasLocalDraft.value = false;
 };
 
-// detect draft on load
 onMounted(() => {
     const raw = localStorage.getItem(draftKey.value);
     if (!raw) return;
     try {
         const d = JSON.parse(raw);
         const serverBody = props.entry?.body ?? '';
-        const serverSections = JSON.stringify(props.entry?.sections ?? []);
-        const serverTitle = props.entry?.title ?? '';
-        const serverMood = props.entry?.mood_emoji ?? '';
-        const serverFav = !!props.entry?.is_favorite;
-        const localSections = JSON.stringify(d.sections ?? []);
-        if (
-            (d.title ?? '') !== serverTitle ||
-            (d.mood_emoji ?? '') !== serverMood ||
-            !!d.is_favorite !== serverFav ||
-            (d.body ?? '') !== serverBody ||
-            localSections !== serverSections
-        ) {
+        // Simple check: if local body is different and not empty, prompt user
+        if ((d.body ?? '') !== serverBody && (d.body ?? '').length > 0) {
             hasLocalDraft.value = true;
         }
     } catch {}
@@ -225,7 +224,11 @@ const addSection = async () => {
 };
 
 const removeSection = (idx) => {
-    form.sections.splice(idx, 1);
+    const s = form.sections[idx];
+    const hasContent = !!s?.content?.trim();
+    if (!hasContent || confirm('Remove this section?')) {
+        form.sections.splice(idx, 1);
+    }
 };
 
 const moveSection = (from, to) => {
@@ -234,20 +237,29 @@ const moveSection = (from, to) => {
     form.sections.splice(to, 0, item);
 };
 
-const insertTemplate = async () => {
-    const t = insertOptions.value.find((x) => x.id === selectedTemplateId.value);
+const insertTemplate = async (templateObj = null) => {
+    // Bisa dipanggil langsung dengan object template, atau via dropdown ID
+    let t = templateObj;
+    
+    if (!t && selectedTemplateId.value) {
+        t = insertOptions.value.find((x) => x.id === selectedTemplateId.value);
+    }
+
     if (!t) return;
 
-    const firstNewId = newId();
     const secs = t.sections ?? [];
     if (!secs.length) return;
 
+    // Tambahkan section baru
+    const firstNewId = newId();
     form.sections.push({ id: firstNewId, title: secs[0].title ?? '', content: '' });
     for (let i = 1; i < secs.length; i++) {
         form.sections.push({ id: newId(), title: secs[i].title ?? '', content: '' });
     }
 
+    // Reset UI state
     selectedTemplateId.value = '';
+    showTemplateSelector.value = false; 
     scrollToSection(firstNewId);
 };
 
@@ -280,7 +292,6 @@ const saveAsTemplate = () => {
         {
             preserveScroll: true,
             onSuccess: () => {
-                // refresh props.templates
                 router.reload({ only: ['templates'] });
             },
         }
@@ -297,9 +308,7 @@ const deleteTemplate = (tpl) => {
     });
 };
 
-// ---------- Server save (SAVE = AUTO CLAIM if eligible) ----------
 const saveToServer = () => {
-    // jangan kirim reward kalau bukan today atau sudah claimed
     form.transform((data) => ({
         ...data,
         xp_reward: isToday.value && !isClaimed.value ? (data.xp_reward ?? 0) : null,
@@ -310,14 +319,12 @@ const saveToServer = () => {
         preserveScroll: true,
         onSuccess: () => {
             clearDraft();
-            // optional: reset input reward biar ga kepake lagi
             if (isClaimed.value) {
                 form.xp_reward = 0;
                 form.coin_reward = 0;
             }
         },
         onFinish: () => {
-            // reset transform supaya state form normal untuk next submit
             form.transform((d) => d);
         },
     });
@@ -327,363 +334,298 @@ const scrollToSection = async (id) => {
     await nextTick();
     const el = document.getElementById(`sec-${id}`);
     if (!el) return;
-    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
 };
 
+// Keepalive
 let keepaliveTimer = null;
-
 onMounted(() => {
-    keepaliveTimer = setInterval(
-        () => {
-            fetch('/journal/ping', {
-                method: 'HEAD',
-                cache: 'no-store',
-                credentials: 'same-origin',
-            }).catch(() => {});
-        },
-        9 * 60 * 1000
-    ); // 9 menit
+    keepaliveTimer = setInterval(() => {
+        fetch('/journal/ping', { method: 'HEAD', cache: 'no-store' }).catch(() => {});
+    }, 9 * 60 * 1000);
 });
-
 onBeforeUnmount(() => {
     if (keepaliveTimer) clearInterval(keepaliveTimer);
 });
 </script>
 
 <template>
-    <Head title="Journal" />
+    <Head title="Journal Log" />
 
-    <div class="mx-auto max-w-5xl space-y-8 p-4 text-gray-200 md:p-8">
-        <!-- Header -->
-        <div class="flex items-center gap-3 border-b border-slate-700 pb-4">
-            <div
-                class="flex h-12 w-12 items-center justify-center rounded-lg bg-slate-700 text-2xl shadow-lg shadow-slate-500/10"
-            >
-                📖
-            </div>
-            <div class="flex-1">
-                <h1 class="text-3xl font-black tracking-tight text-white">Journal</h1>
-                <p class="text-sm text-slate-400">
-                    One entry per day. Sections optional. Reward today only (one-time).
-                </p>
-            </div>
-            <Link
-                href="/journal/archive"
-                class="rounded-lg bg-slate-700 px-4 py-2 text-sm font-bold text-slate-200 hover:bg-slate-600"
-            >
-                Archive
-            </Link>
+    <div class="min-h-screen bg-slate-900 pb-20 text-slate-200">
         
-        </div>
-
-        <!-- Draft banner -->
-        <div
-            v-if="hasLocalDraft"
-            class="flex items-center justify-between gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4"
-        >
-            <div class="text-sm text-amber-200">Draft found (saved locally). Restore it?</div>
-            <div class="flex gap-2">
-                <button
-                    @click="restoreDraft"
-                    class="rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-amber-500"
-                >
-                    Restore
-                </button>
-                <button
-                    @click="clearDraft"
-                    class="rounded-lg bg-slate-700 px-3 py-1.5 text-xs font-bold text-slate-200 hover:bg-slate-600"
-                >
-                    Dismiss
-                </button>
-            </div>
-        </div>
-
-        <!-- Date + Save + Reward (AUTO) -->
-        <div class="space-y-3 rounded-xl border border-slate-700 bg-slate-800 p-4">
-            <div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-                <div class="flex-1">
-                    <label class="mb-1 block text-[10px] font-bold uppercase text-slate-500">Date</label>
-                    <input
-                        type="date"
-                        v-model="form.date"
-                        class="input-dark w-full"
-                        @change="goToDate(form.date)"
-                    />
-                    <div v-if="form.errors.date" class="mt-1 text-xs text-red-400">
-                        {{ form.errors.date }}
+        <div class="sticky top-0 z-40 border-b border-slate-800 bg-slate-900/80 backdrop-blur-md transition-all">
+            <div class="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
+                <div class="flex items-center gap-3">
+                    <div class="flex items-center rounded-lg border border-slate-700 bg-slate-900 p-1 shadow-sm">
+                        <input
+                            type="date"
+                            v-model="form.date"
+                            class="cursor-pointer border-none bg-transparent p-1 text-sm font-bold uppercase tracking-widest text-slate-200 focus:ring-0"
+                            @change="goToDate(form.date)"
+                        />
+                    </div>
+                    
+                    <div class="hidden md:block">
+                        <h1 class="text-2xl font-black tracking-tight text-white">
+                            <span v-if="isToday" class="text-sky-400">Today</span> DAILY LOG
+                        </h1>
+                        <div class="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">
+                            Every day leaves a mark on your legend.
+                        </div>
                     </div>
                 </div>
 
-                <div class="flex gap-2 sm:justify-end">
+                <div class="flex gap-2">
+                    <Link
+                        href="/journal/archive"
+                        class="hidden items-center gap-2 rounded-lg border border-slate-700 px-3 py-1.5 text-xs font-bold uppercase text-slate-400 hover:bg-slate-800 hover:text-white md:flex"
+                    >
+                        PAST LOGS
+                    </Link>
+                    
                     <button
                         @click="saveToServer"
                         :disabled="form.processing"
-                        class="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-bold text-white shadow-lg hover:bg-indigo-500 disabled:opacity-60"
+                        class="group flex items-center gap-2 rounded-lg bg-sky-600 px-4 py-1.5 text-sm font-bold text-white shadow-lg shadow-sky-500/20 transition-all hover:bg-sky-500 active:scale-95 disabled:opacity-50"
                     >
-                        Save
+                        <span v-if="form.processing">Saving...</span>
+                        <span v-else>SAVE</span>
                     </button>
                 </div>
             </div>
+        </div>
 
-            <!-- Reward info (no claim button) -->
-            <div class="rounded-xl border border-slate-700/70 bg-slate-900/40 p-3">
-                <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <div class="text-sm text-slate-300">
-                        Reward:
-                        <span class="text-slate-400">auto on Save</span>
-                        <span v-if="!isToday" class="text-slate-500">(not today)</span>
-                        <span v-else-if="isClaimed" class="text-emerald-300">
-                            (claimed: +{{ props.entry?.xp_awarded ?? 0 }} XP, +{{
-                                props.entry?.coin_awarded ?? 0
-                            }}
-                            G)
-                        </span>
-                        <span v-else class="text-indigo-300">(available)</span>
-                    </div>
-
-                    <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
-                        <div class="flex gap-2">
-                            <input
-                                type="number"
-                                min="0"
-                                v-model.number="form.xp_reward"
-                                class="input-dark w-28"
-                                placeholder="XP"
-                                :disabled="!isToday || isClaimed"
-                            />
-                            <input
-                                type="number"
-                                min="0"
-                                v-model.number="form.coin_reward"
-                                class="input-dark w-28"
-                                placeholder="Gold"
-                                :disabled="!isToday || isClaimed"
-                            />
-                        </div>
-
-                        <div class="text-[11px] text-slate-500">
-                            {{
-                                isToday && !isClaimed
-                                    ? 'Fill XP/Gold then Save.'
-                                    : 'You can still edit & Save.'
-                            }}
-                        </div>
-                    </div>
-                </div>
-
+        <div class="mx-auto mt-6 max-w-4xl space-y-6 px-4 md:mt-8">
+            
+            <transition name="fade">
                 <div
-                    v-if="form.errors.xp_reward || form.errors.coin_reward"
-                    class="mt-2 text-xs text-red-400"
+                    v-if="hasLocalDraft"
+                    class="flex items-center justify-between rounded-xl border border-sky-500/30 bg-sky-500/10 p-4 backdrop-blur-sm"
                 >
-                    <div v-if="form.errors.xp_reward">{{ form.errors.xp_reward }}</div>
-                    <div v-if="form.errors.coin_reward">{{ form.errors.coin_reward }}</div>
-                </div>
-            </div>
-        </div>
-
-        <div class="space-y-2 rounded-xl border border-slate-700 bg-slate-800 p-4">
-            <div class="text-xs font-bold uppercase tracking-wider text-slate-400">Title (optional)</div>
-            <input
-                v-model="form.title"
-                class="input-dark w-full"
-                placeholder='e.g. "Shipping day", "Feeling low", "Big win"'
-                maxlength="160"
-            />
-        </div>
-
-        <div class="grid gap-3 rounded-xl border border-slate-700 bg-slate-800 p-4 sm:grid-cols-2">
-            <div class="space-y-2">
-                <div class="text-xs font-bold uppercase tracking-wider text-slate-400">Mood (emoji)</div>
-                <input
-                    v-model="form.mood_emoji"
-                    class="input-dark w-full"
-                    placeholder="🙂"
-                    maxlength="16"
-                    list="mood-suggestions"
-                />
-                <datalist id="mood-suggestions">
-                    <option value="🙂"></option>
-                    <option value="😀"></option>
-                    <option value="😐"></option>
-                    <option value="😢"></option>
-                    <option value="😡"></option>
-                    <option value="😴"></option>
-                    <option value="🤩"></option>
-                </datalist>
-            </div>
-            <div class="space-y-2">
-                <div class="text-xs font-bold uppercase tracking-wider text-slate-400">Favorite</div>
-                <label class="flex items-center gap-2 text-sm text-slate-200">
-                    <input
-                        type="checkbox"
-                        v-model="form.is_favorite"
-                        class="h-4 w-4 rounded border-slate-600 bg-slate-900 text-amber-400 focus:ring-1 focus:ring-amber-400"
-                    />
-                    Mark as favorite
-                </label>
-            </div>
-        </div>
-
-        <!-- Free writing -->
-        <div class="space-y-2 rounded-xl border border-slate-700 bg-slate-800 p-4">
-            <div class="text-xs font-bold uppercase tracking-wider text-slate-400">Free Writing</div>
-            <textarea
-                v-model="form.body"
-                rows="8"
-                class="input-dark w-full resize-none"
-                placeholder="Write anything..."
-            />
-        </div>
-
-        <!-- Sections -->
-        <div class="space-y-4 rounded-xl border border-slate-700 bg-slate-800 p-4">
-            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div class="text-xs font-bold uppercase tracking-wider text-slate-400">
-                    Sections (optional)
-                </div>
-                <div class="flex flex-col gap-2 sm:flex-row">
+                    <div class="flex items-center gap-3">
+                        <div>
+                            <div class="text-sm font-bold text-sky-200">Unsaved draft found</div>
+                            <div class="text-xs text-sky-200/70">From your previous session</div>
+                        </div>
+                    </div>
                     <div class="flex gap-2">
-                        <select v-model="selectedTemplateId" class="input-dark w-full sm:w-56">
-                            <option value="">Insert template…</option>
-                            <optgroup label="Built-in">
-                                <option v-for="t in builtInTemplates" :key="t.id" :value="t.id">
-                                    {{ t.name }}
-                                </option>
-                            </optgroup>
+                        <button @click="restoreDraft" class="rounded-lg bg-sky-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-sky-500">Restore</button>
+                        <button @click="clearDraft" class="rounded-lg border border-slate-600 px-3 py-1.5 text-xs font-bold text-slate-300 hover:bg-slate-700">Dismiss</button>
+                    </div>
+                </div>
+            </transition>
 
-                            <optgroup v-if="myTemplates.length" label="My Templates">
-                                <option v-for="t in myTemplates" :key="t.id" :value="t.id">
-                                    {{ t.name }}
-                                </option>
-                            </optgroup>
-                        </select>
+            <div class="grid gap-6 md:grid-cols-12">
+                <div class="col-span-12 md:col-span-4">
+                    <div class="h-full rounded-2xl border border-slate-800 bg-gradient-to-br from-slate-800/90 to-slate-900/60 p-5 shadow-lg shadow-slate-950/40 ring-1 ring-sky-500/10 transition-all hover:-translate-y-0.5 hover:border-slate-700 hover:shadow-xl hover:shadow-sky-500/10">
+                        <h3 class="mb-3 text-xs font-bold uppercase tracking-widest text-slate-500">Rewards</h3>
+                        
+                        <div v-if="!isToday" class="mb-3 rounded-lg bg-slate-800 p-2 text-center text-xs text-slate-400">
+                            Viewing Past Log (No Reward)
+                        </div>
+                        <div v-else-if="isClaimed" class="mb-3 flex items-center justify-center gap-2 rounded-lg bg-emerald-500/10 p-2 text-center text-xs font-bold text-sky-400">
+                            <span>CLAIMED</span>
+                            <span>+{{ props.entry?.xp_awarded }} XP</span>
+                        </div>
 
-                        <button
-                            @click="insertTemplate"
-                            class="rounded-lg bg-slate-700 px-3 py-2 text-sm font-bold text-slate-200 hover:bg-slate-600"
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="space-y-1">
+                                <label class="text-[10px] font-bold text-sky-400">XP</label>
+                                <div class="relative">
+                                    <input
+                                        type="number"
+                                        v-model.number="form.xp_reward"
+                                        class="w-full rounded-lg border border-sky-500/30 bg-slate-900 px-3 py-2 text-center font-mono text-sm font-bold text-white focus:border-sky-500 focus:ring-1 focus:ring-sky-500"
+                                        placeholder="0"
+                                        :disabled="!isToday || isClaimed"
+                                    />
+                                    <div class="absolute right-2 top-2 text-[10px] opacity-50">XP</div>
+                                </div>
+                            </div>
+                            <div class="space-y-1">
+                                <label class="text-[10px] font-bold text-sky-400">GOLD</label>
+                                <div class="relative">
+                                    <input
+                                        type="number"
+                                        v-model.number="form.coin_reward"
+                                        class="w-full rounded-lg border border-sky-500/30 bg-slate-900 px-3 py-2 text-center font-mono text-sm font-bold text-white focus:border-sky-500 focus:ring-1 focus:ring-sky-500"
+                                        placeholder="0"
+                                        :disabled="!isToday || isClaimed"
+                                    />
+                                    <div class="absolute right-2 top-2 text-[10px] opacity-50">G</div>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="mt-3 text-[10px] leading-relaxed text-slate-500">
+                            Rate your day honestly. Rewards are granted upon saving.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="col-span-12 md:col-span-8">
+                    <div class="flex h-full flex-col justify-between rounded-2xl border border-slate-800 bg-gradient-to-br from-slate-800/80 to-slate-900/70 p-5 shadow-lg shadow-slate-950/40 ring-1 ring-sky-500/10 transition-all hover:-translate-y-0.5 hover:border-slate-700 hover:shadow-xl hover:shadow-sky-500/10">
+                        
+                        <div class="mb-4">
+                            <label class="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-500">Mood</label>
+                            <div class="flex flex-wrap gap-2">
+                                <button 
+                                    v-for="emoji in MOOD_OPTIONS" 
+                                    :key="emoji"
+                                    @click="form.mood_emoji = emoji"
+                                    class="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-700 bg-slate-800 text-xl transition-all hover:scale-110 hover:border-sky-500 hover:bg-slate-700"
+                                    :class="{'ring-2 ring-sky-500 bg-sky-500/20 border-sky-500': form.mood_emoji === emoji}"
+                                >
+                                    {{ emoji }}
+                                </button>
+                                <input 
+                                    v-model="form.mood_emoji" 
+                                    class="w-12 rounded-lg border border-slate-700 bg-slate-900 px-1 text-center text-lg focus:border-sky-500 focus:ring-0" 
+                                    placeholder="?"
+                                />
+                            </div>
+                        </div>
+
+                        <div class="space-y-1">
+                            <div class="flex items-center justify-between">
+                                <label class="text-xs font-bold uppercase tracking-widest text-slate-500">Title</label>
+                                <label class="flex cursor-pointer items-center gap-2 text-xs text-slate-400 hover:text-sky-400">
+                                    <input type="checkbox" v-model="form.is_favorite" class="hidden" />
+                                    <span class="text-lg transition-transform active:scale-125">
+                                        {{ form.is_favorite ? 'Saved to Favorites' : 'Mark Favorite' }}
+                                    </span>
+                                </label>
+                            </div>
+                            <input
+                                v-model="form.title"
+                                class="w-full border-none bg-transparent p-0 text-2xl font-black text-white placeholder-slate-600 focus:ring-0 md:text-3xl"
+                                placeholder="Give this day a title..."
+                            />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="relative min-h-[300px] overflow-hidden rounded-2xl border border-slate-700 bg-gradient-to-br from-slate-800/80 to-slate-900/70 shadow-2xl shadow-slate-950/50 ring-1 ring-sky-500/10 transition-all hover:-translate-y-0.5 hover:border-slate-600 hover:shadow-sky-500/10">
+                <div class="absolute left-0 top-0 h-full w-1.5 bg-gradient-to-b from-sky-400 via-blue-600 to-sky-500 opacity-80"></div>
+                
+                <div class="p-6 md:p-8">
+                    <textarea
+                        v-model="form.body"
+                        class="min-h-[400px] w-full resize-none border-none bg-transparent p-0 text-base leading-relaxed text-slate-200 placeholder-slate-600 focus:ring-0 md:text-lg"
+                        placeholder="Log your journey here... What happened? What did you learn?"
+                    ></textarea>
+                </div>
+            </div>
+
+            <div class="space-y-4">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                    <h3 class="text-sm font-black uppercase tracking-widest text-slate-400">
+                        Expansion Modules <span class="text-slate-600 text-xs font-normal">({{ form.sections.length }})</span>
+                    </h3>
+                    
+                    <div class="flex gap-2">
+                        <button 
+                            @click="showTemplateSelector = !showTemplateSelector"
+                            class="flex items-center gap-1 text-xs font-bold text-sky-400 hover:text-sky-300"
                         >
-                            Insert
+                            <span>{{ showTemplateSelector ? 'Close' : 'Open' }} Library</span>
                         </button>
                     </div>
-                    <button
-                        @click="addSection"
-                        class="rounded-lg bg-slate-700 px-3 py-2 text-sm font-bold text-slate-200 hover:bg-slate-600"
-                    >
-                        + Add Section
-                    </button>
-                    <button
-                        @click="saveAsTemplate"
-                        class="rounded-lg bg-slate-700 px-3 py-2 text-sm font-bold text-slate-200 hover:bg-slate-600"
-                    >
-                        Save as Template
-                    </button>
                 </div>
-            </div>
 
-            <div class="mt-2 flex items-center justify-between">
-                <div class="text-[10px] font-bold uppercase tracking-wider text-slate-500">My Templates</div>
-                <button
-                    v-if="(templates?.length || 0) > 0"
-                    @click="showMyTemplates = !showMyTemplates"
-                    class="rounded bg-slate-700 px-2 py-1 text-[10px] font-bold text-slate-200 hover:bg-slate-600"
+                <transition name="slide">
+                    <div v-if="showTemplateSelector" class="rounded-xl border border-slate-700 bg-slate-800/70 p-4 shadow-inner transition-all hover:border-slate-600 hover:shadow-sky-500/10">
+                        <div class="mb-4 flex items-center justify-between">
+                            <span class="text-xs font-bold text-slate-300">Available Blueprints</span>
+                            <button @click="saveAsTemplate" class="text-[10px] underline text-slate-500 hover:text-white">+ Save current as template</button>
+                        </div>
+                        
+                        <div class="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
+                            <button 
+                                v-for="t in insertOptions" 
+                                :key="t.id"
+                                @click="insertTemplate(t)"
+                                class="group flex flex-col items-start rounded-lg border border-slate-700 bg-slate-800/80 p-3 text-left transition-all hover:border-sky-500 hover:bg-slate-700 hover:shadow-md hover:shadow-sky-500/10"
+                            >
+                                <span class="font-bold text-slate-200 group-hover:text-white">{{ t.name }}</span>
+                                <span class="text-[10px] text-slate-500">{{ t.sections.length }} sections</span>
+                            </button>
+                        </div>
+
+                        <div v-if="myTemplates.length > 0" class="mt-4 border-t border-slate-800 pt-4">
+                            <p class="mb-2 text-xs font-bold text-slate-500">Manage Custom</p>
+                            <div class="flex flex-wrap gap-2">
+                                <div v-for="t in props.templates" :key="t.id" class="flex items-center gap-2 rounded bg-slate-900 px-2 py-1 text-xs border border-slate-800">
+                                    <span class="text-slate-300">{{ t.name }}</span>
+                                    <button @click="deleteTemplate(t)" class="text-red-500 hover:text-red-400 font-bold">×</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </transition>
+
+                <transition-group name="list" tag="div" class="space-y-4">
+                    <div 
+                        v-for="(section, idx) in form.sections" 
+                        :key="section.id" 
+                        :id="`sec-${section.id}`"
+                        class="group relative overflow-hidden rounded-xl border border-slate-700 bg-slate-800/70 transition-all hover:-translate-y-0.5 hover:border-slate-600 hover:shadow-md hover:shadow-sky-500/10"
+                    >
+                        <div class="flex items-center gap-3 bg-slate-900/50 px-4 py-2">
+                            <div class="flex flex-col gap-0.5 opacity-50 transition-opacity group-hover:opacity-100">
+                                <button @click="moveSection(idx, idx-1)" class="text-[8px] text-slate-400 hover:text-white">▲</button>
+                                <button @click="moveSection(idx, idx+1)" class="text-[8px] text-slate-400 hover:text-white">▼</button>
+                            </div>
+                            <input 
+                                v-model="section.title" 
+                                class="w-full border-none bg-transparent p-0 text-sm font-bold uppercase tracking-wider text-sky-200 placeholder-slate-600 focus:ring-0"
+                                placeholder="SECTION TITLE"
+                            />
+                            <button @click="removeSection(idx)" class="text-slate-600 hover:text-red-400 transition-colors">
+                                🗑️
+                            </button>
+                        </div>
+
+                        <textarea 
+                            v-model="section.content"
+                            rows="3"
+                            class="w-full resize-y border-none bg-transparent px-4 py-3 text-sm text-slate-300 placeholder-slate-600 focus:ring-0"
+                            placeholder="Write details..."
+                        ></textarea>
+                    </div>
+                </transition-group>
+
+                <button 
+                    @click="addSection" 
+                    class="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-slate-700 bg-slate-800/50 py-4 text-sm font-bold text-slate-500 transition-all hover:border-slate-500 hover:bg-slate-800 hover:text-slate-300"
                 >
-                    {{ showMyTemplates ? 'Hide' : 'Manage' }}
+                    <span>+ Add New Section</span>
                 </button>
             </div>
 
-            <div
-                v-if="showMyTemplates && (templates?.length || 0) > 0"
-                class="mt-2 rounded-xl border border-slate-700 bg-slate-900/30 p-3"
-            >
-                <div class="flex flex-col gap-2">
-                    <div
-                        v-for="tpl in templates"
-                        :key="tpl.id"
-                        class="flex items-center justify-between gap-2 rounded-lg border border-slate-700/60 bg-slate-900 px-3 py-2"
-                    >
-                        <div class="min-w-0">
-                            <div class="truncate text-sm font-bold text-slate-200">
-                                {{ tpl.name }}
-                            </div>
-                            <div class="text-[11px] text-slate-500">
-                                {{ tpl.sections?.length || 0 }} sections
-                            </div>
-                        </div>
-
-                        <button
-                            @click="deleteTemplate(tpl)"
-                            class="rounded bg-red-600/20 px-2 py-1 text-xs font-bold text-red-200 hover:bg-red-600/30"
-                            title="Delete template"
-                        >
-                            x
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <div v-if="form.sections.length === 0" class="text-sm italic text-slate-500">
-                No sections yet. You can use free writing only.
-            </div>
-
-            <div v-else class="space-y-3">
-                <div
-                    v-for="(s, idx) in form.sections"
-                    :key="s.id"
-                    :id="`sec-${s.id}`"
-                    class="rounded-xl border border-slate-700/60 bg-slate-900/30 p-3"
-                >
-                    <div class="flex items-center justify-between gap-2">
-                        <input
-                            v-model="s.title"
-                            class="input-dark w-full"
-                            placeholder="Section title (optional)"
-                        />
-                        <div class="flex gap-1">
-                            <button
-                                @click="moveSection(idx, idx - 1)"
-                                class="rounded bg-slate-700 px-2 py-1 text-xs font-bold text-slate-200 hover:bg-slate-600"
-                                title="Move up"
-                            >
-                                ↑
-                            </button>
-                            <button
-                                @click="moveSection(idx, idx + 1)"
-                                class="rounded bg-slate-700 px-2 py-1 text-xs font-bold text-slate-200 hover:bg-slate-600"
-                                title="Move down"
-                            >
-                                ↓
-                            </button>
-                            <button
-                                @click="removeSection(idx)"
-                                class="rounded bg-red-600/30 px-2 py-1 text-xs font-bold text-red-200 hover:bg-red-600/40"
-                                title="Remove"
-                            >
-                                ✕
-                            </button>
-                        </div>
-                    </div>
-
-                    <textarea
-                        v-model="s.content"
-                        rows="4"
-                        class="input-dark mt-2 w-full resize-none"
-                        placeholder="Write..."
-                    />
-                </div>
-            </div>
-
-            <div v-if="form.errors.sections" class="text-xs text-red-400">{{ form.errors.sections }}</div>
         </div>
     </div>
 </template>
 
 <style scoped>
-.input-dark {
-    @apply rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-200 placeholder-slate-500 outline-none transition-all focus:ring-1 focus:ring-indigo-500;
-}
+/* Transisi Halus */
+.fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease; }
+.fade-enter-from, .fade-leave-to { opacity: 0; }
+
+.slide-enter-active, .slide-leave-active { transition: all 0.3s ease; max-height: 500px; opacity: 1; overflow: hidden; }
+.slide-enter-from, .slide-leave-to { max-height: 0; opacity: 0; padding-top: 0; padding-bottom: 0; }
+
+.list-enter-active, .list-leave-active { transition: all 0.4s ease; }
+.list-enter-from, .list-leave-to { opacity: 0; transform: translateY(10px); }
+
+/* Custom Inputs to reset browser styles */
 input[type='date']::-webkit-calendar-picker-indicator {
     filter: invert(1);
     opacity: 0.6;
     cursor: pointer;
+}
+textarea {
+    field-sizing: content; /* Modern CSS for auto-grow if supported, fallback to resize-y */
 }
 </style>
