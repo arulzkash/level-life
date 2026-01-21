@@ -416,95 +416,76 @@ onBeforeUnmount(() => {
                 </div>
             </transition>
 
-            <div class="grid gap-6 md:grid-cols-12">
-                <div class="col-span-12 md:col-span-4">
-                    <div class="h-full rounded-2xl border border-slate-800 bg-gradient-to-br from-slate-800/90 to-slate-900/60 p-5 shadow-lg shadow-slate-950/40 ring-1 ring-sky-500/10 transition-all hover:-translate-y-0.5 hover:border-slate-700 hover:shadow-xl hover:shadow-sky-500/10">
-                        <h3 class="mb-3 text-xs font-bold uppercase tracking-widest text-slate-500">Rewards</h3>
-                        
-                        <div v-if="!isToday" class="mb-3 rounded-lg bg-slate-800 p-2 text-center text-xs text-slate-400">
-                            Viewing Past Log (No Reward)
-                        </div>
-                        <div v-else-if="isClaimed" class="mb-3 flex items-center justify-center gap-2 rounded-lg bg-emerald-500/10 p-2 text-center text-xs font-bold text-sky-400">
-                            <span>CLAIMED</span>
-                            <span>+{{ props.entry?.xp_awarded }} XP</span>
-                        </div>
+            <div class="rounded-2xl border border-slate-800 bg-gradient-to-br from-slate-800/80 to-slate-900/70 p-5 shadow-lg shadow-slate-950/40 ring-1 ring-sky-500/10 transition-all hover:border-slate-700">
+    
+    <div class="flex items-center justify-between mb-1">
+        <label class="text-xs font-bold uppercase tracking-widest text-slate-500">Title</label>
+        <label class="flex cursor-pointer items-center gap-2 text-xs text-slate-400 hover:text-sky-400 transition-colors">
+            <input type="checkbox" v-model="form.is_favorite" class="hidden" />
+            <span class="text-[10px] font-bold uppercase tracking-widest transition-all" 
+                  :class="form.is_favorite ? 'text-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.5)]' : ''">
+                {{ form.is_favorite ? '★ FAVORITE' : '☆ MARK FAVORITE' }}
+            </span>
+        </label>
+    </div>
 
-                        <div class="grid grid-cols-2 gap-3">
-                            <div class="space-y-1">
-                                <label class="text-[10px] font-bold text-sky-400">XP</label>
-                                <div class="relative">
-                                    <input
-                                        type="number"
-                                        v-model.number="form.xp_reward"
-                                        class="w-full rounded-lg border border-sky-500/30 bg-slate-900 px-3 py-2 text-center font-mono text-sm font-bold text-white focus:border-sky-500 focus:ring-1 focus:ring-sky-500"
-                                        placeholder="0"
-                                        :disabled="!isToday || isClaimed"
-                                    />
-                                    <div class="absolute right-2 top-2 text-[10px] opacity-50">XP</div>
-                                </div>
-                            </div>
-                            <div class="space-y-1">
-                                <label class="text-[10px] font-bold text-sky-400">GOLD</label>
-                                <div class="relative">
-                                    <input
-                                        type="number"
-                                        v-model.number="form.coin_reward"
-                                        class="w-full rounded-lg border border-sky-500/30 bg-slate-900 px-3 py-2 text-center font-mono text-sm font-bold text-white focus:border-sky-500 focus:ring-1 focus:ring-sky-500"
-                                        placeholder="0"
-                                        :disabled="!isToday || isClaimed"
-                                    />
-                                    <div class="absolute right-2 top-2 text-[10px] opacity-50">G</div>
-                                </div>
-                            </div>
-                        </div>
-                        <p class="mt-3 text-[10px] leading-relaxed text-slate-500">
-                            Rate your day honestly. Rewards are granted upon saving.
-                        </p>
-                    </div>
-                </div>
+    <input
+        v-model="form.title"
+        class="w-full border-none bg-transparent p-0 text-2xl font-black text-white placeholder-slate-600 focus:ring-0 md:text-3xl"
+        placeholder="Give this day a title..."
+    />
 
-                <div class="col-span-12 md:col-span-8">
-                    <div class="flex h-full flex-col justify-between rounded-2xl border border-slate-800 bg-gradient-to-br from-slate-800/80 to-slate-900/70 p-5 shadow-lg shadow-slate-950/40 ring-1 ring-sky-500/10 transition-all hover:-translate-y-0.5 hover:border-slate-700 hover:shadow-xl hover:shadow-sky-500/10">
-                        
-                        <div class="mb-4">
-                            <label class="mb-2 block text-xs font-bold uppercase tracking-widest text-slate-500">Mood</label>
-                            <div class="flex flex-wrap gap-2">
-                                <button 
-                                    v-for="emoji in MOOD_OPTIONS" 
-                                    :key="emoji"
-                                    @click="form.mood_emoji = emoji"
-                                    class="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-700 bg-slate-800 text-xl transition-all hover:scale-110 hover:border-sky-500 hover:bg-slate-700"
-                                    :class="{'ring-2 ring-sky-500 bg-sky-500/20 border-sky-500': form.mood_emoji === emoji}"
-                                >
-                                    {{ emoji }}
-                                </button>
-                                <input 
-                                    v-model="form.mood_emoji" 
-                                    class="w-12 rounded-lg border border-slate-700 bg-slate-900 px-1 text-center text-lg focus:border-sky-500 focus:ring-0" 
-                                    placeholder="?"
-                                />
-                            </div>
-                        </div>
+    <div class="my-4 h-px w-full bg-slate-700/50"></div>
 
-                        <div class="space-y-1">
-                            <div class="flex items-center justify-between">
-                                <label class="text-xs font-bold uppercase tracking-widest text-slate-500">Title</label>
-                                <label class="flex cursor-pointer items-center gap-2 text-xs text-slate-400 hover:text-sky-400">
-                                    <input type="checkbox" v-model="form.is_favorite" class="hidden" />
-                                    <span class="text-lg transition-transform active:scale-125">
-                                        {{ form.is_favorite ? 'Saved to Favorites' : 'Mark Favorite' }}
-                                    </span>
-                                </label>
-                            </div>
-                            <input
-                                v-model="form.title"
-                                class="w-full border-none bg-transparent p-0 text-2xl font-black text-white placeholder-slate-600 focus:ring-0 md:text-3xl"
-                                placeholder="Give this day a title..."
-                            />
-                        </div>
-                    </div>
-                </div>
+    <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        
+        <div class="flex flex-wrap items-center gap-2">
+            <span class="text-[10px] font-bold uppercase text-slate-500">Mood</span>
+            <div class="flex flex-wrap gap-1">
+                <button 
+                    v-for="emoji in MOOD_OPTIONS" 
+                    :key="emoji"
+                    @click="form.mood_emoji = emoji"
+                    class="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-700 bg-slate-800 text-lg transition-all hover:-translate-y-0.5 hover:border-sky-500 hover:bg-slate-700 hover:shadow-lg hover:shadow-sky-500/20 active:scale-95"
+                    :class="{'ring-2 ring-sky-500 bg-sky-500/20 border-sky-500 shadow-[0_0_10px_rgba(14,165,233,0.3)]': form.mood_emoji === emoji}"
+                >
+                    {{ emoji }}
+                </button>
             </div>
+        </div>
+
+        <div class="flex items-center gap-3 bg-slate-900/40 p-1.5 rounded-lg border border-slate-800/50 backdrop-blur-sm">
+            
+            <div class="flex items-center gap-2">
+                <span class="text-[10px] font-black text-sky-500 pl-1">XP</span>
+                <input
+                    type="number"
+                    v-model.number="form.xp_reward"
+                    :disabled="!isToday || isClaimed"
+                    class="w-16 rounded border border-slate-700 bg-slate-900 py-1 text-center font-mono text-xs font-bold text-white focus:border-sky-500 focus:ring-1 focus:ring-sky-500 disabled:opacity-50"
+                    placeholder="0"
+                />
+            </div>
+
+            <div class="h-4 w-px bg-slate-700"></div>
+
+            <div class="flex items-center gap-2">
+                <span class="text-[10px] font-black text-amber-500">GOLD</span>
+                <input
+                    type="number"
+                    v-model.number="form.coin_reward"
+                    :disabled="!isToday || isClaimed"
+                    class="w-16 rounded border border-slate-700 bg-slate-900 py-1 text-center font-mono text-xs font-bold text-white focus:border-sky-500 focus:ring-1 focus:ring-sky-500 disabled:opacity-50"
+                    placeholder="0"
+                />
+            </div>
+
+            <div v-if="isClaimed" class="px-2 rounded bg-emerald-500/10 border border-emerald-500/20 text-[9px] font-bold text-emerald-400">
+                CLAIMED
+            </div>
+        </div>
+    </div>
+</div>
 
             <div class="relative min-h-[300px] overflow-hidden rounded-2xl border border-slate-700 bg-gradient-to-br from-slate-800/80 to-slate-900/70 shadow-2xl shadow-slate-950/50 ring-1 ring-sky-500/10 transition-all hover:-translate-y-0.5 hover:border-slate-600 hover:shadow-sky-500/10">
                 <div class="absolute left-0 top-0 h-full w-1.5 bg-gradient-to-b from-sky-400 via-blue-600 to-sky-500 opacity-80"></div>
@@ -517,6 +498,8 @@ onBeforeUnmount(() => {
                     ></textarea>
                 </div>
             </div>
+
+            
 
             <div class="space-y-4">
                 <div class="flex items-center justify-between border-b border-slate-800 pb-2">

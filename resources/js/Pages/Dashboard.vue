@@ -17,6 +17,7 @@ const props = defineProps({
     habits: Array,
     habitSummary: Object,
     today: String,
+    journalTodayExists: Boolean,
     todayBlocks: Array,
     leaderboardData: Object,
     topBadge: Object, // { name, icon, description }
@@ -919,6 +920,33 @@ const getRankClass = (rank) => {
                             </button>
                         </div>
                     </div>
+                </div>
+
+                <div class="rounded-2xl border border-slate-700 bg-slate-800 p-6 shadow-lg">
+                    <div class="mb-3 flex items-center justify-between">
+                        <h3 class="flex items-center gap-2 font-bold text-white">
+                            <span>✍</span>
+                            Reflection
+                        </h3>
+                        <div class="flex items-center gap-3">
+                            <span
+                                class="rounded-md border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider"
+                                :class="
+                                    journalTodayExists
+                                        ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300'
+                                        : 'border-slate-600 bg-slate-900 text-slate-400'
+                                "
+                            >
+                                {{ journalTodayExists ? 'LOGGED TODAY' : 'NOT YET LOGGED' }}
+                            </span>
+                            <Link href="/journal" class="text-xs text-indigo-400 hover:underline">
+                                Open Log
+                            </Link>
+                        </div>
+                    </div>
+                    <p class="text-xs text-slate-500">
+                        Write a short insight or story from today.
+                    </p>
                 </div>
             </div>
         </div>

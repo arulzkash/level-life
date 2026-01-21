@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Carbon\Carbon;
+use App\Models\JournalEntry;
 
 class DashboardController extends Controller
 {
@@ -18,6 +19,9 @@ class DashboardController extends Controller
 
         // HABIT
         $today = now()->toDateString();
+        $journalTodayExists = JournalEntry::where('user_id', $user->id)
+            ->whereDate('date', $today)
+            ->exists();
 
         $habits = $user->habits()
             ->active($today)
@@ -174,6 +178,7 @@ class DashboardController extends Controller
         return Inertia::render('Dashboard', [
             'profile' => $profile,
             'today' => $today,
+            'journalTodayExists' => $journalTodayExists,
             'habits' => $habitsPayload,
             'habitSummary' => [
                 'done_today' => $doneCount,
