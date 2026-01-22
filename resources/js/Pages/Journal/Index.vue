@@ -3,6 +3,7 @@ import { Head, useForm, router, Link } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { computed, onMounted, ref, watch, onBeforeUnmount, nextTick } from 'vue';
 import debounce from 'lodash/debounce';
+import { useAudio } from '@/Composables/useAudio';
 
 defineOptions({ layout: AppLayout });
 
@@ -13,6 +14,8 @@ const props = defineProps({
     templates: Array,
     title: String,
 });
+
+const {playSfx} = useAudio();
 
 // ---------- Constants ----------
 const MOOD_OPTIONS = ['😴', '😐', '🙂', '😀', '🤩', '🔥', '🧠', '😵‍💫', '😢', '😡'];
@@ -326,6 +329,7 @@ const saveToServer = () => {
                 form.xp_reward = 0;
                 form.coin_reward = 0;
             }
+            playSfx('typing');
         },
         onFinish: () => {
             form.transform((d) => d);
