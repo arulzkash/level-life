@@ -8,6 +8,7 @@ import LevelUpModal from '@/Components/Game/LevelUpModal.vue';
 import confetti from 'canvas-confetti';
 import { useAudio } from '@/Composables/useAudio';
 import { useLevelUp } from '@/Composables/useLevelUp';
+import HoldButton from '@/Components/Game/HoldButton.vue';
 
 defineOptions({ layout: AppLayout });
 
@@ -743,13 +744,13 @@ const getRankClass = (rank) => {
                                     class="input-dark w-full resize-none overflow-hidden py-2 text-xs placeholder-slate-600 transition-all duration-300 focus:w-64 md:w-48"
                                 ></textarea>
 
-                                <button
-                                    @click="completeQuest(q.id, q.xp_reward, q.coin_reward)"
+                                <HoldButton
+                                    class="w-full md:w-auto"
                                     :disabled="getCompleteForm(q.id).processing"
-                                    class="flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-xs font-bold uppercase tracking-wider text-white shadow-lg shadow-emerald-900/20 transition-all hover:bg-emerald-500 active:scale-95 md:w-auto"
+                                    @complete="completeQuest(q.id, q.xp_reward, q.coin_reward)"
                                 >
-                                    <span>✅ Complete</span>
-                                </button>
+                                    <span>⚔️ Hold to Slash</span>
+                                </HoldButton>
                             </div>
                         </div>
                     </li>
@@ -907,17 +908,12 @@ const getRankClass = (rank) => {
                             </Link>
                         </div>
                     </div>
-                    <p class="text-xs text-slate-500">
-                        Write a short insight or story from today.
-                    </p>
+                    <p class="text-xs text-slate-500">Write a short insight or story from today.</p>
                 </div>
             </div>
         </div>
 
-        <LevelUpModal
-            v-model="showLevelUpModal"
-            :current-level="profile?.level_data?.current_level || 1"
-        />
+        <LevelUpModal v-model="showLevelUpModal" :current-level="profile?.level_data?.current_level || 1" />
     </div>
 </template>
 
