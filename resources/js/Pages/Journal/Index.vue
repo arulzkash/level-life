@@ -30,7 +30,6 @@ const TEMPLATES = [
         ],
     },
 
-
     {
         name: 'Morning Plan',
         sections: [
@@ -42,7 +41,6 @@ const TEMPLATES = [
         ],
     },
 
-
     {
         name: '2-Min Check-in',
         sections: [
@@ -51,7 +49,6 @@ const TEMPLATES = [
             { title: 'One next step', content: '' },
         ],
     },
-
 
     {
         name: 'Gratitude',
@@ -62,12 +59,10 @@ const TEMPLATES = [
         ],
     },
 
-
     {
         name: 'Brain Dump',
         sections: [{ title: 'Stream of thoughts (no filter)', content: '' }],
     },
-
 
     {
         name: 'CBT Thought Record',
@@ -82,7 +77,6 @@ const TEMPLATES = [
         ],
     },
 
-
     {
         name: 'Stoic Reflection',
         sections: [
@@ -92,7 +86,6 @@ const TEMPLATES = [
             { title: 'What to improve tomorrow', content: '' },
         ],
     },
-
 
     {
         name: 'Health & Energy',
@@ -105,7 +98,6 @@ const TEMPLATES = [
         ],
     },
 
-
     {
         name: 'Idea to Ship',
         sections: [
@@ -115,7 +107,6 @@ const TEMPLATES = [
             { title: 'Things to research', content: '' },
         ],
     },
-
 
     {
         name: 'Weekly Review',
@@ -129,7 +120,6 @@ const TEMPLATES = [
         ],
     },
 ];
-
 
 const selectedTemplateId = ref('');
 const showMyTemplates = ref(false);
@@ -209,8 +199,21 @@ onMounted(() => {
     try {
         const d = JSON.parse(raw);
         const serverBody = props.entry?.body ?? '';
-        // Simple check: if local body is different and not empty, prompt user
-        if ((d.body ?? '') !== serverBody && (d.body ?? '').length > 0) {
+        // Simple check: if local body, section, title, emoji is different and not empty, prompt user
+        const serverSections = props.entry?.sections ?? [];
+        const localSections = d.sections ?? [];
+        const serverTitle = props.entry?.title ?? '';
+        const localTitle = d.title ?? '';
+        const serverEmoji = props.entry?.mood_emoji ?? '';
+        const localEmoji = d.mood_emoji ?? '';
+
+        const isDifferent =
+            (d.body ?? '') !== serverBody && (d.body ?? '').length > 0 ||
+            JSON.stringify(localSections) !== JSON.stringify(serverSections) && localSections.length > 0 ||
+            localTitle !== serverTitle && localTitle.length > 0 ||
+            localEmoji !== serverEmoji && localEmoji.length > 0;
+
+        if (isDifferent) {
             hasLocalDraft.value = true;
         }
     } catch {}
@@ -240,7 +243,7 @@ const moveSection = (from, to) => {
 const insertTemplate = async (templateObj = null) => {
     // Bisa dipanggil langsung dengan object template, atau via dropdown ID
     let t = templateObj;
-    
+
     if (!t && selectedTemplateId.value) {
         t = insertOptions.value.find((x) => x.id === selectedTemplateId.value);
     }
@@ -259,7 +262,7 @@ const insertTemplate = async (templateObj = null) => {
 
     // Reset UI state
     selectedTemplateId.value = '';
-    showTemplateSelector.value = false; 
+    showTemplateSelector.value = false;
     scrollToSection(firstNewId);
 };
 
@@ -340,9 +343,12 @@ const scrollToSection = async (id) => {
 // Keepalive
 let keepaliveTimer = null;
 onMounted(() => {
-    keepaliveTimer = setInterval(() => {
-        fetch('/journal/ping', { method: 'HEAD', cache: 'no-store' }).catch(() => {});
-    }, 9 * 60 * 1000);
+    keepaliveTimer = setInterval(
+        () => {
+            fetch('/journal/ping', { method: 'HEAD', cache: 'no-store' }).catch(() => {});
+        },
+        9 * 60 * 1000
+    );
 });
 onBeforeUnmount(() => {
     if (keepaliveTimer) clearInterval(keepaliveTimer);
@@ -353,11 +359,14 @@ onBeforeUnmount(() => {
     <Head title="Journal Log" />
 
     <div class="min-h-screen bg-slate-900 pb-20 text-slate-200">
-        
-        <div class="sticky top-0 z-40 border-b border-slate-800 bg-slate-900/80 backdrop-blur-md transition-all">
+        <div
+            class="sticky top-0 z-40 border-b border-slate-800 bg-slate-900/80 backdrop-blur-md transition-all"
+        >
             <div class="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
                 <div class="flex items-center gap-3">
-                    <div class="flex items-center rounded-lg border border-slate-700 bg-slate-900 p-1 shadow-sm">
+                    <div
+                        class="flex items-center rounded-lg border border-slate-700 bg-slate-900 p-1 shadow-sm"
+                    >
                         <input
                             type="date"
                             v-model="form.date"
@@ -365,10 +374,11 @@ onBeforeUnmount(() => {
                             @change="goToDate(form.date)"
                         />
                     </div>
-                    
+
                     <div class="hidden md:block">
                         <h1 class="text-2xl font-black tracking-tight text-white">
-                            <span v-if="isToday" class="text-sky-400">Today</span> DAILY LOG
+                            <span v-if="isToday" class="text-sky-400">Today</span>
+                            DAILY LOG
                         </h1>
                         <div class="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">
                             Every day leaves a mark on your legend.
@@ -383,7 +393,7 @@ onBeforeUnmount(() => {
                     >
                         PAST LOGS
                     </Link>
-                    
+
                     <button
                         @click="saveToServer"
                         :disabled="form.processing"
@@ -397,7 +407,6 @@ onBeforeUnmount(() => {
         </div>
 
         <div class="mx-auto mt-6 max-w-4xl space-y-6 px-4 md:mt-8">
-            
             <transition name="fade">
                 <div
                     v-if="hasLocalDraft"
@@ -410,86 +419,115 @@ onBeforeUnmount(() => {
                         </div>
                     </div>
                     <div class="flex gap-2">
-                        <button @click="restoreDraft" class="rounded-lg bg-sky-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-sky-500">Restore</button>
-                        <button @click="clearDraft" class="rounded-lg border border-slate-600 px-3 py-1.5 text-xs font-bold text-slate-300 hover:bg-slate-700">Dismiss</button>
+                        <button
+                            @click="restoreDraft"
+                            class="rounded-lg bg-sky-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-sky-500"
+                        >
+                            Restore
+                        </button>
+                        <button
+                            @click="clearDraft"
+                            class="rounded-lg border border-slate-600 px-3 py-1.5 text-xs font-bold text-slate-300 hover:bg-slate-700"
+                        >
+                            Dismiss
+                        </button>
                     </div>
                 </div>
             </transition>
 
-            <div class="rounded-2xl border border-slate-800 bg-gradient-to-br from-slate-800/80 to-slate-900/70 p-5 shadow-lg shadow-slate-950/40 ring-1 ring-sky-500/10 transition-all hover:border-slate-700">
-    
-    <div class="flex items-center justify-between mb-1">
-        <label class="text-xs font-bold uppercase tracking-widest text-slate-500">Title</label>
-        <label class="flex cursor-pointer items-center gap-2 text-xs text-slate-400 hover:text-sky-400 transition-colors">
-            <input type="checkbox" v-model="form.is_favorite" class="hidden" />
-            <span class="text-[10px] font-bold uppercase tracking-widest transition-all" 
-                  :class="form.is_favorite ? 'text-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.5)]' : ''">
-                {{ form.is_favorite ? '★ FAVORITE' : '☆ MARK FAVORITE' }}
-            </span>
-        </label>
-    </div>
+            <div
+                class="rounded-2xl border border-slate-800 bg-gradient-to-br from-slate-800/80 to-slate-900/70 p-5 shadow-lg shadow-slate-950/40 ring-1 ring-sky-500/10 transition-all hover:border-slate-700"
+            >
+                <div class="mb-1 flex items-center justify-between">
+                    <label class="text-xs font-bold uppercase tracking-widest text-slate-500">Title</label>
+                    <label
+                        class="flex cursor-pointer items-center gap-2 text-xs text-slate-400 transition-colors hover:text-sky-400"
+                    >
+                        <input type="checkbox" v-model="form.is_favorite" class="hidden" />
+                        <span
+                            class="text-[10px] font-bold uppercase tracking-widest transition-all"
+                            :class="
+                                form.is_favorite
+                                    ? 'text-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.5)]'
+                                    : ''
+                            "
+                        >
+                            {{ form.is_favorite ? '★ FAVORITE' : '☆ MARK FAVORITE' }}
+                        </span>
+                    </label>
+                </div>
 
-    <input
-        v-model="form.title"
-        class="w-full border-none bg-transparent p-0 text-2xl font-black text-white placeholder-slate-600 focus:ring-0 md:text-3xl"
-        placeholder="Give this day a title..."
-    />
-
-    <div class="my-4 h-px w-full bg-slate-700/50"></div>
-
-    <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        
-        <div class="flex flex-wrap items-center gap-2">
-            <span class="text-[10px] font-bold uppercase text-slate-500">Mood</span>
-            <div class="flex flex-wrap gap-1">
-                <button 
-                    v-for="emoji in MOOD_OPTIONS" 
-                    :key="emoji"
-                    @click="form.mood_emoji = emoji"
-                    class="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-700 bg-slate-800 text-lg transition-all hover:-translate-y-0.5 hover:border-sky-500 hover:bg-slate-700 hover:shadow-lg hover:shadow-sky-500/20 active:scale-95"
-                    :class="{'ring-2 ring-sky-500 bg-sky-500/20 border-sky-500 shadow-[0_0_10px_rgba(14,165,233,0.3)]': form.mood_emoji === emoji}"
-                >
-                    {{ emoji }}
-                </button>
-            </div>
-        </div>
-
-        <div class="flex items-center gap-3 bg-slate-900/40 p-1.5 rounded-lg border border-slate-800/50 backdrop-blur-sm">
-            
-            <div class="flex items-center gap-2">
-                <span class="text-[10px] font-black text-sky-500 pl-1">XP</span>
                 <input
-                    type="number"
-                    v-model.number="form.xp_reward"
-                    :disabled="!isToday || isClaimed"
-                    class="w-16 rounded border border-slate-700 bg-slate-900 py-1 text-center font-mono text-xs font-bold text-white focus:border-sky-500 focus:ring-1 focus:ring-sky-500 disabled:opacity-50"
-                    placeholder="0"
+                    v-model="form.title"
+                    class="w-full border-none bg-transparent p-0 text-2xl font-black text-white placeholder-slate-600 focus:ring-0 md:text-3xl"
+                    placeholder="Give this day a title..."
                 />
+
+                <div class="my-4 h-px w-full bg-slate-700/50"></div>
+
+                <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <span class="text-[10px] font-bold uppercase text-slate-500">Mood</span>
+                        <div class="flex flex-wrap gap-1">
+                            <button
+                                v-for="emoji in MOOD_OPTIONS"
+                                :key="emoji"
+                                @click="form.mood_emoji = emoji"
+                                class="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-700 bg-slate-800 text-lg transition-all hover:-translate-y-0.5 hover:border-sky-500 hover:bg-slate-700 hover:shadow-lg hover:shadow-sky-500/20 active:scale-95"
+                                :class="{
+                                    'border-sky-500 bg-sky-500/20 shadow-[0_0_10px_rgba(14,165,233,0.3)] ring-2 ring-sky-500':
+                                        form.mood_emoji === emoji,
+                                }"
+                            >
+                                {{ emoji }}
+                            </button>
+                        </div>
+                    </div>
+
+                    <div
+                        class="flex items-center gap-3 rounded-lg border border-slate-800/50 bg-slate-900/40 p-1.5 backdrop-blur-sm"
+                    >
+                        <div class="flex items-center gap-2">
+                            <span class="pl-1 text-[10px] font-black text-sky-500">XP</span>
+                            <input
+                                type="number"
+                                v-model.number="form.xp_reward"
+                                :disabled="!isToday || isClaimed"
+                                class="w-16 rounded border border-slate-700 bg-slate-900 py-1 text-center font-mono text-xs font-bold text-white focus:border-sky-500 focus:ring-1 focus:ring-sky-500 disabled:opacity-50"
+                                placeholder="0"
+                            />
+                        </div>
+
+                        <div class="h-4 w-px bg-slate-700"></div>
+
+                        <div class="flex items-center gap-2">
+                            <span class="text-[10px] font-black text-amber-500">GOLD</span>
+                            <input
+                                type="number"
+                                v-model.number="form.coin_reward"
+                                :disabled="!isToday || isClaimed"
+                                class="w-16 rounded border border-slate-700 bg-slate-900 py-1 text-center font-mono text-xs font-bold text-white focus:border-sky-500 focus:ring-1 focus:ring-sky-500 disabled:opacity-50"
+                                placeholder="0"
+                            />
+                        </div>
+
+                        <div
+                            v-if="isClaimed"
+                            class="rounded border border-emerald-500/20 bg-emerald-500/10 px-2 text-[9px] font-bold text-emerald-400"
+                        >
+                            CLAIMED
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <div class="h-4 w-px bg-slate-700"></div>
+            <div
+                class="relative min-h-[300px] overflow-hidden rounded-2xl border border-slate-700 bg-gradient-to-br from-slate-800/80 to-slate-900/70 shadow-2xl shadow-slate-950/50 ring-1 ring-sky-500/10 transition-all hover:-translate-y-0.5 hover:border-slate-600 hover:shadow-sky-500/10"
+            >
+                <div
+                    class="absolute left-0 top-0 h-full w-1.5 bg-gradient-to-b from-sky-400 via-blue-600 to-sky-500 opacity-80"
+                ></div>
 
-            <div class="flex items-center gap-2">
-                <span class="text-[10px] font-black text-amber-500">GOLD</span>
-                <input
-                    type="number"
-                    v-model.number="form.coin_reward"
-                    :disabled="!isToday || isClaimed"
-                    class="w-16 rounded border border-slate-700 bg-slate-900 py-1 text-center font-mono text-xs font-bold text-white focus:border-sky-500 focus:ring-1 focus:ring-sky-500 disabled:opacity-50"
-                    placeholder="0"
-                />
-            </div>
-
-            <div v-if="isClaimed" class="px-2 rounded bg-emerald-500/10 border border-emerald-500/20 text-[9px] font-bold text-emerald-400">
-                CLAIMED
-            </div>
-        </div>
-    </div>
-</div>
-
-            <div class="relative min-h-[300px] overflow-hidden rounded-2xl border border-slate-700 bg-gradient-to-br from-slate-800/80 to-slate-900/70 shadow-2xl shadow-slate-950/50 ring-1 ring-sky-500/10 transition-all hover:-translate-y-0.5 hover:border-slate-600 hover:shadow-sky-500/10">
-                <div class="absolute left-0 top-0 h-full w-1.5 bg-gradient-to-b from-sky-400 via-blue-600 to-sky-500 opacity-80"></div>
-                
                 <div class="p-6 md:p-8">
                     <textarea
                         v-model="form.body"
@@ -499,16 +537,15 @@ onBeforeUnmount(() => {
                 </div>
             </div>
 
-            
-
             <div class="space-y-4">
                 <div class="flex items-center justify-between border-b border-slate-800 pb-2">
                     <h3 class="text-sm font-black uppercase tracking-widest text-slate-400">
-                        Expansion Modules <span class="text-slate-600 text-xs font-normal">({{ form.sections.length }})</span>
+                        Expansion Modules
+                        <span class="text-xs font-normal text-slate-600">({{ form.sections.length }})</span>
                     </h3>
-                    
+
                     <div class="flex gap-2">
-                        <button 
+                        <button
                             @click="showTemplateSelector = !showTemplateSelector"
                             class="flex items-center gap-1 text-xs font-bold text-sky-400 hover:text-sky-300"
                         >
@@ -518,30 +555,51 @@ onBeforeUnmount(() => {
                 </div>
 
                 <transition name="slide">
-                    <div v-if="showTemplateSelector" class="rounded-xl border border-slate-700 bg-slate-800/70 p-4 shadow-inner transition-all hover:border-slate-600 hover:shadow-sky-500/10">
+                    <div
+                        v-if="showTemplateSelector"
+                        class="rounded-xl border border-slate-700 bg-slate-800/70 p-4 shadow-inner transition-all hover:border-slate-600 hover:shadow-sky-500/10"
+                    >
                         <div class="mb-4 flex items-center justify-between">
                             <span class="text-xs font-bold text-slate-300">Available Blueprints</span>
-                            <button @click="saveAsTemplate" class="text-[10px] underline text-slate-500 hover:text-white">+ Save current as template</button>
+                            <button
+                                @click="saveAsTemplate"
+                                class="text-[10px] text-slate-500 underline hover:text-white"
+                            >
+                                + Save current as template
+                            </button>
                         </div>
-                        
+
                         <div class="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
-                            <button 
-                                v-for="t in insertOptions" 
+                            <button
+                                v-for="t in insertOptions"
                                 :key="t.id"
                                 @click="insertTemplate(t)"
                                 class="group flex flex-col items-start rounded-lg border border-slate-700 bg-slate-800/80 p-3 text-left transition-all hover:border-sky-500 hover:bg-slate-700 hover:shadow-md hover:shadow-sky-500/10"
                             >
-                                <span class="font-bold text-slate-200 group-hover:text-white">{{ t.name }}</span>
-                                <span class="text-[10px] text-slate-500">{{ t.sections.length }} sections</span>
+                                <span class="font-bold text-slate-200 group-hover:text-white">
+                                    {{ t.name }}
+                                </span>
+                                <span class="text-[10px] text-slate-500">
+                                    {{ t.sections.length }} sections
+                                </span>
                             </button>
                         </div>
 
                         <div v-if="myTemplates.length > 0" class="mt-4 border-t border-slate-800 pt-4">
                             <p class="mb-2 text-xs font-bold text-slate-500">Manage Custom</p>
                             <div class="flex flex-wrap gap-2">
-                                <div v-for="t in props.templates" :key="t.id" class="flex items-center gap-2 rounded bg-slate-900 px-2 py-1 text-xs border border-slate-800">
+                                <div
+                                    v-for="t in props.templates"
+                                    :key="t.id"
+                                    class="flex items-center gap-2 rounded border border-slate-800 bg-slate-900 px-2 py-1 text-xs"
+                                >
                                     <span class="text-slate-300">{{ t.name }}</span>
-                                    <button @click="deleteTemplate(t)" class="text-red-500 hover:text-red-400 font-bold">×</button>
+                                    <button
+                                        @click="deleteTemplate(t)"
+                                        class="font-bold text-red-500 hover:text-red-400"
+                                    >
+                                        ×
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -549,28 +607,43 @@ onBeforeUnmount(() => {
                 </transition>
 
                 <transition-group name="list" tag="div" class="space-y-4">
-                    <div 
-                        v-for="(section, idx) in form.sections" 
-                        :key="section.id" 
+                    <div
+                        v-for="(section, idx) in form.sections"
+                        :key="section.id"
                         :id="`sec-${section.id}`"
                         class="group relative overflow-hidden rounded-xl border border-slate-700 bg-slate-800/70 transition-all hover:-translate-y-0.5 hover:border-slate-600 hover:shadow-md hover:shadow-sky-500/10"
                     >
                         <div class="flex items-center gap-3 bg-slate-900/50 px-4 py-2">
-                            <div class="flex flex-col gap-0.5 opacity-50 transition-opacity group-hover:opacity-100">
-                                <button @click="moveSection(idx, idx-1)" class="text-[8px] text-slate-400 hover:text-white">▲</button>
-                                <button @click="moveSection(idx, idx+1)" class="text-[8px] text-slate-400 hover:text-white">▼</button>
+                            <div
+                                class="flex flex-col gap-0.5 opacity-50 transition-opacity group-hover:opacity-100"
+                            >
+                                <button
+                                    @click="moveSection(idx, idx - 1)"
+                                    class="text-[8px] text-slate-400 hover:text-white"
+                                >
+                                    ▲
+                                </button>
+                                <button
+                                    @click="moveSection(idx, idx + 1)"
+                                    class="text-[8px] text-slate-400 hover:text-white"
+                                >
+                                    ▼
+                                </button>
                             </div>
-                            <input 
-                                v-model="section.title" 
+                            <input
+                                v-model="section.title"
                                 class="w-full border-none bg-transparent p-0 text-sm font-bold uppercase tracking-wider text-sky-200 placeholder-slate-600 focus:ring-0"
                                 placeholder="SECTION TITLE"
                             />
-                            <button @click="removeSection(idx)" class="text-slate-600 hover:text-red-400 transition-colors">
+                            <button
+                                @click="removeSection(idx)"
+                                class="text-slate-600 transition-colors hover:text-red-400"
+                            >
                                 🗑️
                             </button>
                         </div>
 
-                        <textarea 
+                        <textarea
                             v-model="section.content"
                             rows="3"
                             class="w-full resize-y border-none bg-transparent px-4 py-3 text-sm text-slate-300 placeholder-slate-600 focus:ring-0"
@@ -579,28 +652,52 @@ onBeforeUnmount(() => {
                     </div>
                 </transition-group>
 
-                <button 
-                    @click="addSection" 
+                <button
+                    @click="addSection"
                     class="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-slate-700 bg-slate-800/50 py-4 text-sm font-bold text-slate-500 transition-all hover:border-slate-500 hover:bg-slate-800 hover:text-slate-300"
                 >
                     <span>+ Add New Section</span>
                 </button>
             </div>
-
         </div>
     </div>
 </template>
 
 <style scoped>
 /* Transisi Halus */
-.fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease; }
-.fade-enter-from, .fade-leave-to { opacity: 0; }
+.fade-enter-active,
+.fade-leave-active {
+    transition: opacity 0.3s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+    opacity: 0;
+}
 
-.slide-enter-active, .slide-leave-active { transition: all 0.3s ease; max-height: 500px; opacity: 1; overflow: hidden; }
-.slide-enter-from, .slide-leave-to { max-height: 0; opacity: 0; padding-top: 0; padding-bottom: 0; }
+.slide-enter-active,
+.slide-leave-active {
+    transition: all 0.3s ease;
+    max-height: 500px;
+    opacity: 1;
+    overflow: hidden;
+}
+.slide-enter-from,
+.slide-leave-to {
+    max-height: 0;
+    opacity: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+}
 
-.list-enter-active, .list-leave-active { transition: all 0.4s ease; }
-.list-enter-from, .list-leave-to { opacity: 0; transform: translateY(10px); }
+.list-enter-active,
+.list-leave-active {
+    transition: all 0.4s ease;
+}
+.list-enter-from,
+.list-leave-to {
+    opacity: 0;
+    transform: translateY(10px);
+}
 
 /* Custom Inputs to reset browser styles */
 input[type='date']::-webkit-calendar-picker-indicator {
