@@ -725,7 +725,7 @@ const onDragEnd = () => {
 
                             <div class="relative z-10 flex flex-col justify-between gap-4 md:flex-row">
                                 <div
-                                    class="drag-handle absolute right-0 top-0 -mr-2 -mt-2 cursor-grab p-3 text-slate-600 opacity-0 transition-opacity hover:text-slate-200 active:cursor-grabbing group-hover:opacity-100 sm:opacity-40"
+                                    class="drag-handle absolute right-0 top-0 -mr-2 -mt-2 cursor-grab p-3 text-slate-600 opacity-100 transition-opacity hover:text-slate-200 active:cursor-grabbing sm:opacity-40 sm:group-hover:opacity-100"
                                 >
                                     <svg
                                         xmlns="http://www.w3.org/2000/svg"
