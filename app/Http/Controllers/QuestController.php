@@ -6,6 +6,7 @@ use App\Models\Quest;
 use App\Services\BadgeService;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class QuestController extends Controller
 {
@@ -30,7 +31,31 @@ class QuestController extends Controller
             $data['due_date'] = null;
         }
 
+        $maxPosition = Quest::where('user_id', $request->user()->id)->max('position');
+        $data['position'] = $maxPosition + 1;
+
         $request->user()->quests()->create($data);
+
+        return redirect()->back();
+    }
+
+    public function reorder(Request $request)
+    {
+        $request->validate([
+            'ordered_ids' => 'required|array',
+            'ordered_ids.*' => 'exists:quests,id',
+        ]);
+
+        DB::transaction(function () use ($request) {
+            $user = $request->user();
+
+            foreach ($request->ordered_ids as $index => $id) {
+                DB::table('quests')
+                    ->where('id', $id)
+                    ->where('user_id', $user->id)
+                    ->update(['position' => $index + 1]);
+            }
+        });
 
         return redirect()->back();
     }

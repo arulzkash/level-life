@@ -52,9 +52,11 @@ Route::middleware('auth')->group(function () {
 
         // actions
         Route::post('/', [QuestController::class, 'store']);
+        Route::patch('/reorder', [QuestController::class, 'reorder'])->name('quests.reorder');
         Route::patch('/{quest}', [QuestController::class, 'update']);
         Route::patch('/{quest}/complete', [QuestController::class, 'complete']);
         Route::delete('/{quest}', [QuestController::class, 'destroy']);
+        
     });
 
     // LOGS

@@ -17,7 +17,8 @@ class Quest extends Model
         'coin_reward',
         'due_date',
         'completed_at',
-        'is_repeatable'
+        'is_repeatable',
+        'position',
     ];
 
 
@@ -31,10 +32,16 @@ class Quest extends Model
         return $this->hasMany(QuestCompletion::class);
     }
 
+    /**
+     * 1. Position (Manual user)
+     * 2. Due Date (Deadline terdekat)
+     * 3. Created At (newest)
+     */
     public function scopeActive(Builder $query): void
     {
         $query->whereIn('status', ['todo', 'in_progress'])
-              ->orderByRaw('due_date is null, due_date asc') // Deadline paling dekat di atas, yang null di bawah
-              ->latest(); // Kalau deadline sama, yang baru dibuat di atas
+            ->orderBy('position', 'asc')
+            ->orderByRaw('due_date is null, due_date asc')
+            ->latest();
     }
 }

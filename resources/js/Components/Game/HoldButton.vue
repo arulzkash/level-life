@@ -94,7 +94,6 @@ onUnmounted(() => {
     </button>
 </template>
 <style scoped>
-
 .hold-btn {
     will-change: transform;
     transform: translateZ(0);
