@@ -127,3 +127,8 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/debug/badges', [BadgeDebugController::class, 'index']);
 });
+
+// Route khusus buat UptimeRobot "nyolek" server
+Route::get('/up', function () {
+    return 'Up';
+});
