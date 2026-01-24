@@ -122,9 +122,6 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/journal/archive', [JournalArchivePageController::class, 'index']);
 
-
-    Route::match(['GET', 'HEAD'], '/journal/ping', fn() => response('', 204))->name('journal.ping');
-
     Route::get('/debug/badges', [BadgeDebugController::class, 'index']);
 });
 

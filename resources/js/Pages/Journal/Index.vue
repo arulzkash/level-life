@@ -349,19 +349,6 @@ const scrollToSection = async (id) => {
     el.scrollIntoView({ behavior: 'smooth', block: 'center' });
 };
 
-// Keepalive
-let keepaliveTimer = null;
-onMounted(() => {
-    keepaliveTimer = setInterval(
-        () => {
-            fetch('/journal/ping', { method: 'HEAD', cache: 'no-store' }).catch(() => {});
-        },
-        9 * 60 * 1000
-    );
-});
-onBeforeUnmount(() => {
-    if (keepaliveTimer) clearInterval(keepaliveTimer);
-});
 </script>
 
 <template>
