@@ -1,6 +1,7 @@
 <script setup>
 import { Link, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
+import CoinIcon from '@/Components/Game/icons/CoinIcon.vue';
 
 const page = usePage();
 const user = computed(() => page.props.auth.user);
@@ -130,7 +131,7 @@ const showingNavigationDropdown = ref(false);
                                 class="flex cursor-help items-center gap-1.5 rounded-full border border-slate-700/50 bg-slate-800 px-2 py-1.5 transition-colors hover:border-yellow-500/50 sm:px-3"
                                 title="Your Gold Balance"
                             >
-                                <span class="text-sm">🪙</span>
+                                <CoinIcon cls="w-4 h-4 drop-shadow-[0_0_6px_rgba(234,179,8,0.45)]" />
                                 <span class="text-sm font-bold text-yellow-400">
                                     {{ profile.coin_balance }}
                                 </span>

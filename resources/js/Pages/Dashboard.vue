@@ -10,6 +10,7 @@ import confetti from 'canvas-confetti';
 import { useAudio } from '@/Composables/useAudio';
 import { useLevelUp } from '@/Composables/useLevelUp';
 import HoldButton from '@/Components/Game/HoldButton.vue';
+import CoinIcon from '@/Components/Game/icons/CoinIcon.vue';
 
 defineOptions({ layout: AppLayout });
 
@@ -367,7 +368,12 @@ const onDragEnd = () => {
                                 <span class="text-xl font-black text-yellow-400 md:text-3xl">
                                     {{ profile.coin_balance }}
                                 </span>
-                                <span class="text-xs text-slate-500 md:text-sm">🪙 Gold</span>
+                                <span
+                                    class="inline-flex items-center gap-1 text-xs text-slate-500 md:text-sm"
+                                >
+                                    <CoinIcon cls="w-3.5 h-3.5 drop-shadow-[0_0_6px_rgba(234,179,8,0.45)]" />
+                                    <span>Gold</span>
+                                </span>
                             </div>
                         </div>
 
