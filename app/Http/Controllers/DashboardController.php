@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
 use Carbon\Carbon;
 use App\Models\JournalEntry;
@@ -93,87 +94,90 @@ class DashboardController extends Controller
             ]);
 
         $now = now();
-        $ghostThresholdDate = $now->copy()->subDays(4)->toDateString();
-
-        // 1) last_active_at (timestamp detik)
-        $lastActiveQuery = DB::table('quest_completions')
-            ->select('user_id', DB::raw('MAX(completed_at) as last_active_at'))
-            ->groupBy('user_id');
-
-        // 2) active_days_last_7d
-        $weekStart = $now->copy()->startOfWeek(Carbon::MONDAY)->startOfDay();
-
-        $active7Query = DB::table('quest_completions')
-            ->select('user_id', DB::raw('COUNT(DISTINCT DATE(completed_at)) as active_days_last_7d'))
-            ->where('completed_at', '>=', $weekStart)
-            ->groupBy('user_id');
-
-        $leaderboard = DB::table('profiles')
-            ->join('users', 'users.id', '=', 'profiles.user_id')
-            ->leftJoinSub($lastActiveQuery, 'last_log', function ($join) {
-                $join->on('profiles.user_id', '=', 'last_log.user_id');
-            })
-            ->leftJoinSub($active7Query, 'active7', function ($join) {
-                $join->on('profiles.user_id', '=', 'active7.user_id');
-            })
-            ->select([
-                'profiles.user_id',
-                'users.name',
-                'profiles.streak_current',
-                'profiles.streak_best',
-                'profiles.last_active_date',
-                'last_log.last_active_at',
-            ])
-            ->selectRaw('COALESCE(active7.active_days_last_7d, 0) as active_days_last_7d')
-            ->selectRaw("
-        CASE
-            WHEN profiles.last_active_date < ? THEN 0
-            ELSE COALESCE(profiles.streak_current, 0)
-        END as effective_streak
-    ", [$ghostThresholdDate])
-            ->orderByDesc('effective_streak')
-            ->orderByDesc('profiles.streak_best')
-            ->orderByDesc('active_days_last_7d')
-            ->orderByDesc('last_active_at')
-            ->limit(100) // tetap boleh 100, ranking urutannya sudah sama
-            ->get();
-
-        // Find Me
-        $myIndex = $leaderboard->search(fn($item) => $item->user_id === $user->id);
-
         $leaderboardData = [
-            'rank' => $myIndex !== false ? $myIndex + 1 : '-',
+            'rank' => '-',
             'rival' => null,
+            'message' => 'View Leaderboard'
         ];
 
-        // Find Rival (The person 1 rank above me)
-        if ($myIndex !== false && $myIndex > 0) {
-            $rival = $leaderboard[$myIndex - 1];
-            $diff = ($rival->effective_streak) - ($leaderboard[$myIndex]->effective_streak);
+        // 1. Ambil Global Roster (Cached 10m)
+        $globalRoster = Cache::get('leaderboard:global_roster'); // Returns Collection/Array of Objects
 
-            $leaderboardData['rival'] = [
-                'name' => $rival->name,
-                'gap' => $diff + 1, // Points needed to overtake (beat them by 1)
-            ];
-        } elseif ($myIndex === 0) {
-            // You are #1
-            $leaderboardData['rival'] = [
-                'name' => 'No one',
-                'gap' => 0,
-                'is_king' => true
-            ];
+        if ($globalRoster) {
+            // 2. Ambil Data Realtime Saya (1 Query Ringan - Point Get)
+            $myRealtimeStats = $this->fetchSingleUserStats($user->id);
+
+            // 3. Logic "Injection & Re-Sort" di Memori PHP
+            // Kita gabungkan user lain (dari cache) dengan data saya (realtime)
+            // Lalu kita sort ulang untuk tau posisi 'asli' saya detik ini.
+
+            $rosterCollection = collect($globalRoster);
+
+            // Hapus entry saya yang lama (kalau ada di cache), ganti dengan yang baru
+            $rosterCollection = $rosterCollection->filter(fn($item) => $item->user_id !== $user->id);
+            $rosterCollection->push($myRealtimeStats);
+
+            // Sort Ulang (Sesuai logic Leaderboard)
+            $sortedRoster = $rosterCollection->sort(function ($a, $b) {
+                // Logic sort descending (Return 1 jika A < B, -1 jika A > B)
+                // Prioritas 1: Effective Streak
+                if (($b->effective_streak ?? 0) !== ($a->effective_streak ?? 0)) {
+                    return ($b->effective_streak ?? 0) <=> ($a->effective_streak ?? 0);
+                }
+                // Prioritas 2: Best Streak
+                if (($b->streak_best ?? 0) !== ($a->streak_best ?? 0)) {
+                    return ($b->streak_best ?? 0) <=> ($a->streak_best ?? 0);
+                }
+                // Prioritas 3: Active Days
+                if (($b->active_days_last_7d ?? 0) !== ($a->active_days_last_7d ?? 0)) {
+                    return ($b->active_days_last_7d ?? 0) <=> ($a->active_days_last_7d ?? 0);
+                }
+                // Prioritas 4: Last Active At (Siapa yang duluan aktif/selesai)
+                return strcmp($b->last_active_at ?? '', $a->last_active_at ?? '');
+            })->values();
+
+            // 4. Cari Posisi Saya Setelah Sort
+            $myIndex = $sortedRoster->search(fn($item) => $item->user_id === $user->id);
+
+            // Cek apakah saya masuk Top 50 setelah update realtime?
+            if ($myIndex !== false && $myIndex < 50) {
+                $myRank = $myIndex + 1;
+                $leaderboardData['rank'] = $myRank;
+
+                // Cari Rival (Orang di atas saya)
+                if ($myIndex > 0) {
+                    $rival = $sortedRoster[$myIndex - 1];
+                    $gap = ($rival->effective_streak ?? 0) - ($myRealtimeStats->effective_streak ?? 0);
+
+                    $leaderboardData['rival'] = [
+                        'name' => $rival->name,
+                        'gap' => $gap + 1,
+                    ];
+                } else {
+                    // Rank 1
+                    $leaderboardData['rival'] = [
+                        'name' => 'No one',
+                        'gap' => 0,
+                        'is_king' => true
+                    ];
+                }
+            } else {
+                // Masih di luar Top 50
+                $leaderboardData['rank'] = '50+';
+                $leaderboardData['message'] = 'Keep grinding to enter top 50!';
+            }
         }
 
         // --- BADGE SNIPPET ---
         // Fetch the "Top" badge (Highest ID usually means latest, 
-        // or filter by 'rarity' if you have that column)
+
         $topBadge = DB::table('user_badges')
             ->join('badges', 'badges.id', '=', 'user_badges.badge_id')
             ->where('user_badges.user_id', $user->id)
             ->select('badges.name', 'badges.key', 'badges.description')
-            ->orderBy('user_badges.created_at', 'desc') // Get the Latest one
+            ->orderBy('user_badges.created_at', 'desc')
+            ->limit(1)
             ->first();
-
 
         return Inertia::render('Dashboard', [
             'profile' => $profile,
@@ -191,5 +195,71 @@ class DashboardController extends Controller
             'leaderboardData' => $leaderboardData,
             'topBadge' => $topBadge,
         ]);
+    }
+
+
+    /**
+     * Helper: Query 1 User Stats (Copy logic dari LeaderboardController biar konsisten)
+     * Sangat ringan karena filter WHERE user_id
+     */
+    private function fetchSingleUserStats($userId)
+    {
+        $now = now();
+        $today = $now->toDateString();
+        $yesterday = $now->copy()->subDay()->toDateString();
+        $ghostThresholdDate = $now->copy()->subDays(4)->toDateString();
+        $weekStart = $now->copy()->startOfWeek(Carbon::MONDAY)->startOfDay();
+
+        $lastActiveQuery = DB::table('quest_completions')
+            ->select('user_id', DB::raw('MAX(completed_at) as last_active_at'))
+            ->where('user_id', $userId)
+            ->groupBy('user_id');
+
+        $active7Query = DB::table('quest_completions')
+            ->select('user_id', DB::raw('COUNT(DISTINCT DATE(completed_at)) as active_days_last_7d'))
+            ->where('user_id', $userId)
+            ->where('completed_at', '>=', $weekStart)
+            ->groupBy('user_id');
+
+        $data = DB::table('profiles')
+            ->join('users', 'users.id', '=', 'profiles.user_id')
+            ->leftJoinSub($lastActiveQuery, 'last_log', function ($join) {
+                $join->on('profiles.user_id', '=', 'last_log.user_id');
+            })
+            ->leftJoinSub($active7Query, 'active7', function ($join) {
+                $join->on('profiles.user_id', '=', 'active7.user_id');
+            })
+            ->where('profiles.user_id', $userId)
+            ->select([
+                'profiles.user_id',
+                'users.name',
+                'profiles.streak_current',
+                'profiles.streak_best',
+                'profiles.last_active_date',
+                'last_log.last_active_at',
+            ])
+            ->selectRaw('COALESCE(active7.active_days_last_7d, 0) as active_days_last_7d')
+            ->selectRaw("
+                CASE 
+                    WHEN profiles.last_active_date < ? THEN 0 
+                    ELSE COALESCE(profiles.streak_current, 0) 
+                END as effective_streak
+            ", [$ghostThresholdDate])
+            ->first();
+
+        // Handle jika user baru (belum ada profile) -> Return dummy object
+        if (!$data) {
+            $user = DB::table('users')->find($userId);
+            return (object) [
+                'user_id' => $userId,
+                'name' => $user->name ?? 'You',
+                'effective_streak' => 0,
+                'streak_best' => 0,
+                'active_days_last_7d' => 0,
+                'last_active_at' => null
+            ];
+        }
+
+        return $data;
     }
 }

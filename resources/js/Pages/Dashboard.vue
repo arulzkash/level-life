@@ -416,17 +416,27 @@ const onDragEnd = () => {
 
                             <div class="mt-1 flex flex-col items-center justify-center md:mt-2">
                                 <span
+                                    v-if="typeof leaderboardData?.rank === 'number'"
                                     class="text-3xl font-black md:text-4xl"
-                                    :class="getRankClass(leaderboardData?.rank)"
+                                    :class="getRankClass(leaderboardData.rank)"
                                 >
-                                    #{{ leaderboardData?.rank ?? '-' }}
+                                    #{{ leaderboardData.rank }}
                                 </span>
+
+                                <span
+                                    v-else-if="leaderboardData?.rank === '50+'"
+                                    class="text-2xl font-black text-slate-500 md:text-3xl"
+                                >
+                                    50+
+                                </span>
+
+                                <span v-else class="text-3xl font-black text-slate-600 md:text-4xl">—</span>
 
                                 <div class="mt-1 flex items-center justify-center gap-1">
                                     <span class="text-xs">🏆</span>
 
                                     <span
-                                        v-if="leaderboardData?.rank === 1"
+                                        v-if="leaderboardData?.rival?.is_king"
                                         class="text-[10px] font-bold text-yellow-500 md:text-xs"
                                     >
                                         King
@@ -440,6 +450,16 @@ const onDragEnd = () => {
                                         <span class="text-slate-300 group-hover:text-white">
                                             {{ leaderboardData.rival.name }}
                                         </span>
+                                        <span class="ml-1 text-slate-600">
+                                            (-{{ leaderboardData.rival.gap }})
+                                        </span>
+                                    </span>
+
+                                    <span
+                                        v-else
+                                        class="text-[10px] font-medium text-indigo-400 underline-offset-2 group-hover:underline md:text-xs"
+                                    >
+                                        {{ leaderboardData?.message || 'Check Leaderboard' }}
                                     </span>
                                 </div>
                             </div>
@@ -759,7 +779,7 @@ const onDragEnd = () => {
                                             class="cursor-pointer rounded border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider transition-colors hover:opacity-80"
                                             :class="
                                                 q.status === 'in_progress'
-                                                    ? 'border-indigo-700 bg-indigo-900 text-indigo-300 ring-1 ring-indigo-500/40 shadow-[0_0_10px_rgba(99,102,241,0.2)]'
+                                                    ? 'border-indigo-700 bg-indigo-900 text-indigo-300 shadow-[0_0_10px_rgba(99,102,241,0.2)] ring-1 ring-indigo-500/40'
                                                     : 'border-slate-600 bg-slate-700 text-slate-300'
                                             "
                                         >
@@ -792,7 +812,7 @@ const onDragEnd = () => {
                                             class="flex items-center gap-1"
                                             :class="
                                                 q.due_date < today
-                                                    ? 'font-bold text-red-400 rounded bg-red-500/10 px-1'
+                                                    ? 'rounded bg-red-500/10 px-1 font-bold text-red-400'
                                                     : ''
                                             "
                                         >
@@ -1057,6 +1077,6 @@ input[type='date']::-webkit-calendar-picker-indicator {
 }
 
 .sortable-drag {
-    @apply transform-none shadow-none cursor-grabbing !important;
+    @apply transform-none cursor-grabbing shadow-none !important;
 }
 </style>
