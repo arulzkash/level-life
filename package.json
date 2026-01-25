@@ -22,6 +22,7 @@
     "dependencies": {
         "canvas-confetti": "^1.9.4",
         "lodash": "^4.17.21",
+        "twemoji": "^14.0.2",
         "vuedraggable": "^4.1.0"
     }
 }

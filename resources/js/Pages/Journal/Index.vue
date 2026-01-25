@@ -469,13 +469,13 @@ const scrollToSection = async (id) => {
                                 v-for="emoji in MOOD_OPTIONS"
                                 :key="emoji"
                                 @click="form.mood_emoji = emoji"
-                                class="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-700 bg-slate-800 text-lg transition-all hover:-translate-y-0.5 hover:border-sky-500 hover:bg-slate-700 hover:shadow-lg hover:shadow-sky-500/20 active:scale-95"
+                                class="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-700 bg-slate-800 text-xl transition-all hover:-translate-y-0.5 hover:border-sky-500 hover:bg-slate-700 hover:shadow-lg hover:shadow-sky-500/20 active:scale-95"
                                 :class="{
                                     'border-sky-500 bg-sky-500/20 shadow-[0_0_10px_rgba(14,165,233,0.3)] ring-2 ring-sky-500':
                                         form.mood_emoji === emoji,
                                 }"
                             >
-                                {{ emoji }}
+                                <span v-twemoji="emoji"></span>
                             </button>
                         </div>
                     </div>

@@ -259,7 +259,7 @@ const clearSearch = () => {
 
                                 <div class="flex h-full w-full items-center justify-center">
                                     <div v-if="entriesByDate.get(c.dateKey)?.mood_emoji" class="text-lg md:text-2xl">
-                                        {{ entriesByDate.get(c.dateKey).mood_emoji }}
+                                        <span v-twemoji="entriesByDate.get(c.dateKey).mood_emoji"></span>
                                     </div>
                                 </div>
                             </button>
@@ -321,7 +321,7 @@ const clearSearch = () => {
 
                                 <div class="min-w-0 flex-1">
                                     <div class="flex flex-wrap items-center gap-2">
-                                        <div v-if="e.mood_emoji" class="text-lg md:text-xl">{{ e.mood_emoji }}</div>
+                                        <div v-if="e.mood_emoji" class="text-lg md:text-xl"><span v-twemoji="e.mood_emoji"></span></div>
                                         <div class="min-w-0 truncate text-sm font-black text-white md:text-base">
                                             {{ e.title }}
                                         </div>
