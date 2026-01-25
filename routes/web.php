@@ -90,6 +90,7 @@ Route::middleware('auth')->group(function () {
 
         // actions
         Route::post('/', [HabitController::class, 'store']);
+        Route::patch('/{habit}', [HabitController::class, 'update']);
         Route::patch('/{habit}/toggle', [HabitController::class, 'toggleToday']);
         Route::patch('/{habit}/archive', [HabitController::class, 'archive']);
         Route::patch('/{habit}/unarchive', [HabitController::class, 'unarchive']);

@@ -101,6 +101,24 @@ class HabitController extends Controller
         return redirect()->back();
     }
 
+    public function update(Request $request, Habit $habit)
+    {
+        abort_unless($habit->user_id === $request->user()->id, 403);
+
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+        ]);
+
+        $habit->update([
+            'name' => $data['name'],
+        ]);
+
+        // INVALIDASI CACHE: Biar nama baru muncul di dashboard
+        $this->clearDashboardCache($request->user());
+
+        return redirect()->back();
+    }
+
     public function archive(Request $request, Habit $habit)
     {
         abort_unless($habit->user_id === $request->user()->id, 403);
