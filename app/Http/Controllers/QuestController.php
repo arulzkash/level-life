@@ -109,139 +109,161 @@ class QuestController extends Controller
             return redirect()->back();
         }
 
-        // Mark as done locally
-        if (! $quest->is_repeatable) {
-            $quest->update(['status' => 'done', 'completed_at' => now()]);
-        }
+        $user = $request->user();
 
-        // Log completion
-        $request->user()->questCompletions()->create([
-            'quest_id' => $quest->id,
-            'xp_awarded' => $quest->xp_reward,
-            'coin_awarded' => $quest->coin_reward,
-            'completed_at' => now(),
-            'note' => $data['note'] ?? null,
-        ]);
+        // pakai Jakarta biar konsisten sama sistemmu
+        $today = Carbon::now('Asia/Jakarta')->startOfDay();
+        $todayStr = $today->toDateString();
 
-        // --- CORE LOGIC: STREAK & FREEZE SYSTEM (LAZY UPDATE) ---
-        $profile = $request->user()->profile;
+        $profile = null; // supaya bisa dipakai setelah commit
 
-        // PENTING: Gunakan startOfDay untuk komparasi tanggal murni
-        $today = now()->startOfDay();
+        DB::transaction(function () use ($user, $quest, $data, $today, $todayStr, &$profile) {
+            // LOCK profile row (anti race + konsisten)
+            $profile = $user->profile()
+                ->lockForUpdate()
+                ->first([
+                    'id',
+                    'user_id',
+                    'xp_total',
+                    'coin_balance',
+                    'streak_current',
+                    'streak_best',
+                    'last_active_date',
+                    'freezes_used_week_start',
+                    'freezes_used_count',
+                    'freezes_used_total',
+                    'streak_resets_total',
+                    'streak_maintained_through',
+                    'current_streak',
+                    'last_quest_completed_at',
+                ]);
 
+            // kalau somehow belum ada profile
+            if (! $profile) {
+                // minimal: buat profile atau abort
+                // abort(500, 'Profile missing');
+                $profile = $user->profile()->create([
+                    'xp_total' => 0,
+                    'coin_balance' => 0,
+                    'streak_current' => 0,
+                    'streak_best' => 0,
+                ]);
+            }
 
+            // Mark quest done kalau non-repeatable
+            if (! $quest->is_repeatable && $quest->status !== 'done') {
+                $quest->update([
+                    'status' => 'done',
+                    'completed_at' => now(),
+                ]);
+            }
 
-        // 2. Streak Calculation
-        if ($profile->last_active_date) {
-            $lastActive = Carbon::parse($profile->last_active_date)->startOfDay();
-            $diffInDays = $lastActive->diffInDays($today); // Selisih hari absolut
+            // Log completion (wajib)
+            $user->questCompletions()->create([
+                'quest_id' => $quest->id,
+                'xp_awarded' => $quest->xp_reward,
+                'coin_awarded' => $quest->coin_reward,
+                'completed_at' => now(),
+                'note' => $data['note'] ?? null,
+            ]);
 
-            if ($diffInDays == 0) {
-                // Kasus A: Masih hari yang sama.
-                // Tidak ada perubahan streak.
-            } elseif ($diffInDays == 1) {
-                // Kasus B: Login besoknya (Perfect Streak).
-                $profile->streak_current++;
-            } else {
-                // Kasus C: Ada Gap (Bolong)
-                $weekStartOf = function (Carbon $d) {
-                    return $d->copy()->startOfWeek(Carbon::MONDAY)->toDateString();
-                };
+            // --- CORE LOGIC: STREAK & FREEZE SYSTEM (LAZY UPDATE) ---
+            if ($profile->last_active_date) {
+                $lastActive = Carbon::parse($profile->last_active_date, 'Asia/Jakarta')->startOfDay();
+                $diffInDays = $lastActive->diffInDays($today);
 
-                // rentang hari yang miss: (lastActive+1) .. (today-1)
-                $missStart = $lastActive->copy()->addDay()->startOfDay();
-                $missEnd = $today->copy()->subDay()->startOfDay();
+                if ($diffInDays == 0) {
+                    // same day: no change
+                } elseif ($diffInDays == 1) {
+                    $profile->streak_current++;
+                } else {
+                    $weekStartOf = function (Carbon $d) {
+                        return $d->copy()->startOfWeek(Carbon::MONDAY)->toDateString();
+                    };
 
-                // Pastikan window freeze start ada (kalau null, anggap minggu lastActive)
-                if (!$profile->freezes_used_week_start) {
-                    $profile->freezes_used_week_start = $weekStartOf($lastActive);
-                    $profile->freezes_used_count = (int) ($profile->freezes_used_count ?? 0);
-                }
+                    $missStart = $lastActive->copy()->addDay()->startOfDay();
+                    $missEnd   = $today->copy()->subDay()->startOfDay();
 
-                $freezeFailed = false;
+                    if (! $profile->freezes_used_week_start) {
+                        $profile->freezes_used_week_start = $weekStartOf($lastActive);
+                        $profile->freezes_used_count = (int) ($profile->freezes_used_count ?? 0);
+                    }
 
-                if ($missStart->lte($missEnd)) {
-                    $cursor = $missStart->copy();
+                    $freezeFailed = false;
 
-                    while ($cursor->lte($missEnd)) {
-                        $ws = $weekStartOf($cursor);
-                        $weekStartDate = Carbon::parse($ws)->startOfDay();
-                        $weekEndDate = $weekStartDate->copy()->addDays(6)->startOfDay();
+                    if ($missStart->lte($missEnd)) {
+                        $cursor = $missStart->copy();
 
-                        // segment minggu ini: cursor .. min(missEnd, weekEnd)
-                        $segEnd = $weekEndDate->lt($missEnd) ? $weekEndDate : $missEnd;
-                        $daysInThisWeek = $cursor->diffInDays($segEnd) + 1; // inclusive
+                        while ($cursor->lte($missEnd)) {
+                            $ws = $weekStartOf($cursor);
+                            $weekStartDate = Carbon::parse($ws, 'Asia/Jakarta')->startOfDay();
+                            $weekEndDate   = $weekStartDate->copy()->addDays(6)->startOfDay();
 
-                        // kalau kita sedang “mengonsumsi” minggu berbeda, reset count untuk minggu tsb
-                        if ($profile->freezes_used_week_start !== $ws) {
-                            $profile->freezes_used_week_start = $ws;
-                            $profile->freezes_used_count = 0;
+                            $segEnd = $weekEndDate->lt($missEnd) ? $weekEndDate : $missEnd;
+                            $daysInThisWeek = $cursor->diffInDays($segEnd) + 1;
+
+                            if ($profile->freezes_used_week_start !== $ws) {
+                                $profile->freezes_used_week_start = $ws;
+                                $profile->freezes_used_count = 0;
+                            }
+
+                            $used = (int) ($profile->freezes_used_count ?? 0);
+                            $left = max(0, 2 - $used);
+
+                            if ($daysInThisWeek > $left) {
+                                $freezeFailed = true;
+                                break;
+                            }
+
+                            $profile->freezes_used_count = $used + $daysInThisWeek;
+                            $profile->freezes_used_total = (int) ($profile->freezes_used_total ?? 0) + $daysInThisWeek;
+
+                            $cursor = $segEnd->copy()->addDay();
                         }
+                    }
 
-                        $used = (int) ($profile->freezes_used_count ?? 0);
-                        $left = max(0, 2 - $used);
-
-                        if ($daysInThisWeek > $left) {
-                            $freezeFailed = true;
-                            break;
-                        }
-
-                        // consume sekaligus untuk minggu ini
-                        $profile->freezes_used_count = $used + $daysInThisWeek;
-                        $profile->freezes_used_total = (int) ($profile->freezes_used_total ?? 0) + $daysInThisWeek;
-
-                        // maju ke minggu berikutnya
-                        $cursor = $segEnd->copy()->addDay();
+                    if ($freezeFailed) {
+                        $profile->streak_current = 1;
+                        $profile->streak_resets_total = (int) ($profile->streak_resets_total ?? 0) + 1;
+                    } else {
+                        $profile->streak_current++;
+                        $profile->streak_maintained_through = $todayStr;
                     }
                 }
-
-                if ($freezeFailed) {
-                    // fail => streak putus, tapi karena hari ini aktif, restart ke 1
-                    $profile->streak_current = 1;
-                    $profile->streak_resets_total = (int) ($profile->streak_resets_total ?? 0) + 1;
-                } else {
-                    // succeed => streak lanjut, hari ini aktif => +1
-                    $profile->streak_current++;
-                    $profile->streak_maintained_through = $today->toDateString();
-                }
+            } else {
+                $profile->streak_current = 1;
             }
-        } else {
-            // Kasus D: User baru pertama kali
-            $profile->streak_current = 1;
-        }
 
-        // Setelah streak dihitung, pastikan window freeze sekarang adalah minggu hari ini
-        $currentWeekStart = $today->copy()->startOfWeek(Carbon::MONDAY)->toDateString();
-        if ($profile->freezes_used_week_start !== $currentWeekStart) {
-            $profile->freezes_used_week_start = $currentWeekStart;
-            $profile->freezes_used_count = 0;
-        }
+            // ensure freeze window = minggu hari ini
+            $currentWeekStart = $today->copy()->startOfWeek(Carbon::MONDAY)->toDateString();
+            if ($profile->freezes_used_week_start !== $currentWeekStart) {
+                $profile->freezes_used_week_start = $currentWeekStart;
+                $profile->freezes_used_count = 0;
+            }
 
-        // 3. Save State
-        $profile->last_active_date = $today->toDateString();
+            // Save State
+            $profile->last_active_date = $todayStr;
 
-        // Update Best Streak Record
-        if ($profile->streak_current > $profile->streak_best) {
-            $profile->streak_best = $profile->streak_current;
-        }
+            if ($profile->streak_current > (int)($profile->streak_best ?? 0)) {
+                $profile->streak_best = $profile->streak_current;
+            }
 
-        // Legacy Sync (Opsional, buat jaga kompatibilitas UI lama)
-        $profile->current_streak = $profile->streak_current;
-        $profile->last_quest_completed_at = $today->toDateString();
+            // Legacy sync
+            $profile->current_streak = $profile->streak_current;
+            $profile->last_quest_completed_at = $todayStr;
 
-        // Update Economy
-        $profile->xp_total += $quest->xp_reward;
-        $profile->coin_balance += $quest->coin_reward;
+            // Economy
+            $profile->xp_total = (int)$profile->xp_total + (int)$quest->xp_reward;
+            $profile->coin_balance = (int)$profile->coin_balance + (int)$quest->coin_reward;
 
-        $profile->save();
-        // invalidate navbar profile cache
-        CacheBuster::onQuestMutate($request->user()->id);
+            $profile->save();
+        });
 
-        // 4. Badge Sync
-        // (Pastikan BadgeService sudah ada logic cek streak_best)
-        app(BadgeService::class)->syncForUser($request->user());
+        $user->setRelation('profile', $profile);
 
-        CacheBuster::onQuestComplete($request->user()->id);
+        app(BadgeService::class)->syncForUser($user);
+
+        CacheBuster::onQuestComplete($user->id);
 
         return redirect()->back();
     }

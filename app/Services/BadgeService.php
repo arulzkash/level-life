@@ -67,7 +67,7 @@ class BadgeService
         }
 
         if ($attach) {
-            $user->badges()->attach($attach);
+            $user->badges()->syncWithoutDetaching($attach);
         }
     }
 }
