@@ -9,6 +9,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Illuminate\Database\UniqueConstraintViolationException;
+use Illuminate\Support\Facades\Cache;
 
 class JournalPageController extends Controller
 {
@@ -96,7 +97,10 @@ class JournalPageController extends Controller
         $coin = (int)($data['coin_reward'] ?? 0);
 
         $entry = null;
-        
+
+        // flag untuk cache invalidate (hanya kalau ekonomi berubah)
+        $touchedEconomy = false;
+
 
         try {
             DB::transaction(function () use ($user, $data, $isToday, $xp, $coin, &$entry) {
@@ -131,6 +135,9 @@ class JournalPageController extends Controller
                     $entry->xp_awarded = $xp;
                     $entry->coin_awarded = $coin;
                     $entry->rewarded_at = now();
+
+                    // hanya set true kalau reward benar-benar applied
+                    $touchedEconomy = true;
                 }
 
                 $entry->save();
@@ -148,6 +155,11 @@ class JournalPageController extends Controller
                 'body' => $data['body'] ?? null,
                 'sections' => $data['sections'] ?? null,
             ]);
+        }
+
+        // nvalidate hanya kalau ekonomi berubah
+        if ($touchedEconomy) {
+            Cache::forget("nav_profile:{$user->id}");
         }
 
         // redirect balik ke date yang sama, supaya props.entry ke-load/update

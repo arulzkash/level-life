@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\TreasuryReward;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Cache;
 
 class TreasuryController extends Controller
 {
@@ -81,6 +82,8 @@ class TreasuryController extends Controller
         $profile->coin_balance -= $totalCost;
         $profile->save();
 
+
+
         // log purchase
         $request->user()->treasuryPurchases()->create([
             'treasury_reward_id' => $reward->id,
@@ -90,6 +93,8 @@ class TreasuryController extends Controller
             'purchased_at' => now(),
             'note' => $data['note'] ?? null,
         ]);
+
+        Cache::forget("nav_profile:{$request->user()->id}");
 
         return redirect()->back();
     }

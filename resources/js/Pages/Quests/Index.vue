@@ -39,7 +39,7 @@ watch(
             preserveScroll: true,
             replace: true,
         });
-    }, 300),
+    }, 800),
     { deep: true }
 );
 

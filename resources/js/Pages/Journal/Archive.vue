@@ -98,7 +98,7 @@ const runSearch = debounce(() => {
         { month: props.month, q: searchQuery.value || undefined },
         { preserveScroll: true, preserveState: true }
     );
-}, 250);
+}, 800);
 
 watch(searchQuery, () => runSearch());
 

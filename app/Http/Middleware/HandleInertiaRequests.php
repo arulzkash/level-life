@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use Illuminate\Http\Request;
 use Inertia\Middleware;
+use Illuminate\Support\Facades\Cache;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -27,14 +28,35 @@ class HandleInertiaRequests extends Middleware
      *
      * @return array<string, mixed>
      */
+
     public function share(Request $request): array
     {
-        return [
+        $shared = [
             ...parent::share($request),
             'auth' => [
-                'user' => $request->user(),
-                'profile' => $request->user() ? $request->user()->profile : null,
+                'user' => null,
+                'profile' => null,
             ],
         ];
+
+        $user = $request->user();
+
+        if (! $user) {
+            return $shared;
+        }
+
+        $profile = Cache::remember("nav_profile:{$user->id}", now()->addMinutes(10), function () use ($user) {
+            return $user->profile()
+                ->select(['id', 'user_id', 'coin_balance', 'xp_total'])
+                ->first();
+        });
+
+
+        $shared['auth'] = [
+            'user' => $user->only(['id', 'name', 'email']),
+            'profile' => $profile,
+        ];
+
+        return $shared;
     }
 }

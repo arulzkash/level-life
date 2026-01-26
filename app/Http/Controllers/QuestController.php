@@ -7,6 +7,7 @@ use App\Services\BadgeService;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 
 class QuestController extends Controller
 {
@@ -202,6 +203,8 @@ class QuestController extends Controller
         $profile->coin_balance += $quest->coin_reward;
 
         $profile->save();
+        // invalidate navbar profile cache
+        Cache::forget("nav_profile:{$request->user()->id}");
 
         // 4. Badge Sync
         // (Pastikan BadgeService sudah ada logic cek streak_best)
