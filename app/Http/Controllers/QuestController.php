@@ -47,19 +47,46 @@ class QuestController extends Controller
             'ordered_ids.*' => 'exists:quests,id',
         ]);
 
-        DB::transaction(function () use ($request) {
-            $user = $request->user();
+        $user = $request->user();
+        $ids = array_values($request->ordered_ids);
 
-            foreach ($request->ordered_ids as $index => $id) {
-                DB::table('quests')
-                    ->where('id', $id)
-                    ->where('user_id', $user->id)
-                    ->update(['position' => $index + 1]);
+        if (count($ids) === 0) {
+            return redirect()->back();
+        }
+
+        DB::transaction(function () use ($user, $ids) {
+            // Build CASE WHEN ... THEN ...
+            $caseSql = 'CASE id ';
+            $bindings = [];
+
+            foreach ($ids as $index => $id) {
+                $caseSql .= 'WHEN ? THEN ? ';
+                $bindings[] = (int) $id;
+                $bindings[] = $index + 1; // position starts at 1
             }
+
+            $caseSql .= 'END';
+
+            // WHERE id IN (...)
+            $inPlaceholders = implode(',', array_fill(0, count($ids), '?'));
+            $bindings[] = (int) $user->id;
+            foreach ($ids as $id) {
+                $bindings[] = (int) $id;
+            }
+
+            $sql = "
+            UPDATE quests
+            SET position = {$caseSql}
+            WHERE user_id = ?
+              AND id IN ({$inPlaceholders})
+        ";
+
+            DB::update($sql, $bindings);
         });
 
         return redirect()->back();
     }
+
 
     public function complete(Request $request, Quest $quest)
     {
