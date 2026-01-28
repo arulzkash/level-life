@@ -128,5 +128,7 @@ Route::middleware('auth')->group(function () {
 
 // Route khusus buat UptimeRobot "nyolek" server
 Route::get('/up', function () {
-    return 'Up';
+    return response('Up', 200)
+        ->header('Content-Type', 'text/plain')
+        ->header('Cache-Control', 'no-cache, no-store, must-revalidate');
 });

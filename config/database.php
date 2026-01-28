@@ -56,7 +56,12 @@ return [
             'engine' => null,
             'options' => extension_loaded('pdo_mysql') ? array_filter([
                 PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
-                
+
+                // Optimasi TiDB
+                PDO::ATTR_PERSISTENT => false,
+                PDO::ATTR_EMULATE_PREPARES => true,
+                PDO::ATTR_TIMEOUT => 5,
+
                 #cloud tidb
                 // PDO::MYSQL_ATTR_SSL_CA => base_path('storage/cacert.pem'),
 
