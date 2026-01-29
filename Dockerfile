@@ -1,9 +1,7 @@
-# 1. Gunakan Image PHP Official
-FROM php:8.2-cli
+# 1. Gunakan Image PHP dengan Apache (Otomatis Multi-Thread)
+FROM php:8.2-apache
 
-
-# 2. Install Library System yang dibutuhkan Laravel
-# PERUBAHAN: Ditambahkan 'libpq-dev' untuk support PostgreSQL
+# 2. Install Library System (Wajib ada libpq-dev buat Postgres)
 RUN apt-get update && apt-get install -y \
     git \
     unzip \
@@ -15,43 +13,40 @@ RUN apt-get update && apt-get install -y \
     curl \
     ca-certificates
 
-
 # 3. Install PHP Extensions
-# PERUBAHAN: Ganti 'pdo_mysql' menjadi 'pdo_pgsql' (dan opsional 'pgsql')
 RUN docker-php-ext-install pdo_pgsql pgsql mbstring exif pcntl bcmath gd
 
+# 4. Config Apache: Arahkan Document Root ke /public Laravel
+# Ini penting biar Apache tau folder mana yang harus dibuka
+ENV APACHE_DOCUMENT_ROOT /var/www/html/public
+RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
+RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf
 
-# 4. Install Node.js & NPM
+# 5. Aktifkan Mod Rewrite (Supaya routing Laravel jalan)
+RUN a2enmod rewrite
+
+# 6. Install Node.js & NPM
 RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
     && apt-get install -y nodejs
 
-
-# 5. Set Folder Kerja
+# 7. Set Folder Kerja
 WORKDIR /var/www/html
 
-
-# 6. Copy semua file project
+# 8. Copy Project
 COPY . .
 
-
-# 7. Install Composer
+# 9. Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 RUN composer install --no-dev --optimize-autoloader
 
-
-# 8. Build Aset Vue
+# 10. Build Aset Vue
 RUN npm install && npm run build
 
-
-# 9. Set Permission
+# 11. Permission (PENTING: Apache jalan sebagai user www-data)
 RUN chown -R www-data:www-data storage bootstrap/cache
 RUN chmod -R 775 storage bootstrap/cache
 
-
-# 10. Expose Port & Jalankan
-ENV PORT=10000
-EXPOSE 10000
-
-
-# Script start-up standard
-CMD sh -c "php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=10000"
+# 12. Jalankan Apache
+# Hapus "php artisan serve". Kita pakai "apache2-foreground"
+# Render otomatis mapping port 80 internal ke port luar
+CMD sh -c "php artisan migrate --force && apache2-foreground"

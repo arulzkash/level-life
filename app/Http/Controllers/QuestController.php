@@ -24,7 +24,6 @@ class QuestController extends Controller
             'is_repeatable' => ['required', 'boolean'],
         ]);
 
-        // $data['is_repeatable'] = $request->boolean('is_repeatable');
         $data['is_repeatable'] = $request->boolean('is_repeatable');
 
         if ($data['is_repeatable']) {
