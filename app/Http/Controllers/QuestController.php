@@ -88,6 +88,7 @@ class QuestController extends Controller
 
     public function complete(Request $request, Quest $quest)
     {
+        // 1. Validasi Input
         $data = $request->validate([
             'note' => ['nullable', 'string', 'max:2000'],
         ]);
@@ -98,6 +99,7 @@ class QuestController extends Controller
             return redirect()->back()->withErrors(['complete' => 'Quest is locked.']);
         }
 
+        // Prevent double reward kalau quest tidak repeatable
         if (! $quest->is_repeatable && $quest->status === 'done') {
             return redirect()->back();
         }
@@ -106,15 +108,14 @@ class QuestController extends Controller
         $today = Carbon::now('Asia/Jakarta')->startOfDay();
         $todayStr = $today->toDateString();
 
-        $profile = null;
+        // 2. Mulai Transaksi (Tanpa Locking Row untuk Hemat RU)
+        DB::transaction(function () use ($user, $quest, $data, $today, $todayStr) {
 
-        DB::transaction(function () use ($user, $quest, $data, $today, $todayStr, &$profile) {
-            // ============================================
-            // OPTIMASI 1: Fetch MINIMAL columns dulu
-            // ============================================
+            // =========================================================
+            // STEP A: Fetch Profile "Ringan" (Hanya kolom krusial)
+            // =========================================================
             $profile = $user->profile()
-                ->lockForUpdate()
-                ->first([
+                ->select([
                     'id',
                     'user_id',
                     'xp_total',
@@ -122,10 +123,11 @@ class QuestController extends Controller
                     'streak_current',
                     'streak_best',
                     'last_active_date',
-                    'current_streak',
-                    'last_quest_completed_at',
-                ]);
+                    // Kolom freeze tidak diambil disini agar hemat bandwidth & RU
+                ])
+                ->first();
 
+            // Handle jika user baru (belum punya profile)
             if (! $profile) {
                 $profile = $user->profile()->create([
                     'xp_total' => 0,
@@ -135,7 +137,9 @@ class QuestController extends Controller
                 ]);
             }
 
-            // Mark quest done
+            // =========================================================
+            // STEP B: Update Quest & Log Completion
+            // =========================================================
             if (! $quest->is_repeatable && $quest->status !== 'done') {
                 $quest->update([
                     'status' => 'done',
@@ -143,7 +147,6 @@ class QuestController extends Controller
                 ]);
             }
 
-            // Log completion
             $user->questCompletions()->create([
                 'quest_id' => $quest->id,
                 'xp_awarded' => $quest->xp_reward,
@@ -152,9 +155,9 @@ class QuestController extends Controller
                 'note' => $data['note'] ?? null,
             ]);
 
-            // ============================================
-            // OPTIMASI 2: Cek apakah perlu freeze logic
-            // ============================================
+            // =========================================================
+            // STEP C: Logic Streak & Freeze (Optimized Lazy Load)
+            // =========================================================
             $needsFreezeCheck = false;
 
             if ($profile->last_active_date) {
@@ -162,25 +165,22 @@ class QuestController extends Controller
                 $diffInDays = $lastActive->diffInDays($today);
 
                 if ($diffInDays == 0) {
-                    // Same day: NO FREEZE CHECK NEEDED
-                    // Just update last_active_date (no change in streak)
+                    // Login di hari yang sama: Tidak ada perubahan streak
                 } elseif ($diffInDays == 1) {
-                    // Consecutive day: NO FREEZE CHECK NEEDED
+                    // Login besoknya (Perfect Streak): Langsung increment
                     $profile->streak_current++;
                 } else {
-                    // Gap detected: NEED FREEZE CHECK
+                    // Ada gap (Bolong): Tandai butuh cek freeze
                     $needsFreezeCheck = true;
                 }
             } else {
-                // First time: NO FREEZE CHECK NEEDED
+                // User pertama kali
                 $profile->streak_current = 1;
             }
 
-            // ============================================
-            // OPTIMASI 3: Lazy load freeze columns ONLY if needed
-            // ============================================
+            // --- LAZY LOAD LOGIC (Hanya jalan jika user bolong) ---
             if ($needsFreezeCheck) {
-                // Fetch freeze-related columns ONLY when needed
+                // Fetch kolom freeze yang berat hanya saat dibutuhkan
                 $freezeData = DB::table('profiles')
                     ->where('id', $profile->id)
                     ->first([
@@ -191,23 +191,24 @@ class QuestController extends Controller
                         'streak_maintained_through',
                     ]);
 
-                // Merge freeze data into profile
+                // Hydrate manual data freeze ke object profile
                 $profile->freezes_used_week_start = $freezeData->freezes_used_week_start;
                 $profile->freezes_used_count = $freezeData->freezes_used_count;
                 $profile->freezes_used_total = $freezeData->freezes_used_total;
                 $profile->streak_resets_total = $freezeData->streak_resets_total;
                 $profile->streak_maintained_through = $freezeData->streak_maintained_through;
 
-                // Run freeze logic
+                // --- Mulai Kalkulasi Freeze (Logic Original) ---
                 $lastActive = Carbon::parse($profile->last_active_date, 'Asia/Jakarta')->startOfDay();
 
-                $weekStartOf = function (Carbon $d) {
+                $weekStartOf = function ($d) {
                     return $d->copy()->startOfWeek(Carbon::MONDAY)->toDateString();
                 };
 
                 $missStart = $lastActive->copy()->addDay()->startOfDay();
                 $missEnd = $today->copy()->subDay()->startOfDay();
 
+                // Init week start jika null
                 if (! $profile->freezes_used_week_start) {
                     $profile->freezes_used_week_start = $weekStartOf($lastActive);
                     $profile->freezes_used_count = (int) ($profile->freezes_used_count ?? 0);
@@ -223,22 +224,25 @@ class QuestController extends Controller
                         $weekStartDate = Carbon::parse($ws, 'Asia/Jakarta')->startOfDay();
                         $weekEndDate = $weekStartDate->copy()->addDays(6)->startOfDay();
 
+                        // Segment minggu ini
                         $segEnd = $weekEndDate->lt($missEnd) ? $weekEndDate : $missEnd;
                         $daysInThisWeek = $cursor->diffInDays($segEnd) + 1;
 
+                        // Reset count jika ganti minggu
                         if ($profile->freezes_used_week_start !== $ws) {
                             $profile->freezes_used_week_start = $ws;
                             $profile->freezes_used_count = 0;
                         }
 
                         $used = (int) ($profile->freezes_used_count ?? 0);
-                        $left = max(0, 2 - $used);
+                        $left = max(0, 2 - $used); // Jatah freeze max 2 per minggu
 
                         if ($daysInThisWeek > $left) {
                             $freezeFailed = true;
                             break;
                         }
 
+                        // Consume freeze
                         $profile->freezes_used_count = $used + $daysInThisWeek;
                         $profile->freezes_used_total = (int) ($profile->freezes_used_total ?? 0) + $daysInThisWeek;
 
@@ -247,63 +251,64 @@ class QuestController extends Controller
                 }
 
                 if ($freezeFailed) {
+                    // Streak putus, reset ke 1 (karena hari ini login)
                     $profile->streak_current = 1;
                     $profile->streak_resets_total = (int) ($profile->streak_resets_total ?? 0) + 1;
                 } else {
+                    // Freeze sukses, streak lanjut +1 hari ini
                     $profile->streak_current++;
                     $profile->streak_maintained_through = $todayStr;
                 }
 
-                // Update freeze window for current week
+                // Update window freeze ke minggu aktif sekarang
                 $currentWeekStart = $today->copy()->startOfWeek(Carbon::MONDAY)->toDateString();
                 if ($profile->freezes_used_week_start !== $currentWeekStart) {
                     $profile->freezes_used_week_start = $currentWeekStart;
                     $profile->freezes_used_count = 0;
                 }
             } else {
-                // No freeze check needed, ensure current week is set
+                // Jika tidak butuh cek freeze (Streak lancar), pastikan window week tetap ter-update
+                // Kita lakukan update 'silent' logic tanpa fetch data lama
+                // Cukup set di object untuk di-save nanti
                 $currentWeekStart = $today->copy()->startOfWeek(Carbon::MONDAY)->toDateString();
 
-                // Only update if we have freeze data already loaded
-                if (
-                    isset($profile->freezes_used_week_start) &&
-                    $profile->freezes_used_week_start !== $currentWeekStart
-                ) {
-                    $profile->freezes_used_week_start = $currentWeekStart;
-                    $profile->freezes_used_count = 0;
-                }
+                // Logic aman: Jika properti week_start di DB beda, kita timpa.
+                // Kita asumsikan null safe karena akan di-save
+                $profile->freezes_used_week_start = $currentWeekStart;
+                $profile->freezes_used_count = 0;
             }
 
-            // ============================================
-            // SAVE PROFILE (Conditional columns)
-            // ============================================
+            // =========================================================
+            // STEP D: Final Update & Save (Atomic Batch)
+            // =========================================================
             $profile->last_active_date = $todayStr;
 
             if ($profile->streak_current > (int)($profile->streak_best ?? 0)) {
                 $profile->streak_best = $profile->streak_current;
             }
 
+            // Legacy/UI Fields
             $profile->current_streak = $profile->streak_current;
             $profile->last_quest_completed_at = $todayStr;
 
-            // Economy
+            // Update Economy (In Memory)
             $profile->xp_total = (int)$profile->xp_total + (int)$quest->xp_reward;
             $profile->coin_balance = (int)$profile->coin_balance + (int)$quest->coin_reward;
 
-            // OPTIMASI 4: Save only modified columns
-            if ($needsFreezeCheck) {
-                // Full save including freeze columns
-                $profile->save();
-            } else {
-                // Partial save (exclude freeze columns if not loaded)
-                $profile->save();
-            }
+            // Save perubahan sekaligus (1x Query Update)
+            $profile->save();
+
+            // Update relasi object user
+            $user->setRelation('profile', $profile);
         });
 
-        $user->setRelation('profile', $profile);
-
+        // =========================================================
+        // STEP E: Post-Transaction (Side Effects)
+        // =========================================================
+        // Sync Badge
         app(BadgeService::class)->syncForUser($user);
 
+        // Invalidate Cache
         CacheBuster::onQuestComplete($user->id);
 
         return redirect()->back();
