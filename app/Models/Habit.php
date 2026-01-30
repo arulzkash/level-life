@@ -14,6 +14,10 @@ class Habit extends Model
         'end_date',
     ];
 
+    protected $casts = [
+        'id' => 'string',
+    ];
+
     public function user()
     {
         return $this->belongsTo(User::class);

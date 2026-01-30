@@ -26,6 +26,10 @@ class Profile extends Model
     // INI BARU: Memberitahu Laravel untuk selalu menyertakan atribut 'level_data' saat model diubah jadi JSON/Array
     protected $appends = ['level_data'];
 
+    protected $casts = [
+        'id' => 'string',
+    ];
+
     public function user()
     {
         return $this->belongsTo(User::class);

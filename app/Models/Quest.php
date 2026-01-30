@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 
 class Quest extends Model
@@ -20,6 +21,33 @@ class Quest extends Model
         'is_repeatable',
         'position',
     ];
+
+    // --- MUTATOR SAKTI ---
+    protected $casts = [
+        'id' => 'string',
+    ];
+    
+    protected function isRepeatable(): Attribute
+    {
+        return Attribute::make(
+            // GET (Dari DB ke Frontend): 
+            // Pastikan apapun yang keluar dari DB ('t', 'TRUE', 1) jadi boolean true/false
+            get: function ($value) {
+                if (is_bool($value)) return $value;
+                return in_array($value, [1, '1', 't', 'true', 'TRUE'], true);
+            },
+
+            // SET (Dari Controller ke DB):
+            // Terima boolean true/false, ubah jadi string 't'/'f' buat Postgres
+            set: function ($value) {
+                // Handle false/0/'f' dengan tegas
+                if ($value === false || $value === 0 || $value === '0' || $value === 'f' || $value === 'false') {
+                    return 'f';
+                }
+                return 't';
+            }
+        );
+    }
 
 
     public function user()

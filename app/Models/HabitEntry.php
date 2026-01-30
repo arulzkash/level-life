@@ -13,6 +13,10 @@ class HabitEntry extends Model
         'note',
     ];
 
+    protected $casts = [
+        'id' => 'string',
+    ];
+
     public function user()
     {
         return $this->belongsTo(User::class);
@@ -23,4 +27,3 @@ class HabitEntry extends Model
         return $this->belongsTo(Habit::class);
     }
 }
-

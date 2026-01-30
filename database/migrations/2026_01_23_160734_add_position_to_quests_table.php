@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
+    public $withinTransaction = false;
     public function up()
     {
         Schema::table('quests', function (Blueprint $table) {

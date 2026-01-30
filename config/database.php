@@ -103,7 +103,14 @@ return [
             'prefix' => '',
             'prefix_indexes' => true,
             'search_path' => 'public',
-            'sslmode' => 'prefer',
+            'sslmode' => env('DB_SSLMODE', 'prefer'),
+            // OPSI WAJIB BUAT RENDER & COCKROACHDB:
+            'options' => [
+                // 1. Hemat CPU Render: Pakai koneksi yg sama berulang-ulang
+                PDO::ATTR_PERSISTENT => true,
+                // 2. Mencegah error prepared statement
+                PDO::ATTR_EMULATE_PREPARES => true,
+            ],
         ],
 
         'sqlsrv' => [

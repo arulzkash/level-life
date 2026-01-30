@@ -10,6 +10,7 @@ class JournalTemplate extends Model
 
     protected $casts = [
         'sections' => 'array',
+        'id' => 'string',
     ];
 }
 

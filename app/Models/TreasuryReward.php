@@ -16,6 +16,10 @@ class TreasuryReward extends Model
         'cost_coin',
     ];
 
+    protected $casts = [
+        'id' => 'string',
+    ];
+
     public function user()
     {
         return $this->belongsTo(User::class);

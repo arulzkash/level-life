@@ -17,6 +17,10 @@ class TreasuryPurchase extends Model
         'note',
     ];
 
+    protected $casts = [
+        'id' => 'string',
+    ];
+
 
     public function user()
     {
