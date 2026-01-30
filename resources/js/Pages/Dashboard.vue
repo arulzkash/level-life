@@ -387,7 +387,7 @@ const onDragEnd = () => {
                             </span>
                             <div class="mt-1 flex flex-col items-center justify-center gap-1 md:mt-2">
                                 <span class="text-xl font-black text-orange-500 md:text-3xl">
-                                    {{ profile.current_streak }}
+                                    {{ profile.streak_current }}
                                 </span>
                                 <span class="text-xs text-slate-500 md:text-sm">🔥 Days</span>
                             </div>

@@ -70,7 +70,7 @@ class HandleInertiaRequests extends Middleware
         $profile = Cache::remember($profileCacheKey, 86400, function () use ($userId) {
             // PENTING: Query langsung ke Profile, BUKAN pakai relationship
             // Ini menghindari Laravel load relationship yang bisa trigger query tambahan
-            return Profile::select(['id', 'user_id', 'coin_balance', 'xp_total', 'current_streak'])
+            return Profile::select(['id', 'user_id', 'coin_balance', 'xp_total'])
                 ->where('user_id', $userId)
                 ->first();
         });

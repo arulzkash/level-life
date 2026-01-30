@@ -18,7 +18,7 @@ class DashboardController extends Controller
 
         // PROFILE
         $profile = $user->profile()
-            ->select(['id', 'user_id', 'coin_balance', 'xp_total', 'current_streak'])
+            ->select(['id', 'user_id', 'coin_balance', 'xp_total', 'streak_current'])
             ->first();
 
 
