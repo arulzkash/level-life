@@ -1,105 +1,146 @@
-# Level Life - Gamified Productivity System ⚔️
+# Level Life ⚔️🛡️
 
-<img width="1892" height="954" alt="Screenshot 2026-01-17 100207" src="https://github.com/user-attachments/assets/9011f54c-4c54-49d3-b282-a387c41a8880" />
+**Level Life** is a gamified productivity platform that transforms daily tasks, habits, and schedules into an engaging RPG experience. 
 
+Built with **Laravel 11** and **Vue 3 (Inertia.js)**, this project demonstrates a **modern monolithic architecture** that combines the SEO and routing simplicity of a backend framework with the reactivity of a client-side SPA.
 
+![Laravel](https://img.shields.io/badge/Laravel-11-FF2D20?logo=laravel)
+![Vue](https://img.shields.io/badge/Vue.js-3-4FC08D?logo=vue.js)
+![Inertia](https://img.shields.io/badge/Inertia.js-Monolith-purple)
+![Tailwind](https://img.shields.io/badge/Tailwind-CSS-38B2AC?logo=tailwind-css)
+![Status](https://img.shields.io/badge/status-active-success)
 
-**Level Life** is a web-based productivity application that transforms daily tasks, habits, and schedules into an engaging RPG-like experience. Built with **Laravel 11** and **Vue 3 (Inertia.js)**, this project demonstrates a monolithic architecture focused on handling business logic for gamification, virtual economy, and time management.
+![Dashboard Screenshot]<img width="1893" height="958" alt="Screenshot 2026-02-02 113011" src="https://github.com/user-attachments/assets/24eaa598-43c6-4840-83d4-de0a8519a2b1" />
+![Leaderboard Screenshot]<img width="1876" height="952" alt="Screenshot 2026-02-02 114258" src="https://github.com/user-attachments/assets/34431eee-8ef0-434e-aa50-b04d625229ad" />
 
-## 🚀 Overview
+## 💡 Philosophy & The Problem
 
-The core problem this application solves is "productivity friction." By adding immediate feedback loops (XP, Gold, Level Ups) to mundane tasks, it encourages user consistency.
+Productivity often fails due to a lack of **consistency** and the feeling of being overwhelmed. Level Life tackles this by enforcing a **"Start Small"** philosophy:
 
-As a **Backend-focused project**, the highlight lies in the logic governing the economy (earning/spending), streak calculations, and state management for repeatable quests versus one-time missions.
+1.  **Immediate Feedback:** Every small task completed gives instant XP and Gold, hacking the brain's reward system.
+2.  **Daily Awareness:** The system encourages users to focus on *today's* target via Time Blocks and limited Quests, preventing burnout.
+3.  **Frictionless Consistency:** Gamified streaks and "freeze" items allow users to be human (miss a day) without losing their momentum entirely.
+
+## 🏗️ Technical Highlights
+
+This project focuses on **High-Performance Monolith** patterns, minimizing database costs while ensuring a snappy frontend experience.
+
+### 1. Modern Monolithic Architecture (Inertia.js)
+Unlike traditional API-based stacks (which require separate routing and state syncing), Level Life uses **Inertia.js** to create a tightly coupled Fullstack environment:
+- **Shared Validation:** Backend validation logic is automatically reflected in the Frontend UI without duplicating code.
+- **Server-Driven Routing:** Retains the security and simplicity of Laravel routes while delivering a seamless SPA (Single Page Application) user experience.
+- **Zero API Overhead:** Eliminates the need for REST/GraphQL serialization for internal views, speeding up development and response times.
+
+### 2. High-Efficiency Shared Caching (Backend Optimization)
+Calculating the leaderboard involves heavy aggregation. To minimize Database Read Units (RU):
+- **Shared Cache Strategy:** The global leaderboard is computed once and cached with a 24-hour TTL.
+- **Derived State:** The dashboard does **not** query the database for "My Rank." Instead, it performs an efficient in-memory lookup within the cached global roster.
+- **Event-Driven Invalidation:** The cache is strictly rebuilt only when a relevant write event (e.g., Quest Completion) occurs.
+
+### 3. Robust Streak & "Freeze" Logic
+The application implements a forgiving streak algorithm:
+- **Gap Walking:** The backend calculates streaks by traversing usage history backwards.
+- **Automated Recovery:** It intelligently detects gaps in daily activity and automatically consumes "Freeze" items to repair broken streaks, handling complex edge cases like weekly boundaries.
+
+### 4. Data Integrity & Audit Trails
+- **Immutable Ledger:** `quest_completions` and `treasury_purchases` act as permanent history logs. Even if a Quest is deleted, the historical XP/Coin data remains accurate.
+- **Atomic Transactions:** Critical actions (XP gain, Item purchase) are wrapped in database transactions to prevent race conditions.
 
 ## 🛠️ Tech Stack
 
-* **Backend Framework:** Laravel 11 (PHP 8.2)
-* **Frontend:** Vue.js 3, Inertia.js (Monolith)
-* **Database:** MySQL / TiDB (Compatible)
-* **Styling:** Tailwind CSS
-* **Build Tool:** Vite
-* **Authentication:** Laravel Breeze
+**Backend**
+- **Framework:** Laravel 11 (PHP 8.2)
+- **Database:** MySQL / TiDB Compatible
+- **Auth:** Laravel Breeze
+- **Caching:** File Driver (Tag-based invalidation)
 
-## 🌟 Key Features & Architecture
+**Frontend**
+- **Framework:** Vue.js 3 (Composition API)
+- **Glue:** Inertia.js (Server-driven SPA)
+- **Styling:** Tailwind CSS
 
-### 1. Gamification Engine (Backend Logic)
-* **Leveling System:** Automatic level calculation based on accumulated XP thresholds (exponential curve).
-* **Economy System:** A transaction-based logic where users earn coins via Quests and spend them in the Treasury.
-* **State Management:** Quests support complex states (`todo`, `in_progress`, `locked`, `done`) and `repeatable` logic (resetting daily).
+## 🌟 Key Features
 
-### 2. Habit Tracking & Consistency
-* **Streak Algorithm:** Backend logic to calculate current and longest streaks based on daily completion logs.
-* **History Logs:** Tracks every completion by date (`habit_entries`), allowing for historical data visualization.
-* **Active Scope:** Efficient querying to only show habits relevant to the current date.
+### 🎮 Gamification Engine
+- **Quests:** Todo, In-Progress, and Done states. Supports daily repeatable tasks.
+- **Economy:** Earn coins from productivity, spend them on real-life rewards.
+- **Leveling:** Exponential XP curve ($level^{1.5} \times 100$).
 
-### 3. Time Management
-* **Time Blocks:** A dedicated module for scheduling day-to-day activities with specific start/end times (`time_blocks` table), distinct from the gamified quest system.
+### 📅 Productivity Tools
+- **Habit Tracker:** Visual heatmaps and streak counting.
+- **Time Blocking:** Strict scheduling validation to manage the day efficiently.
+- **Journaling:** Markdown-supported entries with templates and mood tracking.
 
-### 4. Data Integrity & Logging
-* **Audit Trails:** Dedicated `quest_completions` and `treasury_purchases` tables ensure that every XP gained and Coin spent is permanently recorded for history and balancing analysis.
+### 🏆 Social System
+- **Rivalry:** Automatically identifies the user directly above you in the leaderboard.
+- **Badges:** System-awarded achievements for milestones (Consistency, Recovery, etc.).
 
-## 🗄️ Database Schema
+## 🗄️ Database Schema & Architecture
 
-The application relies on a robust relational database structure designed for scalability and data integrity.
+The database is designed with **Strict Normalization** for core entities and **Snapshot Logic** for historical logs to ensure auditability.
 
-### Core Tables
-* **`users`**: Core authentication (Standard Laravel).
-* **`profiles`**: Gamification stats linked 1:1 to User (`xp_total`, `coin_balance`, `current_streak`, `last_quest_completed_at`).
+### 1. Core & Gamification State
+* **`users`**: Standard authentication table (Laravel default).
+* **`profiles`**: A dedicated 1:1 extension table holding volatile gamification state (`xp_total`, `coin_balance`, `current_streak`, `freeze_stats`).
+    * *Why separate?* Keeps the auth table lean and isolates high-write game logic from read-heavy auth logic.
 
-### Quest System
-* **`quests`**: Task definitions. Attributes: `status`, `type` (Daily, Boss, etc), `xp_reward`, `coin_reward`, `is_repeatable`.
-* **`quest_completions`**: Ledger table for completed quests. Tracks `xp_awarded`, `coin_awarded`, and `completed_at` for history.
+### 2. The Quest Engine (Ledger Pattern)
+* **`quests`**: Definitions of tasks, including rewards (`xp_reward`, `coin_reward`) and types (Daily, Boss).
+* **`quest_completions`**: **(Immutable Ledger)** Records *when* a quest was done.
+    * *Key Feature:* It snapshots the `xp_awarded` and `coin_awarded` at the moment of completion. This ensures historical data remains accurate even if the original Quest is edited or rebalanced later.
 
-### Habit System
-* **`habits`**: Habit definitions (`start_date`, `end_date`).
-* **`habit_entries`**: Daily logs. Records `date` and `note` for each habit completion to calculate streaks.
+### 3. Virtual Economy
+* **`treasury_rewards`**: Shop items defined by the user (e.g., "1 Hour Gaming").
+* **`treasury_purchases`**: **(Immutable Ledger)** Transaction history for spending coins.
+    * *Key Feature:* Preserves `unit_cost_coin` at the time of purchase to calculate accurate spending history.
 
-### Economy System
-* **`treasury_rewards`**: Items available for purchase in the shop (`cost_coin`). Supports Soft Deletes.
-* **`treasury_purchases`**: Transaction history. Records `qty`, `unit_cost_coin`, and total `cost_coin` at the time of purchase.
+### 4. Consistency Tracking
+* **`habits`** & **`habit_entries`**: Tracks daily binary completions. Logic handles streak calculation dynamically based on entry gaps.
+* **`time_blocks`**: Stores daily schedules with strict `start_time` vs `end_time` validation.
 
-### Scheduling
-* **`time_blocks`**: Daily schedule records (`start_time`, `end_time`, `title`).
+### 5. Achievement System
+* **`badges`**: System-defined milestones (e.g., "7 Day Streak", "Comeback Kid").
+* **`user_badges`**: Many-to-Many pivot table tracking when a user earns a specific badge.
 
-## ⚙️ Installation & Setup
+## ⚡ Installation
 
 1.  **Clone the repository**
     ```bash
-    git clone https://github.com/arulzkash/level-life.git
+    git clone [https://github.com/arulzkash/level-life.git](https://github.com/arulzkash/level-life.git)
     cd level-life
     ```
 
-2.  **Install PHP Dependencies**
+2.  **Install Dependencies**
     ```bash
     composer install
-    ```
-
-3.  **Install Node Dependencies**
-    ```bash
     npm install
     ```
 
-4.  **Environment Setup**
+3.  **Environment Setup**
     ```bash
     cp .env.example .env
     php artisan key:generate
     ```
-    *Configure your database credentials in the `.env` file.*
 
-5.  **Database Migration**
+4.  **Database Migration & Seeding**
+    Run migration and populate the default badge system:
     ```bash
     php artisan migrate
+    php artisan badges:seed
     ```
 
-6.  **Run the Application**
+5.  **Run Development Server**
     ```bash
-    # Terminal 1 (Backend)
+    # Terminal 1 (Laravel)
     php artisan serve
 
-    # Terminal 2 (Frontend Hot Reload)
+    # Terminal 2 (Vite)
     npm run dev
     ```
+
+## 📄 License
+
+This project is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
 
 ---
 
