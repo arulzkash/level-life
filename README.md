@@ -18,7 +18,7 @@ Built with **Laravel 11** and **Vue 3 (Inertia.js)**, this project demonstrates 
 Productivity often fails due to a lack of **consistency** and the feeling of being overwhelmed. Level Life tackles this by enforcing a **"Start Small"** philosophy:
 
 1.  **Immediate Feedback:** Every small task completed gives instant XP and Gold, hacking the brain's reward system.
-2.  **Daily Awareness:** The system encourages users to focus on *today's* target via Time Blocks and limited Quests, preventing burnout.
+2.  **Daily Awareness:** The system encourages users to focus on *today's* target via Time Blocks and Quests, preventing burnout.
 3.  **Frictionless Consistency:** Gamified streaks and "freeze" items allow users to be human (miss a day) without losing their momentum entirely.
 
 ## 🏗️ Technical Highlights
