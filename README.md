@@ -10,8 +10,8 @@ Built with **Laravel 11** and **Vue 3 (Inertia.js)**, this project demonstrates 
 ![Tailwind](https://img.shields.io/badge/Tailwind-CSS-38B2AC?logo=tailwind-css)
 ![Status](https://img.shields.io/badge/status-active-success)
 
-![Dashboard Screenshot]<img width="1893" height="958" alt="Screenshot 2026-02-02 113011" src="https://github.com/user-attachments/assets/24eaa598-43c6-4840-83d4-de0a8519a2b1" />
-![Leaderboard Screenshot]<img width="1876" height="952" alt="Screenshot 2026-02-02 114258" src="https://github.com/user-attachments/assets/34431eee-8ef0-434e-aa50-b04d625229ad" />
+[Dashboard Screenshot]<img width="1893" height="958" alt="Screenshot 2026-02-02 113011" src="https://github.com/user-attachments/assets/24eaa598-43c6-4840-83d4-de0a8519a2b1" />
+[Leaderboard Screenshot]<img width="1876" height="952" alt="Screenshot 2026-02-02 114258" src="https://github.com/user-attachments/assets/34431eee-8ef0-434e-aa50-b04d625229ad" />
 
 ## 💡 Philosophy & The Problem
 
