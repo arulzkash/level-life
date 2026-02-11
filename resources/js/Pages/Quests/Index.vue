@@ -8,6 +8,7 @@ import confetti from 'canvas-confetti';
 import { useAudio } from '@/Composables/useAudio';
 import { useLevelUp } from '@/Composables/useLevelUp';
 import Pagination from '@/Components/Pagination.vue';
+import QuestSubtasks from '@/Components/Game/QuestSubtasks.vue';
 
 defineOptions({ layout: AppLayout });
 
@@ -222,7 +223,6 @@ const triggerSlashEffect = () => {
     }, 200);
 };
 
-
 const showToast = (message) => {
     const toast = document.createElement('div');
     toast.className =
@@ -242,6 +242,10 @@ const deleteQuest = (q) => {
 const canComplete = (q) => {
     if (q.status === 'locked') return false;
     if (!q.is_repeatable && q.status === 'done') return false;
+
+    // Gatekeeper: Cek subtask
+    if (!isSubtasksComplete(q)) return false;
+
     return true;
 };
 
@@ -267,6 +271,12 @@ const statusColors = {
 };
 
 const formatStatus = (s) => s.replace('_', ' ').toUpperCase();
+
+// --- HELPER BARU (Copy dari Dashboard) ---
+const isSubtasksComplete = (q) => {
+    if (!q.subtasks || q.subtasks.length === 0) return true;
+    return q.subtasks.every((t) => t.is_done);
+};
 </script>
 
 <template>
@@ -421,6 +431,7 @@ const formatStatus = (s) => s.replace('_', ' ').toUpperCase();
                         </div>
                         <div v-else class="text-xs italic text-slate-600">No deadline</div>
                     </div>
+                    <QuestSubtasks :quest="quest" />
                 </div>
 
                 <div
@@ -433,9 +444,18 @@ const formatStatus = (s) => s.replace('_', ' ').toUpperCase();
                     >
                         Complete
                     </button>
+
+                    <span
+                        v-else-if="!isSubtasksComplete(quest) && quest.status !== 'locked'"
+                        class="flex cursor-not-allowed items-center gap-1 rounded border border-slate-600 bg-slate-800 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-500"
+                    >
+                        🔒 Pending Steps
+                    </span>
+
                     <span v-else class="text-xs italic text-slate-600">
                         {{ quest.status === 'done' ? 'Completed' : 'Locked' }}
                     </span>
+                    <div class="flex gap-2"></div>
 
                     <div class="flex gap-2">
                         <button
