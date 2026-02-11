@@ -11,6 +11,7 @@ class Quest extends Model
     protected $fillable = [
         'user_id',
         'name',
+        'subtasks',
         'status',
         'type',
         'xp_reward',
@@ -19,6 +20,10 @@ class Quest extends Model
         'completed_at',
         'is_repeatable',
         'position',
+    ];
+
+    protected $casts = [
+        'subtasks' => 'array',
     ];
 
 
@@ -43,5 +48,27 @@ class Quest extends Model
             ->orderBy('position', 'asc')
             ->orderByRaw('due_date is null, due_date asc')
             ->latest();
+    }
+
+    // --- HELPER / ACCESSOR ---
+
+    // Logic: Cek apakah semua subtask sudah dicentang?
+    // Return true jika tidak punya subtask ATAU semua subtask is_done = true
+    public function getCanBeCompletedAttribute(): bool
+    {
+        // Kalau kosong, berarti bebas complete
+        if (empty($this->subtasks)) {
+            return true;
+        }
+
+        // Cek satu per satu
+        foreach ($this->subtasks as $task) {
+            // Jika ada satu saja yang is_done-nya false/null, maka GABISA complete
+            if (empty($task['is_done'])) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

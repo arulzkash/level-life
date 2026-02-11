@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
+use illuminate\Support\Str;
 
 class QuestController extends Controller
 {
@@ -22,9 +23,25 @@ class QuestController extends Controller
             'coin_reward' => ['required', 'integer', 'min:0'],
             'due_date' => ['nullable', 'date'],
             'is_repeatable' => ['required', 'boolean'],
+
+            // Validasi Baru untuk Subtasks
+            'subtasks' => ['nullable', 'array'],
+            'subtasks.*.title' => ['required', 'string', 'max:100'],
+            'subtasks.*.is_done' => ['boolean'],
         ]);
 
         $data['is_repeatable'] = $request->boolean('is_repeatable');
+
+        // Logic Subtask: Pastikan punya ID unik (penting buat FE nanti)
+        if (!empty($data['subtasks'])) {
+            $data['subtasks'] = array_map(function ($task) {
+                return [
+                    'id' => $task['id'] ?? Str::uuid()->toString(),
+                    'title' => $task['title'],
+                    'is_done' => $task['is_done'] ?? false,
+                ];
+            }, $data['subtasks']);
+        }
 
         if ($data['is_repeatable']) {
             $data['due_date'] = null;
@@ -94,6 +111,14 @@ class QuestController extends Controller
         ]);
 
         $this->authorize('update', $quest);
+
+        // --- GATEKEEPER BARU: SUBTASK CHECK ---
+        // Kita pakai Accessor yg dibuat di Langkah 2
+        if (!$quest->can_be_completed) {
+            return redirect()->back()->withErrors([
+                'complete' => 'Complete all subtasks first to claim rewards!',
+            ]);
+        }
 
         if ($quest->status === 'locked') {
             return redirect()->back()->withErrors(['complete' => 'Quest is locked.']);
@@ -315,10 +340,28 @@ class QuestController extends Controller
             'coin_reward' => ['required', 'integer', 'min:0'],
             'due_date' => ['nullable', 'date'],
             'is_repeatable' => ['required', 'boolean'],
+
+            // Validasi Baru: Allow update subtask (nambah/hapus/centang)
+            'subtasks' => ['nullable', 'array'],
+            // ID boleh null kalau nambah item baru
+            'subtasks.*.id' => ['nullable', 'string'], 
+            'subtasks.*.title' => ['required', 'string', 'max:100'],
+            'subtasks.*.is_done' => ['boolean'],
         ]);
 
         $data['is_repeatable'] = $request->boolean('is_repeatable');
         $data['due_date'] = $request->input('due_date') ?: null;
+
+        // Ensure ID consistency for new subitems
+        if (!empty($data['subtasks'])) {
+            $data['subtasks'] = array_map(function ($task) {
+                return [
+                    'id' => $task['id'] ?? Str::uuid()->toString(),
+                    'title' => $task['title'],
+                    'is_done' => $task['is_done'] ?? false,
+                ];
+            }, $data['subtasks']);
+        }
 
         $quest->update($data);
 
