@@ -182,6 +182,20 @@ class QuestController extends Controller
                 'note' => $data['note'] ?? null,
             ]);
 
+            if ($quest->is_repeatable && !empty($quest->subtasks)) {
+                // Loop semua subtask, paksa is_done jadi false
+                $resetSubtasks = array_map(function ($task) {
+                    $task['is_done'] = false;
+                    return $task;
+                }, $quest->subtasks);
+
+                // Update kolom subtasks di DB
+                $quest->subtasks = $resetSubtasks;
+
+                // Jangan lupa save perubahan ini
+                $quest->save();
+            }
+
             // =========================================================
             // STEP C: Logic Streak & Freeze (Optimized Lazy Load + minimal writes)
             // =========================================================
@@ -344,7 +358,7 @@ class QuestController extends Controller
             // Validasi Baru: Allow update subtask (nambah/hapus/centang)
             'subtasks' => ['nullable', 'array'],
             // ID boleh null kalau nambah item baru
-            'subtasks.*.id' => ['nullable', 'string'], 
+            'subtasks.*.id' => ['nullable', 'string'],
             'subtasks.*.title' => ['required', 'string', 'max:100'],
             'subtasks.*.is_done' => ['boolean'],
         ]);

@@ -140,7 +140,8 @@ class DashboardController extends Controller
                     'coin_reward',
                     'due_date',
                     'is_repeatable',
-                    'position'
+                    'position',
+                    'subtasks'
                 ]);
         });
 

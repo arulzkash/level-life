@@ -11,6 +11,7 @@ import { useAudio } from '@/Composables/useAudio';
 import { useLevelUp } from '@/Composables/useLevelUp';
 import HoldButton from '@/Components/Game/HoldButton.vue';
 import CoinIcon from '@/Components/Game/icons/CoinIcon.vue';
+import QuestSubtasks from '@/Components/Game/QuestSubtasks.vue'; // Sesuaikan path
 
 defineOptions({ layout: AppLayout });
 
@@ -310,6 +311,15 @@ const onDragEnd = () => {
             preserveState: true,
         }
     );
+};
+
+// Tambahkan fungsi helper baru
+const isSubtasksComplete = (q) => {
+    // Kalau quest tidak punya subtasks (atau array kosong), anggap selesai
+    if (!q.subtasks || q.subtasks.length === 0) return true;
+
+    // Cek apakah setiap item is_done === true
+    return q.subtasks.every((t) => t.is_done);
 };
 </script>
 
@@ -826,6 +836,7 @@ const onDragEnd = () => {
                                             <span v-if="q.due_date < today">(OVERDUE)</span>
                                         </span>
                                     </div>
+                                    <QuestSubtasks :quest="q" />
                                 </div>
 
                                 <div class="flex flex-col items-end gap-2 pt-2 md:pt-0">
@@ -836,7 +847,15 @@ const onDragEnd = () => {
                                         class="input-dark w-full resize-none overflow-hidden py-2 text-xs placeholder-slate-600 transition-all duration-300 focus:w-64 md:w-48"
                                     ></textarea>
 
+                                    <div
+                                        v-if="!isSubtasksComplete(q)"
+                                        class="cursor-not-allowed rounded border border-slate-700 bg-slate-800 px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-slate-500 opacity-70"
+                                    >
+                                        🔒 Pending Steps
+                                    </div>
+
                                     <HoldButton
+                                        v-else
                                         class="w-full md:w-auto"
                                         :disabled="getCompleteForm(q.id).processing"
                                         @complete="completeQuest(q.id, q.xp_reward, q.coin_reward)"
