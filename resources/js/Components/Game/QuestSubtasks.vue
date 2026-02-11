@@ -112,16 +112,34 @@ const finishEditing = (task) => {
     }
 };
 
-// --- WATCHER ---
+// --- SMART WATCHER (REVISI PRODUCTION) ---
 watch(() => props.quest.subtasks, (newVal) => {
-    const isDifferent = JSON.stringify(newVal) !== JSON.stringify(localSubtasks.value);
-    const isAllClean = newVal && newVal.length > 0 && newVal.every(t => !t.is_done);
+    // 1. Hitung jumlah 'Done' SEBELUM update data lokal
+    const oldDoneCount = localSubtasks.value.filter(t => t.is_done).length;
 
+    // 2. Update data lokal agar sinkron dengan server
+    // Gunakan JSON parse/stringify untuk memutus referensi object (deep clone)
     localSubtasks.value = newVal ? JSON.parse(JSON.stringify(newVal)) : [];
 
-    if (isDifferent && isAllClean) {
+    // 3. Hitung jumlah 'Done' SETELAH update (dari data baru server)
+    const newDoneCount = localSubtasks.value.filter(t => t.is_done).length;
+
+    // 4. Deteksi "Hard Reset" (Fitur Daily Grind Complete)
+    // Logika: Tutup HANYA jika dulunya ada yang selesai (> 0), tapi sekarang jadi nol semua.
+    // Skenario Add Subtask: 0 -> 0 (Aman, tidak akan nutup).
+    // Skenario Reset Daily: 5 -> 0 (Kena kondisi ini, Auto Close).
+    const isReset = oldDoneCount > 0 && newDoneCount === 0;
+
+    if (isReset) {
         isExpanded.value = false;
     }
+    
+    // (Opsional) Defensive Coding: 
+    // Jika user sedang mengetik (Add), pastikan tetap terbuka walau server refresh
+    if (newSubtaskTitle.value) {
+        isExpanded.value = true;
+    }
+
 }, { deep: true });
 
 </script>
