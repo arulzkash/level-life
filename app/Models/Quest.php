@@ -24,6 +24,7 @@ class Quest extends Model
 
     protected $casts = [
         'subtasks' => 'array',
+        'is_repeatable' => 'boolean',
     ];
 
 

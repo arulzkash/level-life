@@ -32,21 +32,12 @@ const generateId = () => 'temp_' + Math.random().toString(36).substr(2, 9);
 // Apapun aksinya (Add, Del, Edit-Enter, Toggle), semua lewat pintu ini.
 // Request baru ditembak jika user "diam" selama 1000ms.
 const queueSave = debounce(() => {
-    const payload = {
-        ...props.quest, 
-        subtasks: localSubtasks.value 
-    };
-
-    router.patch(
-        `/quests/${props.quest.id}`,
-        payload,
-        { 
-            preserveScroll: true, 
-            preserveState: true,
-            onError: (err) => console.error("Auto-save error:", err)
-        }
-    );
-}, 1000); // 1 Detik Delay
+  router.patch(
+    `/quests/${props.quest.id}`,
+    { subtasks: localSubtasks.value },
+    { preserveScroll: true, preserveState: true }
+  );
+}, 1000);
 
 // --- ACTIONS ---
 

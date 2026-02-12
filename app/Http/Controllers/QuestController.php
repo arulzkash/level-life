@@ -9,7 +9,7 @@ use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
-use illuminate\Support\Str;
+use Illuminate\Support\Str;
 
 class QuestController extends Controller
 {
@@ -346,6 +346,37 @@ class QuestController extends Controller
     {
         $this->authorize('update', $quest);
 
+        $onlySubtasks = collect($request->keys())->diff(['subtasks'])->isEmpty();
+
+        if ($onlySubtasks) {
+            $data = $request->validate([
+                'subtasks' => ['nullable', 'array'],
+                'subtasks.*.id' => ['nullable', 'string'],
+                'subtasks.*.title' => ['required', 'string', 'max:100'],
+                'subtasks.*.is_done' => ['boolean'],
+            ]);
+
+            $subtasks = $data['subtasks'] ?? null;
+
+            if (!empty($subtasks)) {
+                $subtasks = array_map(function ($task) {
+                    return [
+                        'id' => $task['id'] ?? Str::uuid()->toString(),
+                        'title' => $task['title'],
+                        'is_done' => $task['is_done'] ?? false,
+                    ];
+                }, $subtasks);
+            }
+
+            $quest->timestamps = false;
+            $quest->subtasks = $subtasks;
+            $quest->save();
+
+            CacheBuster::onQuestMutate($request->user()->id);
+            return redirect()->back();
+        }
+
+        // Full update (nama/status/reward/dll)
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'status' => ['required', 'in:todo,in_progress,locked'],
@@ -354,35 +385,17 @@ class QuestController extends Controller
             'coin_reward' => ['required', 'integer', 'min:0'],
             'due_date' => ['nullable', 'date'],
             'is_repeatable' => ['required', 'boolean'],
-
-            // Validasi Baru: Allow update subtask (nambah/hapus/centang)
-            'subtasks' => ['nullable', 'array'],
-            // ID boleh null kalau nambah item baru
-            'subtasks.*.id' => ['nullable', 'string'],
-            'subtasks.*.title' => ['required', 'string', 'max:100'],
-            'subtasks.*.is_done' => ['boolean'],
         ]);
 
         $data['is_repeatable'] = $request->boolean('is_repeatable');
         $data['due_date'] = $request->input('due_date') ?: null;
 
-        // Ensure ID consistency for new subitems
-        if (!empty($data['subtasks'])) {
-            $data['subtasks'] = array_map(function ($task) {
-                return [
-                    'id' => $task['id'] ?? Str::uuid()->toString(),
-                    'title' => $task['title'],
-                    'is_done' => $task['is_done'] ?? false,
-                ];
-            }, $data['subtasks']);
-        }
-
         $quest->update($data);
 
         CacheBuster::onQuestMutate($request->user()->id);
-
         return redirect()->back();
     }
+
 
     public function destroy(Request $request, Quest $quest)
     {
