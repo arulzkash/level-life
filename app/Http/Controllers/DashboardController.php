@@ -193,7 +193,11 @@ class DashboardController extends Controller
                 ->first();
         });
 
-        $customQuestTypes = $user->questTypes()->select('id', 'name', 'color')->orderBy('name')->get();
+        $customQuestTypes = Cache::remember(
+            CacheKeys::dashboardCustomQuestTypes($user->id),
+            86400,
+            fn() => $user->questTypes()->select('id', 'name', 'color')->orderBy('name')->get()
+        );
 
         return Inertia::render('Dashboard', [
             'profile' => $profile,

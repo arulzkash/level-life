@@ -69,6 +69,8 @@ class QuestController extends Controller
             if ($request->filled('custom_color') && $questType->color !== $request->input('custom_color')) {
                  $questType->update(['color' => $request->input('custom_color')]);
             }
+
+            CacheBuster::onQuestTypeMutate($request->user()->id);
         }
 
         CacheBuster::onQuestMutate($request->user()->id);

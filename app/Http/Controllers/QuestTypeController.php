@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\QuestType;
+use App\Support\CacheBuster;
 use Illuminate\Http\Request;
 
 class QuestTypeController extends Controller
@@ -22,6 +23,8 @@ class QuestTypeController extends Controller
 
         $questType->update(['color' => $validated['color']]);
 
+        CacheBuster::onQuestTypeMutate($request->user()->id);
+
         return redirect()->back();
     }
 
@@ -37,6 +40,8 @@ class QuestTypeController extends Controller
         }
 
         $questType->delete();
+
+        CacheBuster::onQuestTypeMutate($request->user()->id);
 
         return redirect()->back();
     }

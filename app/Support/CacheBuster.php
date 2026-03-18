@@ -53,4 +53,9 @@ class CacheBuster
         $dateKey = CacheKeys::todayJakarta();
         Cache::forget(CacheKeys::navUser($userId, $dateKey));
     }
+
+    public static function onQuestTypeMutate(int $userId): void
+    {
+        Cache::forget(CacheKeys::dashboardCustomQuestTypes($userId));
+    }
 }

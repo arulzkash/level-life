@@ -50,4 +50,9 @@ class CacheKeys
     {
         return "dashboard:journal_done:{$userId}:{$dateJakarta}";
     }
+
+    public static function dashboardCustomQuestTypes(int $userId): string
+    {
+        return "dashboard:custom_quest_types:{$userId}";
+    }
 }
