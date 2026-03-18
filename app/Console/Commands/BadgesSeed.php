@@ -19,6 +19,10 @@ class BadgesSeed extends Command
             ['key' => 'streak_30', 'name' => 'Iron Will', 'category' => 'streak', 'description' => 'Reach a 30-day streak'],
             ['key' => 'streak_60', 'name' => 'Unbreakable', 'category' => 'streak', 'description' => 'Reach a 60-day streak'],
             ['key' => 'streak_100', 'name' => 'Legend', 'category' => 'streak', 'description' => 'Reach a 100-day streak'],
+            ['key' => 'streak_150', 'name' => 'Titan', 'category' => 'streak', 'description' => 'Reach a 150-day streak'],
+            ['key' => 'streak_200', 'name' => 'Mythic', 'category' => 'streak', 'description' => 'Reach a 200-day streak'],
+            ['key' => 'streak_365', 'name' => 'Eternal', 'category' => 'streak', 'description' => 'Reach a 365-day streak'],
+            ['key' => 'streak_500', 'name' => 'Transcendent', 'category' => 'streak', 'description' => 'Reach a 500-day streak'],
 
             ['key' => 'second_wind', 'name' => 'Second Wind', 'category' => 'recovery', 'description' => 'Used a freeze to keep streak alive'],
             ['key' => 'comeback_kid', 'name' => 'Comeback Kid', 'category' => 'recovery', 'description' => 'Recovered after a reset and reached 7 again'],

@@ -295,6 +295,10 @@ const getBadgeIcon = (key) => {
         streak_30: '🛡️', // Iron Will (Shield)
         streak_60: '💎', // Unbreakable (Diamond)
         streak_100: '👑', // Legend (Crown)
+        streak_150: '🗿', // Titan (Moai)`
+        streak_200: '🐉', // Mythic (Dragon)
+        streak_365: '🌟', // Eternal (Glowing Star)
+        streak_500: '🌠', // Transcendent (Shooting Star)
 
         // Recovery Badges
         second_wind: '🍃', // Second Wind (Leaf/Wind)

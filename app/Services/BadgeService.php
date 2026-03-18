@@ -35,6 +35,10 @@ class BadgeService
         if ($streakBest >= 30)  $keys[] = 'streak_30';
         if ($streakBest >= 60)  $keys[] = 'streak_60';
         if ($streakBest >= 100) $keys[] = 'streak_100';
+        if ($streakBest >= 150) $keys[] = 'streak_150';
+        if ($streakBest >= 200) $keys[] = 'streak_200';
+        if ($streakBest >= 365) $keys[] = 'streak_365';
+        if ($streakBest >= 500) $keys[] = 'streak_500';
 
         if ($freezesTotal > 0) $keys[] = 'second_wind';
         if ($resetsTotal > 0 && $streakBest >= 7) $keys[] = 'comeback_kid';

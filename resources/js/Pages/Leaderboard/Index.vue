@@ -202,7 +202,7 @@ const metricChipText = (row) => {
 };
 
 // --- Mini-meter (progress to next milestone) ---
-const STREAK_MILESTONES = [3, 7, 14, 30, 60, 100];
+const STREAK_MILESTONES = [3, 7, 14, 30, 60, 100, 150, 200, 365, 500];
 
 const meterFillClass = (tier) => {
     const map = {
@@ -464,6 +464,10 @@ const getBadgeIcon = (key) => {
         streak_30: '🛡️',
         streak_60: '💎',
         streak_100: '👑',
+        streak_150: '🗿',
+        streak_200: '🐉',
+        streak_365: '🌟',
+        streak_500: '🌠',
 
         // Recovery Badges
         second_wind: '🍃',
