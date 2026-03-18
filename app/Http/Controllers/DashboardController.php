@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
 use Carbon\Carbon;
 use App\Models\JournalEntry;
+use App\Models\QuestType;
 use App\Support\CacheKeys;
 
 class DashboardController extends Controller
@@ -192,6 +193,8 @@ class DashboardController extends Controller
                 ->first();
         });
 
+        $customQuestTypes = $user->questTypes()->orderBy('name')->pluck('name', 'id');
+
         return Inertia::render('Dashboard', [
             'profile' => $profile,
             'today' => $today,
@@ -205,6 +208,7 @@ class DashboardController extends Controller
             'todayBlocks' => $todayBlocks,
             'leaderboardData' => $leaderboardData,
             'topBadge' => $topBadge,
+            'customQuestTypes' => $customQuestTypes,
         ]);
     }
 }

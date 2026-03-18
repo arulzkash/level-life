@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Quest;
+use App\Models\QuestType;
 use App\Services\BadgeService;
 use App\Support\CacheBuster;
 use Illuminate\Http\Request;
@@ -51,6 +52,15 @@ class QuestController extends Controller
         $data['position'] = $maxPosition + 1;
 
         $request->user()->quests()->create($data);
+
+        // Auto-save custom types (kalau bukan default type)
+        $defaultTypes = ['Daily Grind', 'Main Quest', 'Side Quest', 'Boss Fight', 'Learning'];
+        if (!in_array($data['type'], $defaultTypes, true)) {
+            QuestType::firstOrCreate([
+                'user_id' => $request->user()->id,
+                'name'    => $data['type'],
+            ]);
+        }
 
         CacheBuster::onQuestMutate($request->user()->id);
 

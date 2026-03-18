@@ -24,6 +24,7 @@ use App\Http\Controllers\TimeBlockPageController;
 use App\Http\Controllers\TreasuryController;
 use App\Http\Controllers\TreasuryLogPageController;
 use App\Http\Controllers\TreasuryPurchaseLogController;
+use App\Http\Controllers\QuestTypeController;
 
 require __DIR__ . '/auth.php';
 
@@ -58,6 +59,9 @@ Route::middleware('auth')->group(function () {
         Route::delete('/{quest}', [QuestController::class, 'destroy']);
         
     });
+
+    // QUEST TYPES (Custom)
+    Route::delete('/quest-types/{questType}', [QuestTypeController::class, 'destroy'])->name('quest-types.destroy');
 
     // LOGS
     Route::prefix('logs')->group(function () {

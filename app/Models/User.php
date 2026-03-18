@@ -119,4 +119,9 @@ class User extends Authenticatable
             ->withPivot(['earned_at'])
             ->withTimestamps();
     }
+
+    public function questTypes()
+    {
+        return $this->hasMany(QuestType::class);
+    }
 }

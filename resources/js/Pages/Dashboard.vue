@@ -27,6 +27,7 @@ const props = defineProps({
     todayBlocks: Array,
     leaderboardData: Object,
     topBadge: Object, // { name, icon, description }
+    customQuestTypes: Object, // { id: name }
 });
 
 // --- UI STATE ---
@@ -65,6 +66,23 @@ const handleTypeChange = (event) => {
 const cancelCustomType = () => {
     isCustomType.value = false;
     createForm.type = 'Daily Grind';
+};
+
+// --- CUSTOM TYPE MANAGEMENT ---
+const showManageTypes = ref(false);
+
+const deleteCustomType = (id) => {
+    if (!confirm('Hapus custom type ini?')) return;
+    router.delete(`/quest-types/${id}`, {
+        preserveScroll: true,
+        onSuccess: () => {
+            // Kalau type yang sedang dipilih dihapus, reset ke default
+            if (createForm.type === props.customQuestTypes[id]) {
+                createForm.type = 'Daily Grind';
+            }
+            showToast('🗑️ Custom type deleted!');
+        },
+    });
 };
 
 const submitQuest = () => {
@@ -591,7 +609,49 @@ const isSubtasksComplete = (q) => {
 
                         <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
                             <div>
-                                <label class="label-text">Quest Type</label>
+                                <div class="mb-1 flex items-center justify-between">
+                                    <label class="label-text">Quest Type</label>
+                                    <button
+                                        v-if="customQuestTypes && Object.keys(customQuestTypes).length > 0"
+                                        type="button"
+                                        @click="showManageTypes = !showManageTypes"
+                                        class="text-[10px] font-bold uppercase tracking-widest text-slate-500 transition-colors hover:text-indigo-400"
+                                    >
+                                        {{ showManageTypes ? '▲ Hide' : '⚙ Manage' }}
+                                    </button>
+                                </div>
+
+                                <!-- Manage Custom Types Panel -->
+                                <div
+                                    v-if="
+                                        showManageTypes &&
+                                        customQuestTypes &&
+                                        Object.keys(customQuestTypes).length > 0
+                                    "
+                                    class="animate-fade-in mb-2 rounded-lg border border-slate-700 bg-slate-900/60 p-2"
+                                >
+                                    <p class="mb-1.5 text-[9px] uppercase tracking-widest text-slate-500">
+                                        Saved Custom Types
+                                    </p>
+                                    <div class="space-y-1">
+                                        <div
+                                            v-for="(name, id) in customQuestTypes"
+                                            :key="id"
+                                            class="flex items-center justify-between rounded px-2 py-1 hover:bg-slate-800"
+                                        >
+                                            <span class="text-xs text-slate-300">{{ name }}</span>
+                                            <button
+                                                type="button"
+                                                @click="deleteCustomType(id)"
+                                                class="text-slate-600 transition-colors hover:text-red-400"
+                                                title="Delete this type"
+                                            >
+                                                🗑️
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <div v-if="!isCustomType">
                                     <select
                                         :value="createForm.type"
@@ -603,13 +663,32 @@ const isSubtasksComplete = (q) => {
                                         "
                                         class="input-dark w-full"
                                     >
-                                        <option value="Daily Grind">Daily Grind</option>
-                                        <option value="Main Quest">Main Quest</option>
-                                        <option value="Side Quest">Side Quest</option>
-                                        <option value="Boss Fight">Boss Fight</option>
-                                        <option value="Learning">Learning</option>
+                                        <!-- Default Types -->
+                                        <optgroup label="Default">
+                                            <option value="Daily Grind">Daily Grind</option>
+                                            <option value="Main Quest">Main Quest</option>
+                                            <option value="Side Quest">Side Quest</option>
+                                            <option value="Boss Fight">Boss Fight</option>
+                                            <option value="Learning">Learning</option>
+                                        </optgroup>
+                                        <!-- Custom Saved Types -->
+                                        <optgroup
+                                            v-if="
+                                                customQuestTypes && Object.keys(customQuestTypes).length > 0
+                                            "
+                                            label="My Custom Types"
+                                        >
+                                            <option
+                                                v-for="(name, id) in customQuestTypes"
+                                                :key="id"
+                                                :value="name"
+                                            >
+                                                {{ name }}
+                                            </option>
+                                        </optgroup>
+                                        <!-- New Custom -->
                                         <option value="Custom" class="font-bold text-indigo-400">
-                                            + Custom Type...
+                                            + New Custom Type...
                                         </option>
                                     </select>
                                 </div>
@@ -629,6 +708,7 @@ const isSubtasksComplete = (q) => {
                                     </button>
                                 </div>
                             </div>
+
                             <div class="flex gap-4">
                                 <div class="flex-1">
                                     <label class="label-text">XP Reward</label>
