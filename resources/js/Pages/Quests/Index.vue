@@ -53,7 +53,6 @@ const { showLevelUpModal } = useLevelUp(globalProfile);
 
 // --- 3. EDIT LOGIC ---
 const editingQuest = ref(null);
-const isEditCustomType = ref(false);
 
 const editForm = useForm({
     name: '',
@@ -69,46 +68,28 @@ const startEdit = (q) => {
     editingQuest.value = q;
     editForm.name = q.name;
     editForm.status = q.status;
+    editForm.type = q.type;
     editForm.xp_reward = q.xp_reward;
     editForm.coin_reward = q.coin_reward;
     editForm.due_date = q.due_date;
     editForm.is_repeatable = !!q.is_repeatable;
-
-    const standardTypes = ['Daily Grind', 'Main Quest', 'Side Quest', 'Boss Fight', 'Learning'];
-    const availableOptions = [...new Set([...standardTypes, ...props.typeOptions])];
-
-    if (availableOptions.includes(q.type)) {
-        isEditCustomType.value = false;
-        editForm.type = q.type;
-    } else {
-        isEditCustomType.value = true;
-        editForm.type = q.type;
-    }
 };
 
 const handleEditTypeChange = (e) => {
     const selectedType = e.target.value;
+    editForm.type = selectedType;
 
-    if (selectedType === 'Custom') {
-        isEditCustomType.value = true;
-        editForm.type = '';
-        editForm.is_repeatable = false; // Reset
+    // Logic Auto-Lock untuk Edit
+    if (selectedType === 'Daily Grind') {
+        editForm.is_repeatable = true;
     } else {
-        editForm.type = selectedType;
-
-        // Logic Auto-Lock untuk Edit
-        if (selectedType === 'Daily Grind') {
-            editForm.is_repeatable = true;
-        } else {
-            editForm.is_repeatable = false;
-        }
+        editForm.is_repeatable = false;
     }
 };
 
 const cancelEdit = () => {
     editingQuest.value = null;
     editForm.reset();
-    isEditCustomType.value = false;
 };
 
 const saveEdit = () => {
@@ -521,41 +502,24 @@ const isSubtasksComplete = (q) => {
                         </div>
                         <div>
                             <label class="mb-1 block text-xs font-bold uppercase text-slate-400">Type</label>
-                            <div v-if="!isEditCustomType">
-                                <select
-                                    :value="editForm.type"
-                                    @change="handleEditTypeChange"
-                                    class="input-dark w-full"
-                                >
+                            <select
+                                :value="editForm.type"
+                                @change="handleEditTypeChange"
+                                class="input-dark w-full"
+                            >
+                                <optgroup label="Default Types">
                                     <option value="Daily Grind">Daily Grind</option>
                                     <option value="Main Quest">Main Quest</option>
                                     <option value="Side Quest">Side Quest</option>
                                     <option value="Boss Fight">Boss Fight</option>
                                     <option value="Learning">Learning</option>
-                                    <option value="Custom" class="font-bold text-indigo-400">
-                                        + Custom Type...
+                                </optgroup>
+                                <optgroup label="Custom Types" v-if="customQuestTypes && customQuestTypes.length > 0">
+                                    <option v-for="type in customQuestTypes" :key="type.id" :value="type.name">
+                                        {{ type.name }}
                                     </option>
-                                </select>
-                            </div>
-                            <div v-else class="flex gap-2">
-                                <input
-                                    v-model="editForm.type"
-                                    placeholder="Type custom..."
-                                    class="input-dark w-full border-indigo-500"
-                                    autofocus
-                                />
-                                <button
-                                    type="button"
-                                    @click="
-                                        isEditCustomType = false;
-                                        editForm.type = 'Daily Grind';
-                                        editForm.is_repeatable = true;
-                                    "
-                                    class="rounded bg-slate-700 px-3 text-slate-300 hover:text-white"
-                                >
-                                    ✕
-                                </button>
-                            </div>
+                                </optgroup>
+                            </select>
                         </div>
                     </div>
                     <div class="grid grid-cols-2 gap-4">
