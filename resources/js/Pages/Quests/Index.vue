@@ -18,6 +18,7 @@ const props = defineProps({
     quests: Object,
     filters: Object,
     typeOptions: Array,
+    customQuestTypes: Array,
 });
 
 const page = usePage();
@@ -368,14 +369,18 @@ const isSubtasksComplete = (q) => {
             >
                 <div
                     class="absolute bottom-0 left-0 top-0 w-1.5"
-                    :class="{
-                        'bg-red-500': quest.type === 'Boss Fight',
-                        'bg-yellow-400': quest.type === 'Main Quest',
-                        'bg-blue-400': quest.type === 'Side Quest',
-                        'bg-emerald-400': quest.type === 'Daily Grind',
-                        'bg-slate-500': !['Boss Fight', 'Main Quest', 'Side Quest', 'Daily Grind'].includes(
-                            quest.type
-                        ),
+                    :style="{
+                        backgroundColor:
+                            customQuestTypes?.find((t) => t.name === quest.type)?.color ||
+                            (quest.type === 'Boss Fight'
+                                ? '#ef4444'
+                                : quest.type === 'Main Quest'
+                                  ? '#fbbf24'
+                                  : quest.type === 'Side Quest'
+                                    ? '#60a5fa'
+                                    : quest.type === 'Daily Grind'
+                                      ? '#34d399'
+                                      : '#64748b'),
                     }"
                 ></div>
 

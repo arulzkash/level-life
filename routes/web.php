@@ -61,6 +61,7 @@ Route::middleware('auth')->group(function () {
     });
 
     // QUEST TYPES (Custom)
+    Route::patch('/quest-types/{questType}', [QuestTypeController::class, 'update'])->name('quest-types.update');
     Route::delete('/quest-types/{questType}', [QuestTypeController::class, 'destroy'])->name('quest-types.destroy');
 
     // LOGS

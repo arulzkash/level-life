@@ -10,6 +10,7 @@ const props = defineProps({
     logs: Object,
     filters: Object,
     group_summaries: Object,
+    customQuestTypes: Array,
 });
 
 const JAKARTA_TZ = 'Asia/Jakarta';
@@ -34,6 +35,20 @@ const dateFromKey = (key) => {
 
 // --- HELPER: QUEST STYLES ---
 const getQuestVisuals = (type) => {
+    const customType = props.customQuestTypes?.find((t) => t.name === type);
+
+    if (customType) {
+        return {
+            color: 'text-white',
+            border: 'border-slate-500/50',
+            bg: 'bg-slate-800/80',
+            icon: '🧩',
+            shadow: `shadow-[0_0_15px_${customType.color}20]`,
+            dot: '', // special handling for dynamic dot color
+            customColor: customType.color,
+        };
+    }
+
     const map = {
         'Boss Fight': {
             color: 'text-red-400',
@@ -371,6 +386,11 @@ const dateTone = (dateKey) => {
                         <div
                             class="absolute left-[18px] top-6 z-10 h-4 w-4 rounded-full border-4 border-slate-900 transition-colors duration-300 md:left-[26px]"
                             :class="getQuestVisuals(log.quest?.type).dot"
+                            :style="
+                                getQuestVisuals(log.quest?.type).customColor
+                                    ? { backgroundColor: getQuestVisuals(log.quest?.type).customColor }
+                                    : {}
+                            "
                         ></div>
 
                         <div
@@ -381,6 +401,11 @@ const dateTone = (dateKey) => {
                                 getQuestVisuals(log.quest?.type).shadow,
                                 'bg-slate-800/60 hover:bg-slate-800', // Hover normalize
                             ]"
+                            :style="
+                                getQuestVisuals(log.quest?.type).customColor
+                                    ? { borderColor: getQuestVisuals(log.quest?.type).customColor + '50' }
+                                    : {}
+                            "
                         >
                             <div
                                 class="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center"
@@ -399,6 +424,14 @@ const dateTone = (dateKey) => {
                                             <span
                                                 class="text-[10px] font-black uppercase tracking-wider opacity-80"
                                                 :class="getQuestVisuals(log.quest?.type).color"
+                                                :style="
+                                                    getQuestVisuals(log.quest?.type).customColor
+                                                        ? {
+                                                              color: getQuestVisuals(log.quest?.type)
+                                                                  .customColor,
+                                                          }
+                                                        : {}
+                                                "
                                             >
                                                 {{ log.quest?.type }}
                                             </span>

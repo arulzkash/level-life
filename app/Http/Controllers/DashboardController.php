@@ -193,7 +193,7 @@ class DashboardController extends Controller
                 ->first();
         });
 
-        $customQuestTypes = $user->questTypes()->orderBy('name')->pluck('name', 'id');
+        $customQuestTypes = $user->questTypes()->select('id', 'name', 'color')->orderBy('name')->get();
 
         return Inertia::render('Dashboard', [
             'profile' => $profile,

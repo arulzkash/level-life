@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class QuestType extends Model
 {
-    protected $fillable = ['user_id', 'name'];
+    protected $fillable = ['user_id', 'name', 'color'];
 
     public function user()
     {

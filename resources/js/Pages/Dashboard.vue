@@ -44,6 +44,7 @@ const createForm = useForm({
     coin_reward: 50,
     due_date: null,
     is_repeatable: true,
+    custom_color: '#6366f1', // Default Indigo for new custom types
 });
 
 const handleTypeChange = (event) => {
@@ -77,12 +78,33 @@ const deleteCustomType = (id) => {
         preserveScroll: true,
         onSuccess: () => {
             // Kalau type yang sedang dipilih dihapus, reset ke default
-            if (createForm.type === props.customQuestTypes[id]) {
+            const deletedType = props.customQuestTypes.find(t => t.id === id);
+            if (deletedType && createForm.type === deletedType.name) {
                 createForm.type = 'Daily Grind';
             }
             showToast('🗑️ Custom type deleted!');
         },
     });
+};
+
+const updateCustomTypeColor = (id, event) => {
+    const newColor = event.target.value;
+    const oldColor = props.customQuestTypes.find(t => t.id === id)?.color || '#64748b';
+
+    if (newColor === oldColor) return;
+
+    if (confirm('Change this category’s color? All quests of this type will be updated.')) {
+        router.patch(`/quest-types/${id}`, { color: newColor }, {
+            preserveScroll: true,
+            preserveState: true,
+            onSuccess: () => showToast('🎨 Color updated!'),
+            onError: () => {
+                event.target.value = oldColor;
+            }
+        });
+    } else {
+        event.target.value = oldColor;
+    }
 };
 
 const submitQuest = () => {
@@ -92,6 +114,7 @@ const submitQuest = () => {
             createForm.reset('name', 'xp_reward', 'coin_reward', 'due_date');
             createForm.type = 'Daily Grind';
             createForm.is_repeatable = false;
+            createForm.custom_color = '#6366f1';
             isCustomType.value = false;
 
             showCreateQuestForm.value = false;
@@ -635,14 +658,23 @@ const isSubtasksComplete = (q) => {
                                     </p>
                                     <div class="space-y-1">
                                         <div
-                                            v-for="(name, id) in customQuestTypes"
-                                            :key="id"
+                                            v-for="qt in customQuestTypes"
+                                            :key="qt.id"
                                             class="flex items-center justify-between rounded px-2 py-1 hover:bg-slate-800"
                                         >
-                                            <span class="text-xs text-slate-300">{{ name }}</span>
+                                            <div class="flex items-center gap-2">
+                                                <input 
+                                                    type="color" 
+                                                    :value="qt.color || '#64748b'"
+                                                    @change="(e) => updateCustomTypeColor(qt.id, e)"
+                                                    class="h-5 w-5 cursor-pointer rounded border border-slate-600 bg-transparent p-0"
+                                                    title="Change Color"
+                                                />
+                                                <span class="text-xs text-slate-300">{{ qt.name }}</span>
+                                            </div>
                                             <button
                                                 type="button"
-                                                @click="deleteCustomType(id)"
+                                                @click="deleteCustomType(qt.id)"
                                                 class="text-slate-600 transition-colors hover:text-red-400"
                                                 title="Delete this type"
                                             >
@@ -679,11 +711,11 @@ const isSubtasksComplete = (q) => {
                                             label="My Custom Types"
                                         >
                                             <option
-                                                v-for="(name, id) in customQuestTypes"
-                                                :key="id"
-                                                :value="name"
+                                                v-for="qt in customQuestTypes"
+                                                :key="qt.id"
+                                                :value="qt.name"
                                             >
-                                                {{ name }}
+                                                {{ qt.name }}
                                             </option>
                                         </optgroup>
                                         <!-- New Custom -->
@@ -692,20 +724,34 @@ const isSubtasksComplete = (q) => {
                                         </option>
                                     </select>
                                 </div>
-                                <div v-else class="animate-fade-in flex gap-2">
-                                    <input
-                                        v-model="createForm.type"
-                                        placeholder="Type custom category..."
-                                        class="input-dark w-full border-indigo-500 ring-1 ring-indigo-500/50"
-                                        autofocus
-                                    />
-                                    <button
-                                        type="button"
-                                        @click="cancelCustomType"
-                                        class="rounded-lg border border-slate-600 bg-slate-700 px-3 text-slate-300 hover:text-white"
-                                    >
-                                        ✕
-                                    </button>
+                                <div v-else class="animate-fade-in flex flex-col gap-2">
+                                    <div class="flex gap-2">
+                                        <input
+                                            v-model="createForm.type"
+                                            placeholder="Type custom category..."
+                                            class="input-dark w-full border-indigo-500 ring-1 ring-indigo-500/50"
+                                            autofocus
+                                        />
+                                        <button
+                                            type="button"
+                                            @click="cancelCustomType"
+                                            class="rounded-lg border border-slate-600 bg-slate-700 px-3 text-slate-300 hover:text-white"
+                                        >
+                                            ✕
+                                        </button>
+                                    </div>
+                                    <div class="mt-2 rounded-lg border border-slate-700 bg-slate-800 p-2 text-center">
+                                        <label class="flex cursor-pointer items-center justify-center gap-3">
+                                            <span class="text-[10px] uppercase tracking-widest text-slate-400">
+                                                Choose Category Color
+                                            </span>
+                                            <input
+                                                type="color"
+                                                v-model="createForm.custom_color"
+                                                class="h-8 w-12 cursor-pointer rounded border border-slate-600 bg-transparent p-0"
+                                            />
+                                        </label>
+                                    </div>
                                 </div>
                             </div>
 
@@ -835,7 +881,10 @@ const isSubtasksComplete = (q) => {
                                         'Main Quest',
                                         'Side Quest',
                                         'Daily Grind',
-                                    ].includes(q.type),
+                                    ].includes(q.type) && !Object.values(customQuestTypes || {}).find(ct => ct.name === q.type),
+                                }"
+                                :style="{
+                                    backgroundColor: Object.values(customQuestTypes || {}).find(ct => ct.name === q.type)?.color || ''
                                 }"
                             ></div>
 

@@ -78,6 +78,7 @@ class CompletionLogPageController extends Controller
                 'dir' => $dir,
             ],
             'group_summaries' => $groupSummaries,
+            'customQuestTypes' => $user->questTypes()->select('id', 'name', 'color')->get(),
         ]);
     }
 }

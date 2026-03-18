@@ -29,9 +29,13 @@ class QuestController extends Controller
             'subtasks' => ['nullable', 'array'],
             'subtasks.*.title' => ['required', 'string', 'max:100'],
             'subtasks.*.is_done' => ['boolean'],
+
+            // Warna custom type baru
+            'custom_color' => ['nullable', 'string', 'max:7'],
         ]);
 
         $data['is_repeatable'] = $request->boolean('is_repeatable');
+
 
         // Logic Subtask: Pastikan punya ID unik (penting buat FE nanti)
         if (!empty($data['subtasks'])) {
@@ -56,10 +60,15 @@ class QuestController extends Controller
         // Auto-save custom types (kalau bukan default type)
         $defaultTypes = ['Daily Grind', 'Main Quest', 'Side Quest', 'Boss Fight', 'Learning'];
         if (!in_array($data['type'], $defaultTypes, true)) {
-            QuestType::firstOrCreate([
-                'user_id' => $request->user()->id,
-                'name'    => $data['type'],
-            ]);
+            $questType = QuestType::firstOrCreate(
+                ['user_id' => $request->user()->id, 'name' => $data['type']],
+                ['color' => $request->input('custom_color', '#64748b')] // Default slate-500
+            );
+            
+            // Allow updating color if it already exists (optional improvement)
+            if ($request->filled('custom_color') && $questType->color !== $request->input('custom_color')) {
+                 $questType->update(['color' => $request->input('custom_color')]);
+            }
         }
 
         CacheBuster::onQuestMutate($request->user()->id);
