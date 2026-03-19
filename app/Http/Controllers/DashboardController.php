@@ -17,12 +17,7 @@ class DashboardController extends Controller
     {
         $user = $request->user();
 
-        // PROFILE
-        $profile = $user->profile()
-            ->select(['id', 'user_id', 'coin_balance', 'xp_total', 'streak_current'])
-            ->first();
-
-
+        // CACHE KEYS
         $today = CacheKeys::todayJakarta();
 
         $journalTodayExists = Cache::remember(
@@ -200,7 +195,6 @@ class DashboardController extends Controller
         );
 
         return Inertia::render('Dashboard', [
-            'profile' => $profile,
             'today' => $today,
             'journalTodayExists' => $journalTodayExists,
             'habits' => $habitsPayload,

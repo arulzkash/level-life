@@ -1,5 +1,5 @@
 <script setup>
-import { useForm, router, Link, Head } from '@inertiajs/vue3';
+import { useForm, router, Link, Head, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { watch, ref, computed } from 'vue';
 import draggable from 'vuedraggable';
@@ -18,7 +18,6 @@ defineOptions({ layout: AppLayout });
 const { playSfx, playBgm, stopSfx } = useAudio();
 
 const props = defineProps({
-    profile: Object,
     activeQuests: Array,
     habits: Array,
     habitSummary: Object,
@@ -29,6 +28,9 @@ const props = defineProps({
     topBadge: Object, // { name, icon, description }
     customQuestTypes: Object, // { id: name }
 });
+
+const page = usePage();
+const profile = computed(() => page.props.auth.profile);
 
 // --- UI STATE ---
 const showCreateQuestForm = ref(false);
@@ -333,6 +335,43 @@ const getBadgeIcon = (key) => {
     return icons[key] || '🎖️';
 };
 
+const streakStatus = computed(() => {
+    if (!profile.value?.last_active_date) return 'Cold';
+
+    const today = props.today;
+    const lastActive = profile.value.last_active_date;
+
+    if (lastActive === today) return 'On Fire';
+
+    const d = new Date(today);
+    d.setDate(d.getDate() - 1);
+    const yesterday = d.toISOString().split('T')[0];
+
+    if (lastActive === yesterday) return 'Pending';
+
+    return 'Cold';
+});
+
+const statusCfg = (status) => {
+    if (status === 'On Fire')
+        return {
+            icon: '🔥',
+            label: 'BLAZING',
+            cls: 'bg-orange-500/15 text-orange-300 border-orange-500/30 shadow-[0_0_18px_rgba(249,115,22,0.18)]',
+        };
+    if (status === 'Pending')
+        return {
+            icon: '🌙',
+            label: 'RECOVERING',
+            cls: 'bg-indigo-500/15 text-indigo-300 border-indigo-500/30 shadow-[0_0_18px_rgba(99,102,241,0.14)]',
+        };
+    return {
+        icon: '❄️',
+        label: 'AFK',
+        cls: 'bg-slate-950/60 text-slate-400 border-slate-700 shadow-none',
+    };
+};
+
 const getRankClass = (rank) => {
     // Rank 1: Gold + Glow
     if (rank === 1) {
@@ -459,6 +498,15 @@ const isSubtasksComplete = (q) => {
                         <div
                             class="col-span-2 flex flex-col items-center justify-center rounded-2xl border border-slate-700 bg-slate-800/50 p-3 text-center shadow-sm transition-all duration-300 hover:scale-105 hover:bg-slate-800 hover:shadow-lg hover:shadow-orange-500/10 md:col-span-1 md:p-5"
                         >
+                            <div class="mb-2">
+                                <span
+                                    class="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[8px] font-black tracking-widest transition-all duration-500"
+                                    :class="statusCfg(streakStatus).cls"
+                                >
+                                    <span>{{ statusCfg(streakStatus).icon }}</span>
+                                    <span>{{ statusCfg(streakStatus).label }}</span>
+                                </span>
+                            </div>
                             <span
                                 class="text-[10px] font-bold uppercase tracking-widest text-slate-400 md:text-xs"
                             >
