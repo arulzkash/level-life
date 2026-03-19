@@ -64,11 +64,6 @@ class QuestController extends Controller
                 ['user_id' => $request->user()->id, 'name' => $data['type']],
                 ['color' => $request->input('custom_color', '#64748b')] // Default slate-500
             );
-            
-            // Allow updating color if it already exists (optional improvement)
-            if ($request->filled('custom_color') && $questType->color !== $request->input('custom_color')) {
-                 $questType->update(['color' => $request->input('custom_color')]);
-            }
 
             CacheBuster::onQuestTypeMutate($request->user()->id);
         }

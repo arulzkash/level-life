@@ -61,6 +61,7 @@ const handleTypeChange = (event) => {
         } else {
             createForm.is_repeatable = false; // Auto False (tapi bisa diedit user nanti)
         }
+        createForm.custom_color = null; // Don't send color for existing types
     }
 };
 
