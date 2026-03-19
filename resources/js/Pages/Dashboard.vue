@@ -34,7 +34,7 @@ const page = usePage();
 const profile = computed(() => page.props.auth.profile);
 
 // --- STREAK LOGIC (Refactored to Composable) ---
-const { streakStatus, streakNumberClass, isRecoverable } = useStreak(profile.value, props.today);
+const { streakStatus, streakNumberClass, isRecoverable } = useStreak(profile, () => props.today);
 
 // --- UI STATE ---
 const showCreateQuestForm = ref(false);
@@ -473,7 +473,7 @@ const isSubtasksComplete = (q) => {
                                 Streak
                             </span>
                             <div class="mt-1 flex flex-col items-center justify-center gap-1 md:mt-2">
-                                <span class="text-xl font-black md:text-3xl" :class="streakNumberClass">
+                                <span class="inline-block text-xl font-black md:text-3xl" :class="streakNumberClass">
                                     {{ profile.streak_current }}
                                 </span>
                                 <span class="text-[10px] text-slate-500 md:text-sm flex items-center justify-center gap-1 md:gap-1.5">

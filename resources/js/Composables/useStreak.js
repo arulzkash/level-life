@@ -1,15 +1,21 @@
-import { computed } from 'vue';
+import { computed, toValue } from 'vue';
 
-export function useStreak(profile, todayDate) {
+export function useStreak(profileInput, todayDateInput) {
+    const profile = computed(() => toValue(profileInput));
+    const todayDate = computed(() => toValue(todayDateInput));
+
     /**
      * Determines if the streak is technically recoverable based on the 2-freeze-per-week rule.
      * This mimics the backend logic in QuestController.php
      */
     const isRecoverable = computed(() => {
-        if (!profile?.last_active_date) return true;
+        const p = profile.value;
+        const tDate = todayDate.value;
 
-        const lastActiveDate = new Date(profile.last_active_date);
-        const today = new Date(todayDate);
+        if (!p?.last_active_date) return true;
+
+        const lastActiveDate = new Date(p.last_active_date);
+        const today = new Date(tDate);
 
         // Reset time to start of day for accurate day diffs
         lastActiveDate.setHours(0, 0, 0, 0);
@@ -41,7 +47,7 @@ export function useStreak(profile, todayDate) {
         endGap.setDate(endGap.getDate() - 1); // End at yesterday
 
         let freezesUsedThisWeek =
-            lastActiveWeekStart === getMondayStr(cursor) ? profile.freezes_used_count || 0 : 0;
+            lastActiveWeekStart === getMondayStr(cursor) ? p.freezes_used_count || 0 : 0;
 
         let activeWeekStart = getMondayStr(cursor);
 
@@ -67,22 +73,26 @@ export function useStreak(profile, todayDate) {
     });
 
     const streakStatus = computed(() => {
-        if (!profile?.last_active_date) return 'Cold';
+        const p = profile.value;
+        const tDate = todayDate.value;
 
-        if (profile.last_active_date === todayDate) return 'On Fire';
+        if (!p?.last_active_date) return 'Cold';
 
-        const d = new Date(todayDate);
+        if (p.last_active_date === tDate) return 'On Fire';
+
+        const d = new Date(tDate);
         d.setDate(d.getDate() - 1);
         const yesterday = d.toISOString().split('T')[0];
 
-        if (profile.last_active_date === yesterday) return 'Pending';
+        if (p.last_active_date === yesterday) return 'Pending';
 
         return 'Cold';
     });
 
     const streakNumberClass = computed(() => {
         if (streakStatus.value === 'On Fire') {
-            return 'bg-gradient-to-b from-orange-400 via-orange-500 to-yellow-400 bg-clip-text text-transparent drop-shadow-[0_0_10px_rgba(249,115,22,0.65)]';
+            // Bright vibrant orange
+            return 'text-orange-400 drop-shadow-[0_0_10px_rgba(249,115,22,0.6)] font-black';
         }
 
         if (streakStatus.value === 'Pending') {
