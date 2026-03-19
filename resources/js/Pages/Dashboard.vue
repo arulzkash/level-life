@@ -109,6 +109,29 @@ const updateCustomTypeColor = (id, event) => {
 };
 
 const submitQuest = () => {
+    // Prevention: Jika ngetik nama kategori yang sudah ada
+    if (isCustomType.value) {
+        const name = createForm.type.trim();
+        if (!name) {
+            showToast('⚠️ Please enter a category name!', 'error');
+            return;
+        }
+
+        const normalized = name.toLowerCase();
+        const standardTypes = ['daily grind', 'main quest', 'side quest', 'boss fight', 'learning'];
+        
+        if (standardTypes.includes(normalized)) {
+            showToast('⚠️ This is a default category. Please select it from the dropdown!', 'error');
+            return;
+        }
+
+        const exists = props.customQuestTypes.some(t => t.name.toLowerCase() === normalized);
+        if (exists) {
+            showToast('⚠️ This category already exists. Please select it from the dropdown!', 'error');
+            return;
+        }
+    }
+
     createForm.post('/quests', {
         preserveScroll: true,
         onSuccess: () => {
