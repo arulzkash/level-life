@@ -9,6 +9,7 @@ import LevelUpModal from '@/Components/Game/LevelUpModal.vue';
 import confetti from 'canvas-confetti';
 import { useAudio } from '@/Composables/useAudio';
 import { useLevelUp } from '@/Composables/useLevelUp';
+import { useStreak } from '@/Composables/useStreak';
 import HoldButton from '@/Components/Game/HoldButton.vue';
 import CoinIcon from '@/Components/Game/icons/CoinIcon.vue';
 import QuestSubtasks from '@/Components/Game/QuestSubtasks.vue'; // Sesuaikan path
@@ -31,6 +32,9 @@ const props = defineProps({
 
 const page = usePage();
 const profile = computed(() => page.props.auth.profile);
+
+// --- STREAK LOGIC (Refactored to Composable) ---
+const { streakStatus, streakNumberClass, isRecoverable } = useStreak(profile.value, props.today);
 
 // --- UI STATE ---
 const showCreateQuestForm = ref(false);
@@ -335,35 +339,7 @@ const getBadgeIcon = (key) => {
     return icons[key] || '🎖️';
 };
 
-const streakStatus = computed(() => {
-    if (!profile.value?.last_active_date) return 'Cold';
 
-    const today = props.today;
-    const lastActive = profile.value.last_active_date;
-
-    if (lastActive === today) return 'On Fire';
-
-    const d = new Date(today);
-    d.setDate(d.getDate() - 1);
-    const yesterday = d.toISOString().split('T')[0];
-
-    if (lastActive === yesterday) return 'Pending';
-
-    return 'Cold';
-});
-
-const streakNumberClass = computed(() => {
-    if (streakStatus.value === 'On Fire') {
-        // BLAZING: Glowing orange-to-yellow gradient
-        return 'bg-gradient-to-b from-orange-400 via-orange-500 to-yellow-400 bg-clip-text text-transparent drop-shadow-[0_0_10px_rgba(249,115,22,0.65)]';
-    }
-    if (streakStatus.value === 'Pending') {
-        // RECOVERING: Dim Slate
-        return 'text-slate-600 grayscale opacity-60';
-    }
-    // COLD / AFK: Frozen Blue
-    return 'text-blue-400 drop-shadow-[0_0_10px_rgba(96,165,250,0.5)] shadow-blue-500/20';
-});
 
 const getRankClass = (rank) => {
     // Rank 1: Gold + Glow
@@ -500,8 +476,24 @@ const isSubtasksComplete = (q) => {
                                 <span class="text-xl font-black md:text-3xl" :class="streakNumberClass">
                                     {{ profile.streak_current }}
                                 </span>
-                                <span class="text-xs text-slate-500 md:text-sm">
-                                    {{ streakStatus === 'Cold' ? '❄️' : '🔥' }} Days
+                                <span class="text-[10px] text-slate-500 md:text-sm flex items-center justify-center gap-1 md:gap-1.5">
+                                    <span class="whitespace-nowrap">
+                                        {{ streakStatus === 'Cold' ? '❄️' : '🔥' }} Days
+                                    </span>
+                                    <span class="h-3 w-[1px] bg-slate-700/50"></span>
+                                    <div class="flex gap-0.5" :title="isRecoverable ? 'Weekly Streak Freeze (🛡️ available)' : 'Streak Unrecoverable (Gaps too large)'">
+                                        <span 
+                                            v-for="i in 2" :key="i"
+                                            class="text-[9px] md:text-[10px] transition-all duration-500"
+                                            :class="!isRecoverable 
+                                                ? 'text-red-900/40 grayscale' 
+                                                : (i <= (2 - (profile.freezes_used_count || 0)) 
+                                                    ? 'text-indigo-400 drop-shadow-[0_0_5px_rgba(129,140,248,0.5)]' 
+                                                    : 'text-slate-600 grayscale opacity-30')"
+                                        >
+                                            {{ isRecoverable ? '🛡️' : '💔' }}
+                                        </span>
+                                    </div>
                                 </span>
                             </div>
                         </div>
