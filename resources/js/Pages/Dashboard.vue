@@ -352,25 +352,18 @@ const streakStatus = computed(() => {
     return 'Cold';
 });
 
-const statusCfg = (status) => {
-    if (status === 'On Fire')
-        return {
-            icon: '🔥',
-            label: 'BLAZING',
-            cls: 'bg-orange-500/15 text-orange-300 border-orange-500/30 shadow-[0_0_18px_rgba(249,115,22,0.18)]',
-        };
-    if (status === 'Pending')
-        return {
-            icon: '🌙',
-            label: 'RECOVERING',
-            cls: 'bg-indigo-500/15 text-indigo-300 border-indigo-500/30 shadow-[0_0_18px_rgba(99,102,241,0.14)]',
-        };
-    return {
-        icon: '❄️',
-        label: 'AFK',
-        cls: 'bg-slate-950/60 text-slate-400 border-slate-700 shadow-none',
-    };
-};
+const streakNumberClass = computed(() => {
+    if (streakStatus.value === 'On Fire') {
+        // BLAZING: Glowing orange-to-yellow gradient
+        return 'bg-gradient-to-b from-orange-400 via-orange-500 to-yellow-400 bg-clip-text text-transparent drop-shadow-[0_0_10px_rgba(249,115,22,0.65)]';
+    }
+    if (streakStatus.value === 'Pending') {
+        // RECOVERING: Dim Slate
+        return 'text-slate-600 grayscale opacity-60';
+    }
+    // COLD / AFK: Frozen Blue
+    return 'text-blue-400 drop-shadow-[0_0_10px_rgba(96,165,250,0.5)] shadow-blue-500/20';
+});
 
 const getRankClass = (rank) => {
     // Rank 1: Gold + Glow
@@ -498,25 +491,18 @@ const isSubtasksComplete = (q) => {
                         <div
                             class="col-span-2 flex flex-col items-center justify-center rounded-2xl border border-slate-700 bg-slate-800/50 p-3 text-center shadow-sm transition-all duration-300 hover:scale-105 hover:bg-slate-800 hover:shadow-lg hover:shadow-orange-500/10 md:col-span-1 md:p-5"
                         >
-                            <div class="mb-2">
-                                <span
-                                    class="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[8px] font-black tracking-widest transition-all duration-500"
-                                    :class="statusCfg(streakStatus).cls"
-                                >
-                                    <span>{{ statusCfg(streakStatus).icon }}</span>
-                                    <span>{{ statusCfg(streakStatus).label }}</span>
-                                </span>
-                            </div>
                             <span
                                 class="text-[10px] font-bold uppercase tracking-widest text-slate-400 md:text-xs"
                             >
                                 Streak
                             </span>
                             <div class="mt-1 flex flex-col items-center justify-center gap-1 md:mt-2">
-                                <span class="text-xl font-black text-orange-500 md:text-3xl">
+                                <span class="text-xl font-black md:text-3xl" :class="streakNumberClass">
                                     {{ profile.streak_current }}
                                 </span>
-                                <span class="text-xs text-slate-500 md:text-sm">🔥 Days</span>
+                                <span class="text-xs text-slate-500 md:text-sm">
+                                    {{ streakStatus === 'Cold' ? '❄️' : '🔥' }} Days
+                                </span>
                             </div>
                         </div>
 
@@ -539,7 +525,7 @@ const isSubtasksComplete = (q) => {
 
                         <Link
                             href="/leaderboard"
-                            class="group col-span-3 flex flex-col items-center justify-between rounded-2xl border border-slate-700 bg-slate-800/50 p-3 text-center shadow-sm transition-all duration-300 hover:scale-105 hover:bg-slate-800 hover:shadow-lg hover:shadow-indigo-500/20 md:col-span-1 md:p-5"
+                            class="group col-span-3 flex flex-col items-center justify-center rounded-2xl border border-slate-700 bg-slate-800/50 p-3 text-center shadow-sm transition-all duration-300 hover:scale-105 hover:bg-slate-800 hover:shadow-lg hover:shadow-indigo-500/20 md:col-span-1 md:p-5"
                         >
                             <span
                                 class="text-[10px] font-bold uppercase tracking-widest text-slate-400 transition-colors group-hover:text-indigo-300 md:text-xs"
@@ -600,7 +586,7 @@ const isSubtasksComplete = (q) => {
 
                         <div
                             v-if="topBadge"
-                            class="group col-span-3 flex flex-col items-center justify-between rounded-2xl border border-slate-700 bg-slate-800/50 p-3 text-center shadow-sm transition-all duration-300 hover:scale-105 hover:bg-slate-800 hover:shadow-lg hover:shadow-indigo-500/10 md:col-span-1 md:p-5"
+                            class="group col-span-3 flex flex-col items-center justify-center rounded-2xl border border-slate-700 bg-slate-800/50 p-3 text-center shadow-sm transition-all duration-300 hover:scale-105 hover:bg-slate-800 hover:shadow-lg hover:shadow-indigo-500/10 md:col-span-1 md:p-5"
                             title="Latest Achievement"
                         >
                             <div class="flex items-center gap-1.5">
