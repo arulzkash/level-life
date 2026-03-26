@@ -107,7 +107,7 @@ const submitEdit = () => {
 };
 
 const toggleMilestone = (m) => {
-    if (isEditing.value) return; // Prevent toggle during edit mode
+    if (isEditing.value || props.goal.status === 'completed') return;
     router.patch(`/goals/milestones/${m.id}/toggle`, {}, { preserveScroll: true });
 };
 
@@ -458,15 +458,19 @@ const deleteGoal = () => {
                     ]"
                 >
                     <div class="flex items-center gap-4">
-                        <label class="relative flex shrink-0 cursor-pointer items-center">
+                        <label
+                            class="relative flex shrink-0 items-center"
+                            :class="goal.status === 'completed' ? 'cursor-not-allowed' : 'cursor-pointer'"
+                        >
                             <input
                                 type="checkbox"
                                 :checked="m.is_completed"
                                 @change="toggleMilestone(m)"
+                                :disabled="goal.status === 'completed'"
                                 class="peer sr-only"
                             />
                             <div
-                                class="flex h-8 w-8 items-center justify-center rounded-lg border-2 border-slate-600 bg-slate-900 transition-all peer-checked:border-emerald-500 peer-checked:bg-emerald-500 peer-checked:shadow-[0_0_10px_rgba(16,185,129,0.3)]"
+                                class="flex h-8 w-8 items-center justify-center rounded-lg border-2 border-slate-600 bg-slate-900 transition-all peer-checked:border-emerald-500 peer-checked:bg-emerald-500 peer-checked:shadow-[0_0_10px_rgba(16,185,129,0.3)] peer-disabled:opacity-50"
                             >
                                 <span
                                     class="text-white opacity-0 transition-opacity peer-checked:opacity-100"
