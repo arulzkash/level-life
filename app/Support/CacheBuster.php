@@ -58,4 +58,18 @@ class CacheBuster
     {
         Cache::forget(CacheKeys::dashboardCustomQuestTypes($userId));
     }
+
+    public static function onGoalMutate(int $userId, ?int $goalId = null): void
+    {
+        // Dashboard active goals widget
+        Cache::forget(CacheKeys::dashboardActiveGoals($userId));
+
+        // Goals index page (active + completed tabs)
+        Cache::forget(CacheKeys::goalsIndex($userId));
+
+        // Show page cache for this specific goal (if given)
+        if ($goalId) {
+            Cache::forget(CacheKeys::goalShow($userId, $goalId));
+        }
+    }
 }

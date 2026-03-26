@@ -141,6 +141,15 @@ class DashboardController extends Controller
                 ]);
         });
 
+        $activeGoalsKey = CacheKeys::dashboardActiveGoals($user->id);
+
+        $activeGoals = Cache::remember($activeGoalsKey, 86400, function () use ($user) {
+            return $user->goals()
+                ->where('status', 'active')
+                ->with('milestones')
+                ->get();
+        });
+
 
         $globalRoster = Cache::get(CacheKeys::leaderboardRoster($dateKey));
 
@@ -203,6 +212,7 @@ class DashboardController extends Controller
                 'total' => $totalCount,
             ],
             'activeQuests' => $activeQuests,
+            'activeGoals' => $activeGoals,
             'todayBlocks' => $todayBlocks,
             'leaderboardData' => $leaderboardData,
             'topBadge' => $topBadge,

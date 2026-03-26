@@ -13,6 +13,7 @@ import { useStreak } from '@/Composables/useStreak';
 import HoldButton from '@/Components/Game/HoldButton.vue';
 import CoinIcon from '@/Components/Game/icons/CoinIcon.vue';
 import QuestSubtasks from '@/Components/Game/QuestSubtasks.vue'; // Sesuaikan path
+import { useGoalUrgency } from '@/Composables/useGoalUrgency';
 
 defineOptions({ layout: AppLayout });
 
@@ -20,6 +21,7 @@ const { playSfx, playBgm, stopSfx } = useAudio();
 
 const props = defineProps({
     activeQuests: Array,
+    activeGoals: Array,
     habits: Array,
     habitSummary: Object,
     today: String,
@@ -32,6 +34,59 @@ const props = defineProps({
 
 const page = usePage();
 const profile = computed(() => page.props.auth.profile);
+
+// --- GOAL URGENCY LOGIC (Focus Goal) ---
+const { sortGoalsByUrgency, getLocalYMD } = useGoalUrgency();
+const focusGoal = computed(() => {
+    if (!props.activeGoals || props.activeGoals.length === 0) return null;
+    return sortGoalsByUrgency(props.activeGoals)[0];
+});
+
+const formatDate = (dateString) => {
+    if (!dateString) return '-';
+    const localDateStr = getLocalYMD(dateString);
+    const [year, month, day] = localDateStr.split('-');
+    const date = new Date(year, month - 1, day);
+    if (isNaN(date.getTime())) return dateString;
+    return date.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
+};
+
+const getDaysLeft = (dateString) => {
+    if (!dateString) return '';
+    const due = new Date(dateString);
+    due.setHours(0,0,0,0);
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    const diffTime = due - today;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays < 0) return `${Math.abs(diffDays)} days overdue`;
+    if (diffDays === 0) return 'Due today';
+    if (diffDays === 1) return 'Due tomorrow';
+    return `${diffDays} days left`;
+};
+
+const getDaysLeftClass = (dateString) => {
+    if (!dateString) return 'text-slate-500';
+    const due = new Date(dateString);
+    due.setHours(0,0,0,0);
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    const diffDays = Math.ceil((due - today) / (1000 * 60 * 60 * 24));
+    
+    if (diffDays < 0) return 'text-red-700 font-bold';
+    if (diffDays === 0) return 'text-red-500 font-bold';
+    if (diffDays <= 2) return 'text-orange-400 font-bold';
+    if (diffDays <= 5) return 'text-amber-400 font-bold';
+    return 'text-emerald-400 font-medium';
+};
+
+const nextFocusMilestone = computed(() => {
+    if (!focusGoal.value || !focusGoal.value.rawGoal.milestones) return null;
+    const pending = focusGoal.value.rawGoal.milestones.filter(m => !m.is_completed);
+    if (!pending.length) return null;
+    return pending.sort((a, b) => new Date(a.due_date) - new Date(b.due_date))[0];
+});
 
 // --- STREAK LOGIC (Refactored to Composable) ---
 const { streakStatus, streakNumberClass, isRecoverable } = useStreak(profile, () => props.today);
@@ -617,11 +672,86 @@ const isSubtasksComplete = (q) => {
             <div
                 class="mt-8 flex flex-wrap justify-center gap-3 border-t border-slate-700/50 pt-4 md:justify-start"
             >
+                <Link href="/goals" class="btn-secondary">🎯 Goals</Link>
                 <Link href="/quests" class="btn-secondary">📜 Quest Board</Link>
                 <Link href="/logs/completions" class="btn-secondary">📒 Completion Log</Link>
                 <Link href="/treasury" class="btn-secondary">💰 Merchant</Link>
             </div>
         </section>
+
+        <!-- FOCUS GOAL WIDGET (MOBILE ONLY: Appears above everything) -->
+        <div v-if="focusGoal" class="block lg:hidden mb-8">
+            <div class="group relative overflow-hidden rounded-2xl border border-slate-700 bg-slate-800 p-5 shadow-lg transition-all hover:border-slate-500 cursor-pointer"
+                 @click="router.visit(`/goals/${focusGoal.id}`)"
+            >
+                <!-- Visual Urgency Background Glow -->
+                <div class="pointer-events-none absolute inset-0 bg-gradient-to-br from-transparent opacity-10 transition-opacity group-hover:opacity-20"
+                     :class="[
+                         focusGoal.level === 4 ? 'to-red-600' : 
+                         focusGoal.level === 3 ? 'to-orange-600' : 
+                         focusGoal.level === 2 ? 'to-amber-500' : 'to-emerald-600'
+                     ]"
+                ></div>
+                
+                <div class="relative z-10 mb-4 flex items-center justify-between">
+                    <h3 class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-300">
+                        <span class="text-base text-white">🎯</span> FOCUS GOAL
+                    </h3>
+                    <!-- URGENCY BADGE -->
+                    <div class="shrink-0 rounded border px-2 py-0.5 text-[10px] font-black uppercase tracking-widest shadow-sm" :class="focusGoal.colorClass">
+                        {{ focusGoal.stateName }}
+                    </div>
+                </div>
+                
+                <div class="relative z-10">
+                    <h4 class="text-xl font-bold text-white transition-colors group-hover:text-indigo-300">
+                        {{ focusGoal.rawGoal.title }}
+                    </h4>
+                    
+                    <p v-if="focusGoal.rawGoal.personal_reason" class="mt-2 border-l-2 border-slate-700/60 pl-3 text-sm italic text-slate-400 whitespace-pre-wrap">
+                        "{{ focusGoal.rawGoal.personal_reason }}"
+                    </p>
+                    
+                    <!-- Next Milestone Info -->
+                    <div v-if="nextFocusMilestone" class="mt-4 rounded-lg border border-slate-700/50 bg-slate-900/60 p-3 shadow-inner">
+                        <div class="mb-1 text-[10px] font-bold uppercase text-slate-500">Next Checkpoint</div>
+                        <div class="mb-2 flex items-start gap-2 text-sm font-semibold text-slate-200">
+                            <span class="mt-2 shrink-0 h-1.5 w-1.5 rounded-full" :class="[
+                                focusGoal.level === 4 ? 'bg-red-500 shadow-[0_0_5px_rgba(239,68,68,0.8)]' : 
+                                focusGoal.level === 3 ? 'bg-orange-500 shadow-[0_0_5px_rgba(249,115,22,0.8)]' : 
+                                focusGoal.level === 2 ? 'bg-amber-500 shadow-[0_0_5px_rgba(251,191,36,0.8)]' : 'bg-emerald-500 shadow-[0_0_5px_rgba(16,185,129,0.8)]'
+                            ]"></span>
+                            <span class="leading-snug">{{ nextFocusMilestone.title }}</span>
+                        </div>
+                        <div class="flex items-center justify-between text-xs">
+                            <span class="font-medium text-slate-400">Due: <span class="text-slate-300 font-bold">{{ formatDate(nextFocusMilestone.due_date) }}</span></span>
+                            <span class="text-[10px] uppercase tracking-widest" :class="getDaysLeftClass(nextFocusMilestone.due_date)">
+                                {{ getDaysLeft(nextFocusMilestone.due_date) }}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <!-- Overall Progress -->
+                    <div class="mt-5 space-y-1.5">
+                        <div class="flex items-center justify-between text-[10px] font-bold uppercase tracking-widest text-slate-500">
+                            <span>{{ focusGoal.progress }}% Completed</span>
+                            <span class="text-slate-400">Target: {{ formatDate(focusGoal.rawGoal.deadline) }}</span>
+                        </div>
+                        <!-- Progress Bar -->
+                        <div class="relative h-1.5 w-full overflow-hidden rounded-full border border-slate-700/50 bg-slate-900">
+                            <div class="absolute inset-y-0 left-0 h-full transition-all duration-1000 ease-out"
+                                 :class="[
+                                     focusGoal.level === 4 ? 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]' :
+                                     focusGoal.level === 3 ? 'bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.5)]' :
+                                     focusGoal.level === 2 ? 'bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.5)]' :
+                                     'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]'
+                                 ]"
+                                 :style="`width: ${focusGoal.progress}%`"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
         <div class="grid grid-cols-1 gap-8 lg:grid-cols-3">
             <div class="space-y-6 lg:col-span-2">
@@ -1053,6 +1183,80 @@ const isSubtasksComplete = (q) => {
             </div>
 
             <div class="space-y-8">
+                <!-- FOCUS GOAL WIDGET (DESKTOP ONLY: Appears in Sidebar) -->
+                <div v-if="focusGoal" 
+                     class="hidden lg:block group relative overflow-hidden rounded-2xl border border-slate-700 bg-slate-800 p-5 shadow-lg transition-all hover:border-slate-500 cursor-pointer md:p-6"
+                     @click="router.visit(`/goals/${focusGoal.id}`)"
+                >
+                    <!-- Visual Urgency Background Glow -->
+                    <div class="pointer-events-none absolute inset-0 bg-gradient-to-br from-transparent opacity-10 transition-opacity group-hover:opacity-20"
+                         :class="[
+                             focusGoal.level === 4 ? 'to-red-600' : 
+                             focusGoal.level === 3 ? 'to-orange-600' : 
+                             focusGoal.level === 2 ? 'to-amber-500' : 'to-emerald-600'
+                         ]"
+                    ></div>
+                    
+                    <div class="relative z-10 mb-4 flex items-center justify-between">
+                        <h3 class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-300">
+                            <span class="text-base text-white">🎯</span> FOCUS GOAL
+                        </h3>
+                        <!-- URGENCY BADGE -->
+                        <div class="shrink-0 rounded border px-2 py-0.5 text-[10px] font-black uppercase tracking-widest shadow-sm" :class="focusGoal.colorClass">
+                            {{ focusGoal.stateName }}
+                        </div>
+                    </div>
+                    
+                    <div class="relative z-10">
+                        <h4 class="text-xl font-bold text-white transition-colors group-hover:text-indigo-300">
+                            {{ focusGoal.rawGoal.title }}
+                        </h4>
+                        
+                        <p v-if="focusGoal.rawGoal.personal_reason" class="mt-2 border-l-2 border-slate-700/60 pl-3 text-sm italic text-slate-400 whitespace-pre-wrap">
+                            "{{ focusGoal.rawGoal.personal_reason }}"
+                        </p>
+                        
+                        <!-- Next Milestone Info -->
+                        <div v-if="nextFocusMilestone" class="mt-4 rounded-lg border border-slate-700/50 bg-slate-900/60 p-3 shadow-inner">
+                            <div class="mb-1 text-[10px] font-bold uppercase text-slate-500">Next Checkpoint</div>
+                            <div class="mb-2 flex items-start gap-2 text-sm font-semibold text-slate-200">
+                                <span class="mt-2 shrink-0 h-1.5 w-1.5 rounded-full" :class="[
+                                    focusGoal.level === 4 ? 'bg-red-500 shadow-[0_0_5px_rgba(239,68,68,0.8)]' : 
+                                    focusGoal.level === 3 ? 'bg-orange-500 shadow-[0_0_5px_rgba(249,115,22,0.8)]' : 
+                                    focusGoal.level === 2 ? 'bg-amber-500 shadow-[0_0_5px_rgba(251,191,36,0.8)]' : 'bg-emerald-500 shadow-[0_0_5px_rgba(16,185,129,0.8)]'
+                                ]"></span>
+                                <span class="leading-snug">{{ nextFocusMilestone.title }}</span>
+                            </div>
+                            <div class="flex items-center justify-between text-xs">
+                                <span class="font-medium text-slate-400">Due: <span class="text-slate-300 font-bold">{{ formatDate(nextFocusMilestone.due_date) }}</span></span>
+                                <span class="text-[10px] uppercase tracking-widest" :class="getDaysLeftClass(nextFocusMilestone.due_date)">
+                                    {{ getDaysLeft(nextFocusMilestone.due_date) }}
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <!-- Overall Progress -->
+                        <div class="mt-5 space-y-1.5">
+                            <div class="flex items-center justify-between text-[10px] font-bold uppercase tracking-widest text-slate-500">
+                                <span>{{ focusGoal.progress }}% Completed</span>
+                                <span class="text-slate-400">Target: {{ formatDate(focusGoal.rawGoal.deadline) }}</span>
+                            </div>
+                            <!-- Progress Bar -->
+                            <div class="relative h-1.5 w-full overflow-hidden rounded-full border border-slate-700/50 bg-slate-900">
+                                <div class="absolute inset-y-0 left-0 h-full transition-all duration-1000 ease-out"
+                                     :class="[
+                                         focusGoal.level === 4 ? 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]' :
+                                         focusGoal.level === 3 ? 'bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.5)]' :
+                                         focusGoal.level === 2 ? 'bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.5)]' :
+                                         'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]'
+                                     ]"
+                                     :style="`width: ${focusGoal.progress}%`"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- DAILY HABITS -->
                 <div class="rounded-2xl border border-slate-700 bg-slate-800 p-6 shadow-lg">
                     <div class="mb-6 flex items-center justify-between">
                         <h3 class="flex items-center gap-2 font-bold text-white">

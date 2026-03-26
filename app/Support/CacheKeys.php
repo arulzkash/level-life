@@ -55,4 +55,21 @@ class CacheKeys
     {
         return "dashboard:custom_quest_types:{$userId}";
     }
+
+    // ── GOALS ─────────────────────────────────────────────────────
+
+    public static function dashboardActiveGoals(int $userId): string
+    {
+        return "dashboard:active_goals:{$userId}";
+    }
+
+    public static function goalsIndex(int $userId): string
+    {
+        return "goals:index:{$userId}";
+    }
+
+    public static function goalShow(int $userId, int $goalId): string
+    {
+        return "goals:show:{$userId}:{$goalId}";
+    }
 }

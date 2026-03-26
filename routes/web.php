@@ -25,6 +25,8 @@ use App\Http\Controllers\TreasuryController;
 use App\Http\Controllers\TreasuryLogPageController;
 use App\Http\Controllers\TreasuryPurchaseLogController;
 use App\Http\Controllers\QuestTypeController;
+use App\Http\Controllers\GoalController;
+
 
 require __DIR__ . '/auth.php';
 
@@ -63,6 +65,17 @@ Route::middleware('auth')->group(function () {
     // QUEST TYPES (Custom)
     Route::patch('/quest-types/{questType}', [QuestTypeController::class, 'update'])->name('quest-types.update');
     Route::delete('/quest-types/{questType}', [QuestTypeController::class, 'destroy'])->name('quest-types.destroy');
+
+    // GOALS
+    Route::prefix('goals')->group(function () {
+        Route::get('/', [GoalController::class, 'index'])->name('goals.index');
+        Route::get('/{goal}', [GoalController::class, 'show'])->name('goals.show');
+        Route::post('/', [GoalController::class, 'store'])->name('goals.store');
+        Route::patch('/{goal}', [GoalController::class, 'update'])->name('goals.update');
+        Route::delete('/{goal}', [GoalController::class, 'destroy'])->name('goals.destroy');
+        Route::patch('/milestones/{goalMilestone}/toggle', [GoalController::class, 'toggleMilestone'])->name('goal-milestones.toggle');
+        Route::post('/{goal}/complete', [GoalController::class, 'complete'])->name('goals.complete');
+    });
 
     // LOGS
     Route::prefix('logs')->group(function () {
