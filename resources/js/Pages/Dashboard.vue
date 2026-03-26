@@ -735,7 +735,26 @@ const isSubtasksComplete = (q) => {
                     <div class="mt-5 space-y-1.5">
                         <div class="flex items-center justify-between text-[10px] font-bold uppercase tracking-widest text-slate-500">
                             <span>{{ focusGoal.progress }}% Completed</span>
-                            <span class="text-slate-400">Target: {{ formatDate(focusGoal.rawGoal.deadline) }}</span>
+                            <div class="flex flex-col items-end">
+                                <span class="text-slate-400 text-[9px]">Target: {{ formatDate(focusGoal.rawGoal.deadline) }}</span>
+                                <span class="text-[9px] font-black uppercase tracking-widest mt-0.5" 
+                                    :class="[
+                                        focusGoal.isGoalOverdue ? 'text-red-400' : 
+                                        focusGoal.goalDaysLeft <= 2 ? 'text-orange-400' :
+                                        focusGoal.goalDaysLeft <= 5 ? 'text-amber-400' : 'text-emerald-400'
+                                    ]"
+                                >
+                                    <template v-if="focusGoal.isGoalOverdue">
+                                        {{ Math.abs(focusGoal.goalDaysLeft) }} Days Overdue
+                                    </template>
+                                    <template v-else-if="focusGoal.goalDaysLeft === 0">
+                                        Due Today
+                                    </template>
+                                    <template v-else>
+                                        {{ focusGoal.goalDaysLeft }} Days Left
+                                    </template>
+                                </span>
+                            </div>
                         </div>
                         <!-- Progress Bar -->
                         <div class="relative h-1.5 w-full overflow-hidden rounded-full border border-slate-700/50 bg-slate-900">
@@ -1239,7 +1258,26 @@ const isSubtasksComplete = (q) => {
                         <div class="mt-5 space-y-1.5">
                             <div class="flex items-center justify-between text-[10px] font-bold uppercase tracking-widest text-slate-500">
                                 <span>{{ focusGoal.progress }}% Completed</span>
-                                <span class="text-slate-400">Target: {{ formatDate(focusGoal.rawGoal.deadline) }}</span>
+                                <div class="flex flex-col items-end">
+                                    <span class="text-slate-400 text-[9px]">Target: {{ formatDate(focusGoal.rawGoal.deadline) }}</span>
+                                    <span class="text-[9px] font-black uppercase tracking-widest mt-0.5" 
+                                        :class="[
+                                            focusGoal.isGoalOverdue ? 'text-red-400' : 
+                                            focusGoal.goalDaysLeft <= 2 ? 'text-orange-400' :
+                                            focusGoal.goalDaysLeft <= 5 ? 'text-amber-400' : 'text-emerald-400'
+                                        ]"
+                                    >
+                                        <template v-if="focusGoal.isGoalOverdue">
+                                            {{ Math.abs(focusGoal.goalDaysLeft) }} Days Overdue
+                                        </template>
+                                        <template v-else-if="focusGoal.goalDaysLeft === 0">
+                                            Due Today
+                                        </template>
+                                        <template v-else>
+                                            {{ focusGoal.goalDaysLeft }} Days Left
+                                        </template>
+                                    </span>
+                                </div>
                             </div>
                             <!-- Progress Bar -->
                             <div class="relative h-1.5 w-full overflow-hidden rounded-full border border-slate-700/50 bg-slate-900">

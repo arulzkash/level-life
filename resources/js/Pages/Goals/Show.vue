@@ -205,9 +205,34 @@ const deleteGoal = () => {
                         >
                             {{ goal.title }}
                         </h1>
-                        <p class="mt-2 text-sm text-slate-400">
-                            Target Deadline:
-                            <span class="font-bold text-slate-200">🏁 {{ formatDate(goal.deadline) }}</span>
+                        <p class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-slate-400">
+                            <span>
+                                Target Deadline:
+                                <span class="font-bold text-slate-200">🏁 {{ formatDate(goal.deadline) }}</span>
+                            </span>
+                            <span
+                                v-if="goal.status !== 'completed'"
+                                class="rounded border border-transparent bg-slate-900 px-2 py-0.5 text-[10px] font-black uppercase tracking-widest shadow-sm"
+                                :class="[
+                                    analyzed.isGoalOverdue
+                                        ? 'border-red-500/20 bg-red-950/30 text-red-400'
+                                        : analyzed.goalDaysLeft <= 2
+                                          ? 'border-orange-500/20 bg-orange-950/30 text-orange-400'
+                                          : analyzed.goalDaysLeft <= 5
+                                            ? 'border-amber-500/20 bg-amber-950/30 text-amber-400'
+                                            : 'border-emerald-500/20 bg-emerald-950/30 text-emerald-400',
+                                ]"
+                            >
+                                <template v-if="analyzed.isGoalOverdue">
+                                    {{ Math.abs(analyzed.goalDaysLeft) }} Days Overdue
+                                </template>
+                                <template v-else-if="analyzed.goalDaysLeft === 0">
+                                    Due Today
+                                </template>
+                                <template v-else>
+                                    {{ analyzed.goalDaysLeft }} Days Left
+                                </template>
+                            </span>
                         </p>
                     </div>
 
