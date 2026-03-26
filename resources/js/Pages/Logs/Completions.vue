@@ -11,6 +11,7 @@ const props = defineProps({
     filters: Object,
     group_summaries: Object,
     customQuestTypes: Array,
+    availableTypes: Array,
 });
 
 const JAKARTA_TZ = 'Asia/Jakarta';
@@ -133,11 +134,13 @@ else filterMode.value = 'preset';
 
 const filterForm = useForm({
     period: props.filters?.period ?? 'all',
-    date: props.filters?.date ?? '',
-    from: props.filters?.from ?? '',
-    to: props.filters?.to ?? '',
-    sort: props.filters?.sort ?? 'completed_at',
-    dir: props.filters?.dir ?? 'desc',
+    date:   props.filters?.date   ?? '',
+    from:   props.filters?.from   ?? '',
+    to:     props.filters?.to     ?? '',
+    sort:   props.filters?.sort   ?? 'completed_at',
+    dir:    props.filters?.dir    ?? 'desc',
+    search: props.filters?.search ?? '',
+    type:   props.filters?.type   ?? '',
 });
 
 watch(filterMode, (newMode) => {
@@ -155,6 +158,16 @@ watch(filterMode, (newMode) => {
         filterForm.date = '';
     }
 });
+
+const hasActiveSearchFilter = computed(() =>
+    filterForm.search !== '' || filterForm.type !== ''
+);
+
+const clearSearchFilters = () => {
+    filterForm.search = '';
+    filterForm.type = '';
+    apply();
+};
 
 const apply = () => {
     filterForm.get('/logs/completions', { preserveScroll: true, preserveState: true });
@@ -243,9 +256,17 @@ const dateTone = (dateKey) => {
             >
                 📜
             </div>
-            <div>
+            <div class="flex-1">
                 <h1 class="text-3xl font-black tracking-tight text-white">Adventure Chronicles</h1>
                 <p class="text-sm text-slate-400">A complete record of your heroic deeds.</p>
+            </div>
+            <div v-if="hasActiveSearchFilter" class="flex items-center gap-2">
+                <span class="rounded-full border border-indigo-500/40 bg-indigo-500/10 px-3 py-1 text-xs font-bold text-indigo-300">
+                    🔍 Filtered
+                </span>
+                <button @click="clearSearchFilters" class="text-xs text-slate-500 hover:text-red-400 transition-colors">
+                    ✕ clear
+                </button>
             </div>
         </div>
 
@@ -333,6 +354,32 @@ const dateTone = (dateKey) => {
                     </button>
                 </div>
             </div>
+        </div>
+
+        <!-- SEARCH + TYPE FILTER ROW -->
+        <div class="flex items-end gap-2">
+            <div class="relative flex-1">
+                <input
+                    type="text"
+                    v-model="filterForm.search"
+                    placeholder="🔍 Search quest name..."
+                    class="input-dark w-full pl-8"
+                    @keyup.enter="apply"
+                />
+            </div>
+            <div class="w-44">
+                <select v-model="filterForm.type" class="input-dark w-full">
+                    <option value="">All Types</option>
+                    <option v-for="t in availableTypes" :key="t" :value="t">{{ t }}</option>
+                </select>
+            </div>
+            <button
+                @click="apply"
+                class="rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-bold text-white shadow-lg transition hover:bg-indigo-500 disabled:opacity-50"
+                :disabled="filterForm.processing"
+            >
+                Search
+            </button>
         </div>
 
         <div
