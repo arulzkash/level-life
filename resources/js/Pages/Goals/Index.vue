@@ -8,12 +8,13 @@ defineOptions({ layout: AppLayout });
 
 const props = defineProps({
     activeGoals: Array,
-    completedGoals: Array,
+    completedGoals: Object, // Paginated object
+    filters: Object,
 });
 
 const { sortGoalsByUrgency, getLocalYMD } = useGoalUrgency();
 
-const activeTab = ref('active');
+const activeTab = ref(props.filters.tab || 'active');
 
 // Analyze and sort all goals Reactively
 const analyzedGoals = computed(() => {
@@ -139,7 +140,7 @@ const getNearestMilestoneInfo = (goalObj) => {
             >
                 🏆 Completed
                 <span class="rounded px-1.5 py-0.5 text-[10px]" :class="activeTab === 'completed' ? 'bg-emerald-700 text-white' : 'bg-slate-700 text-slate-400'">
-                    {{ completedGoals?.length ?? 0 }}
+                    {{ completedGoals.total ?? 0 }}
                 </span>
             </button>
         </div>
@@ -504,7 +505,7 @@ const getNearestMilestoneInfo = (goalObj) => {
 
             <!-- COMPLETED GOALS LIST -->
             <Link
-                v-for="goal in completedGoals"
+                v-for="goal in completedGoals.data"
                 :key="goal.id"
                 :href="`/goals/${goal.id}`"
                 class="group flex flex-col items-stretch overflow-hidden rounded-xl border border-slate-700/30 bg-slate-800/40 shadow transition-all hover:bg-slate-800/70"
@@ -533,6 +534,22 @@ const getNearestMilestoneInfo = (goalObj) => {
                     </div>
                 </div>
             </Link>
+
+            <!-- PAGINATION -->
+            <div v-if="completedGoals.links && completedGoals.links.length > 3" class="mt-8 flex justify-center gap-2">
+                <Link
+                    v-for="(link, k) in completedGoals.links"
+                    :key="k"
+                    class="rounded-lg px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest transition-all"
+                    :class="[
+                        link.active ? 'bg-indigo-600 text-white shadow-lg' : 'bg-slate-800 text-slate-500 hover:bg-slate-700 hover:text-slate-300',
+                        !link.url ? 'opacity-30 cursor-not-allowed' : ''
+                    ]"
+                    :href="link.url ? `${link.url}&tab=completed` : '#'"
+                    v-html="link.label"
+                    preserve-scroll
+                />
+            </div>
         </div>
     </div>
 </template>

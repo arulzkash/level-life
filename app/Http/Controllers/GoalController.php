@@ -17,25 +17,34 @@ class GoalController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
-        $goalsIndexKey = CacheKeys::goalsIndex($user->id);
+        $page = $request->query('page', 1);
 
-        $payload = Cache::remember($goalsIndexKey, self::TTL, function () use ($user) {
-            return [
-                'activeGoals' => $user->goals()
-                    ->where('status', 'active')
-                    ->with('milestones')
-                    ->get(),
-                'completedGoals' => $user->goals()
-                    ->where('status', 'completed')
-                    ->with('milestones')
-                    ->orderByDesc('completed_at')
-                    ->get(),
-            ];
+        // 1. ACTIVE GOALS (Small collection, cached once)
+        $activeGoalsKey = CacheKeys::dashboardActiveGoals($user->id);
+        $activeGoals = Cache::remember($activeGoalsKey, self::TTL, function () use ($user) {
+            return $user->goals()
+                ->where('status', 'active')
+                ->with('milestones')
+                ->get();
+        });
+
+        // 2. COMPLETED GOALS (Paginated, cached per-page)
+        $completedGoalsKey = CacheKeys::goalsIndex($user->id, $page);
+        $completedGoals = Cache::remember($completedGoalsKey, self::TTL, function () use ($user) {
+            return $user->goals()
+                ->where('status', 'completed')
+                ->with('milestones')
+                ->orderByDesc('completed_at')
+                ->paginate(10)
+                ->withQueryString();
         });
 
         return Inertia::render('Goals/Index', [
-            'activeGoals'    => $payload['activeGoals'],
-            'completedGoals' => $payload['completedGoals'],
+            'activeGoals'    => $activeGoals,
+            'completedGoals' => $completedGoals,
+            'filters'        => [
+                'tab' => $request->query('tab', 'active'),
+            ],
         ]);
     }
 

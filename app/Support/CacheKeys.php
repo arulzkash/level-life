@@ -63,9 +63,9 @@ class CacheKeys
         return "dashboard:active_goals:{$userId}";
     }
 
-    public static function goalsIndex(int $userId): string
+    public static function goalsIndex($userId, $page = 1)
     {
-        return "goals:index:{$userId}";
+        return "user:{$userId}:goals:index:page:{$page}";
     }
 
     public static function goalShow(int $userId, int $goalId): string
