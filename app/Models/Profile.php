@@ -21,6 +21,7 @@ class Profile extends Model
         'freezes_used_count',
         'freezes_used_total',
         'streak_resets_total',
+        'bio',
     ];
 
     // INI BARU: Memberitahu Laravel untuk selalu menyertakan atribut 'level_data' saat model diubah jadi JSON/Array

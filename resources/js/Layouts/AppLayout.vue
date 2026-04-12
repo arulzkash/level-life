@@ -6,6 +6,11 @@ import CoinIcon from '@/Components/Game/icons/CoinIcon.vue';
 const page = usePage();
 const user = computed(() => page.props.auth.user);
 const profile = computed(() => page.props.auth.profile);
+const publicProfileHref = computed(() => {
+    const username = user.value?.username;
+
+    return username ? `/u/${username}` : null;
+});
 
 // State untuk Mobile Menu (Buka/Tutup)
 const showingNavigationDropdown = ref(false);
@@ -181,10 +186,18 @@ const showingNavigationDropdown = ref(false);
                                     </div>
 
                                     <Link
+                                        v-if="publicProfileHref"
+                                        :href="publicProfileHref"
+                                        class="block w-full border-b border-slate-700/50 px-4 py-3 text-left text-sm text-slate-300 transition-colors hover:bg-slate-700 hover:text-white"
+                                    >
+                                        👁️ Public Profile
+                                    </Link>
+
+                                    <Link
                                         :href="route('profile.edit')"
                                         class="block w-full border-b border-slate-700/50 px-4 py-3 text-left text-sm text-slate-300 transition-colors hover:bg-slate-700 hover:text-white"
                                     >
-                                        ⚙️ Character Sheet
+                                        ⚙️ Settings
                                     </Link>
 
                                     <Link
@@ -293,11 +306,19 @@ const showingNavigationDropdown = ref(false);
                     </div>
                     <div class="mt-3 space-y-1">
                         <Link
+                            v-if="publicProfileHref"
+                            :href="publicProfileHref"
+                            class="block w-full border-l-4 border-transparent py-2 pl-3 pr-4 text-left text-base font-medium text-slate-300 transition-colors hover:bg-slate-700 hover:text-white"
+                            @click="showingNavigationDropdown = false"
+                        >
+                            👁️ Public Profile
+                        </Link>
+                        <Link
                             :href="route('profile.edit')"
                             class="block w-full border-l-4 border-transparent py-2 pl-3 pr-4 text-left text-base font-medium text-slate-300 transition-colors hover:bg-slate-700 hover:text-white"
                             @click="showingNavigationDropdown = false"
                         >
-                            ⚙️ Character Sheet
+                            ⚙️ Settings
                         </Link>
                         <Link
                             href="/logout"

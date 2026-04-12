@@ -28,6 +28,11 @@ class CacheBuster
         // navbar profile (coin/xp berubah)
         Cache::forget(CacheKeys::navProfile($userId, $dateKey));
 
+        // public profile blocks affected by a new completion
+        self::invalidatePublicProfileSummary($userId);
+        self::invalidatePublicProfileStats($userId);
+        self::invalidatePublicProfileHeatmap($userId);
+
         // dashboard: active quests list (quest bisa keluar/masuk list)
         Cache::forget(CacheKeys::dashboardActiveQuests($userId, $dateKey));
     }
@@ -48,10 +53,61 @@ class CacheBuster
         $dateKey = CacheKeys::todayJakarta();
         Cache::forget(CacheKeys::navProfile($userId, $dateKey));
     }
+
     public static function invalidateNavUser(int $userId): void
     {
         $dateKey = CacheKeys::todayJakarta();
         Cache::forget(CacheKeys::navUser($userId, $dateKey));
+    }
+
+    public static function invalidateProfileHub(int $userId): void
+    {
+        self::invalidatePublicProfileAll($userId);
+    }
+
+    public static function invalidatePublicProfileSummary(int $userId): void
+    {
+        $dateKey = CacheKeys::todayJakarta();
+        Cache::forget(CacheKeys::profileHub($userId, $dateKey));
+        Cache::forget(CacheKeys::publicProfileSummary($userId, $dateKey));
+    }
+
+    public static function invalidatePublicProfileStats(int $userId): void
+    {
+        $dateKey = CacheKeys::todayJakarta();
+        Cache::forget(CacheKeys::profileHub($userId, $dateKey));
+        Cache::forget(CacheKeys::publicProfileStats($userId, $dateKey));
+    }
+
+    public static function invalidatePublicProfileHeatmap(int $userId): void
+    {
+        $dateKey = CacheKeys::todayJakarta();
+        Cache::forget(CacheKeys::profileHub($userId, $dateKey));
+        Cache::forget(CacheKeys::publicProfileHeatmap($userId, $dateKey));
+    }
+
+    public static function invalidatePublicProfileBadges(int $userId): void
+    {
+        $dateKey = CacheKeys::todayJakarta();
+        Cache::forget(CacheKeys::profileHub($userId, $dateKey));
+        Cache::forget(CacheKeys::publicProfileBadgeVault($userId, $dateKey));
+    }
+
+    public static function invalidatePublicProfileAll(int $userId): void
+    {
+        self::invalidatePublicProfileSummary($userId);
+        self::invalidatePublicProfileStats($userId);
+        self::invalidatePublicProfileHeatmap($userId);
+        self::invalidatePublicProfileBadges($userId);
+    }
+
+    public static function invalidatePublicProfileLookup(?string $username): void
+    {
+        if (! $username) {
+            return;
+        }
+
+        Cache::forget(CacheKeys::publicProfileUsername($username));
     }
 
     public static function onQuestTypeMutate(int $userId): void

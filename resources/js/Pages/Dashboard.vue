@@ -14,6 +14,7 @@ import HoldButton from '@/Components/Game/HoldButton.vue';
 import CoinIcon from '@/Components/Game/icons/CoinIcon.vue';
 import QuestSubtasks from '@/Components/Game/QuestSubtasks.vue'; // Sesuaikan path
 import { useGoalUrgency } from '@/Composables/useGoalUrgency';
+import { getBadgeIcon } from '@/Utils/badgeMeta';
 
 defineOptions({ layout: AppLayout });
 
@@ -370,31 +371,6 @@ const triggerSlashEffect = () => {
         });
     }, 200);
 };
-
-const getBadgeIcon = (key) => {
-    const icons = {
-        // Streak Badges
-        streak_3: '👞', // Warm-up (Running shoe)
-        streak_7: '🔥', // Consistent (Fire)
-        streak_14: '⚔️', // Disciplined (Swords)
-        streak_30: '🛡️', // Iron Will (Shield)
-        streak_60: '💎', // Unbreakable (Diamond)
-        streak_100: '👑', // Legend (Crown)
-        streak_150: '🗿', // Titan (Moai)`
-        streak_200: '🐉', // Mythic (Dragon)
-        streak_365: '🌟', // Eternal (Glowing Star)
-        streak_500: '🌠', // Transcendent (Shooting Star)
-
-        // Recovery Badges
-        second_wind: '🍃', // Second Wind (Leaf/Wind)
-        comeback_kid: '❤️‍🔥', // Comeback Kid (Heart on fire)
-    };
-
-    // Default fallback if key not found
-    return icons[key] || '🎖️';
-};
-
-
 
 const getRankClass = (rank) => {
     // Rank 1: Gold + Glow

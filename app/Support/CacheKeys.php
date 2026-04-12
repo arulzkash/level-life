@@ -36,6 +36,36 @@ class CacheKeys
         return "nav_user:{$userId}:{$dateJakarta}";
     }
 
+    public static function profileHub(int $userId, string $dateJakarta): string
+    {
+        return "profile:hub:{$userId}:{$dateJakarta}";
+    }
+
+    public static function publicProfileSummary(int $userId, string $dateJakarta): string
+    {
+        return "profile:public:summary:{$userId}:{$dateJakarta}";
+    }
+
+    public static function publicProfileStats(int $userId, string $dateJakarta): string
+    {
+        return "profile:public:stats:{$userId}:{$dateJakarta}";
+    }
+
+    public static function publicProfileHeatmap(int $userId, string $dateJakarta): string
+    {
+        return "profile:public:heatmap:{$userId}:{$dateJakarta}";
+    }
+
+    public static function publicProfileBadgeVault(int $userId, string $dateJakarta): string
+    {
+        return "profile:public:badges:{$userId}:{$dateJakarta}";
+    }
+
+    public static function publicProfileUsername(string $username): string
+    {
+        return 'profile:username:'.strtolower($username);
+    }
+
     public static function dashboardActiveQuests(int $userId, string $dateJakarta): string
     {
         return "dashboard:active_quests:{$userId}:{$dateJakarta}";

@@ -3,11 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Support\CacheKeys;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Cache;
-use Inertia\Inertia;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+use Inertia\Inertia;
 
 class LeaderboardController extends Controller
 {
@@ -53,13 +53,14 @@ class LeaderboardController extends Controller
         // Hydrate rows (NO realtime "me")
         $hydratedList = $globalRoster->map(function ($item) use ($globalBadges) {
             $badges = $globalBadges->get($item->user_id);
+
             return $this->formatRow($item, $badges);
         });
 
         // 'me' object: cukup cari dari hydratedList
         $myFormattedData = $hydratedList->firstWhere('user.id', $userId);
 
-        if (!$myFormattedData) {
+        if (! $myFormattedData) {
             // kalau user tidak masuk top 50, bikin object minimal (tanpa query DB)
             $meUser = $request->user();
 
@@ -68,6 +69,7 @@ class LeaderboardController extends Controller
                 'user' => [
                     'id' => $meUser->id,
                     'name' => $meUser->name,
+                    'username' => $meUser->username,
                 ],
                 'status' => 'Cold',
                 'streak_current' => 0,
@@ -83,7 +85,6 @@ class LeaderboardController extends Controller
             'me' => $myFormattedData,
         ];
     }
-
 
     // =========================================================================
     // PRIVATE METHODS (Database Queries & Helpers)
@@ -124,6 +125,7 @@ class LeaderboardController extends Controller
             ->select([
                 'profiles.user_id',
                 'users.name',
+                'users.username',
                 'profiles.streak_current',
                 'profiles.streak_best',
                 'profiles.last_active_date',
@@ -131,12 +133,12 @@ class LeaderboardController extends Controller
             ])
             ->selectRaw('COALESCE(active7.active_days_last_7d, 0) as active_days_last_7d')
             // Logic Effective Streak
-            ->selectRaw("
+            ->selectRaw('
                 CASE 
                     WHEN profiles.last_active_date < ? THEN 0 
                     ELSE COALESCE(profiles.streak_current, 0) 
                 END as effective_streak
-            ", [$ghostThresholdDate])
+            ', [$ghostThresholdDate])
             // Logic Status
             ->selectRaw("
                 CASE 
@@ -155,6 +157,7 @@ class LeaderboardController extends Controller
         // Pre-calculate Rank di dalam Cache
         $rankedList->transform(function ($item, $key) {
             $item->rank = $key + 1;
+
             return $item;
         });
 
@@ -170,7 +173,9 @@ class LeaderboardController extends Controller
      */
     private function fetchBadgesForUsers(array $userIds)
     {
-        if (empty($userIds)) return collect();
+        if (empty($userIds)) {
+            return collect();
+        }
 
         return DB::table('user_badges')
             ->join('badges', 'badges.id', '=', 'user_badges.badge_id')
@@ -198,6 +203,7 @@ class LeaderboardController extends Controller
             'user' => [
                 'id' => $row->user_id,
                 'name' => $row->name,
+                'username' => $row->username ?? null,
             ],
             'status' => $row->status ?? 'Cold',
             'streak_current' => (int) $row->effective_streak,

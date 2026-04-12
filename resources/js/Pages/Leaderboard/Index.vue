@@ -3,6 +3,7 @@
 import { ref, computed, onMounted, onBeforeUnmount, nextTick, watch } from 'vue';
 import { Head, Link } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
+import { getBadgeIcon } from '@/Utils/badgeMeta';
 
 defineOptions({ layout: AppLayout });
 
@@ -326,6 +327,11 @@ const meRow = computed(() => {
 });
 
 const isMe = (row) => row?.user?.id && row.user.id === props.me?.user?.id;
+const profileHref = (row) => {
+    const username = row?.user?.username;
+
+    return username ? `/u/${username}` : null;
+};
 
 // streak needed to beat previous rank (only makes sense in "current" view)
 const prevRankRow = (row) => {
@@ -454,28 +460,6 @@ watch(currentView, (v) => {
 watch(currentView, (v) => {
     if (v === 'active7') computeWeekRangeLabel();
 });
-
-const getBadgeIcon = (key) => {
-    const icons = {
-        // Streak Badges
-        streak_3: '👞',
-        streak_7: '🔥',
-        streak_14: '⚔️',
-        streak_30: '🛡️',
-        streak_60: '💎',
-        streak_100: '👑',
-        streak_150: '🗿',
-        streak_200: '🐉',
-        streak_365: '🌟',
-        streak_500: '🌠',
-
-        // Recovery Badges
-        second_wind: '🍃',
-        comeback_kid: '❤️‍🔥',
-    };
-
-    return icons[key] || '🎖️';
-};
 
 const weekRangeLabel = ref('');
 
@@ -629,7 +613,14 @@ const computeShowJumpTop = () => {
                             <h2
                                 class="truncate bg-gradient-to-r from-yellow-100 via-yellow-200 to-orange-200 bg-clip-text text-xl font-black text-transparent drop-shadow-sm filter"
                             >
-                                {{ champion.user?.name || 'Unknown' }}
+                                <Link
+                                    v-if="profileHref(champion)"
+                                    :href="profileHref(champion)"
+                                    class="hover:opacity-85"
+                                >
+                                    {{ champion.user?.name || 'Unknown' }}
+                                </Link>
+                                <span v-else>{{ champion.user?.name || 'Unknown' }}</span>
                             </h2>
 
                             <div class="flex flex-wrap items-center gap-2">
@@ -741,7 +732,14 @@ const computeShowJumpTop = () => {
                                 class="truncate text-sm font-bold text-slate-200 transition-colors group-hover:text-white"
                                 :class="{ '!text-indigo-200': isMe(row) }"
                             >
-                                {{ row.user?.name || 'Unknown' }}
+                                <Link
+                                    v-if="profileHref(row)"
+                                    :href="profileHref(row)"
+                                    class="hover:text-indigo-200 hover:underline underline-offset-2"
+                                >
+                                    {{ row.user?.name || 'Unknown' }}
+                                </Link>
+                                <span v-else>{{ row.user?.name || 'Unknown' }}</span>
                                 <span
                                     v-if="isMe(row)"
                                     class="ml-1 rounded border border-indigo-500/20 bg-indigo-500/10 px-1 text-[9px] font-black uppercase tracking-wider text-indigo-300"
@@ -917,7 +915,14 @@ const computeShowJumpTop = () => {
                                     </div>
 
                                     <div class="mt-1 truncate text-2xl font-black tracking-tight text-white">
-                                        {{ champion.user?.name || 'Unknown' }}
+                                        <Link
+                                            v-if="profileHref(champion)"
+                                            :href="profileHref(champion)"
+                                            class="hover:text-indigo-200 hover:underline underline-offset-2"
+                                        >
+                                            {{ champion.user?.name || 'Unknown' }}
+                                        </Link>
+                                        <span v-else>{{ champion.user?.name || 'Unknown' }}</span>
                                     </div>
 
                                     <div v-if="currentView === 'recent'" class="mt-1 text-xs text-slate-500">
@@ -1044,7 +1049,14 @@ const computeShowJumpTop = () => {
                                         <div class="min-w-0">
                                             <div class="flex flex-wrap items-center gap-2">
                                                 <div class="truncate text-base font-black text-white">
-                                                    {{ row.user?.name || 'Unknown' }}
+                                                    <Link
+                                                        v-if="profileHref(row)"
+                                                        :href="profileHref(row)"
+                                                        class="hover:text-indigo-200 hover:underline underline-offset-2"
+                                                    >
+                                                        {{ row.user?.name || 'Unknown' }}
+                                                    </Link>
+                                                    <span v-else>{{ row.user?.name || 'Unknown' }}</span>
                                                 </div>
 
                                                 <span
@@ -1181,7 +1193,14 @@ const computeShowJumpTop = () => {
 
                                 <div class="min-w-0">
                                     <div class="truncate text-sm font-black text-white">
-                                        {{ meRow.user?.name || 'You' }}
+                                        <Link
+                                            v-if="profileHref(meRow)"
+                                            :href="profileHref(meRow)"
+                                            class="hover:text-indigo-200 hover:underline underline-offset-2"
+                                        >
+                                            {{ meRow.user?.name || 'You' }}
+                                        </Link>
+                                        <span v-else>{{ meRow.user?.name || 'You' }}</span>
                                     </div>
                                     <div
                                         class="mt-1 inline-flex items-center gap-1 rounded border px-1.5 py-[1px] text-[9px] font-black uppercase tracking-wider"
@@ -1283,7 +1302,14 @@ const computeShowJumpTop = () => {
 
                     <div class="min-w-0">
                         <div class="flex items-center gap-2 text-sm font-black text-white">
-                            <span class="truncate">{{ meRow.user?.name || 'You' }}</span>
+                            <Link
+                                v-if="profileHref(meRow)"
+                                :href="profileHref(meRow)"
+                                class="truncate hover:text-indigo-200 hover:underline underline-offset-2"
+                            >
+                                {{ meRow.user?.name || 'You' }}
+                            </Link>
+                            <span v-else class="truncate">{{ meRow.user?.name || 'You' }}</span>
                             <span
                                 :class="statusCfg(meRow.status).cls"
                                 class="rounded border px-1.5 py-[1px] text-[8px] font-black uppercase tracking-wider"

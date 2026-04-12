@@ -4,10 +4,11 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 
-use App\Http\Controllers\ProfileController;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Str;
 
 class User extends Authenticatable
 {
@@ -20,6 +21,7 @@ class User extends Authenticatable
      */
     protected $fillable = [
         'name',
+        'username',
         'email',
         'password',
     ];
@@ -54,6 +56,12 @@ class User extends Authenticatable
     protected static function booted()
     {
         static::created(function ($user) {
+            if (! $user->username) {
+                $user->forceFill([
+                    'username' => static::generateUniqueUsername($user->name, $user->id),
+                ])->saveQuietly();
+            }
+
             // Setiap kali User baru berhasil dibuat (created),
             // Kita buatkan Profile default untuk user tersebut.
             $user->profile()->create([
@@ -69,8 +77,31 @@ class User extends Authenticatable
                 'freezes_used_count' => 0,
                 'freezes_used_total' => 0,
                 'streak_resets_total' => 0,
+                'bio' => null,
             ]);
         });
+    }
+
+    public static function generateUniqueUsername(?string $name, int $fallbackId, ?int $ignoreUserId = null): string
+    {
+        $base = Str::slug(Str::lower((string) $name), '_');
+        $base = $base !== '' ? substr($base, 0, 30) : "user{$fallbackId}";
+
+        $candidate = $base;
+        $suffix = 1;
+
+        while (
+            static::query()
+                ->where('username', $candidate)
+                ->when($ignoreUserId, fn ($query) => $query->where('id', '!=', $ignoreUserId))
+                ->exists()
+        ) {
+            $suffix++;
+            $suffixText = "_{$suffix}";
+            $candidate = substr($base, 0, max(1, 30 - strlen($suffixText))).$suffixText;
+        }
+
+        return $candidate;
     }
 
     public function profile()
@@ -128,5 +159,10 @@ class User extends Authenticatable
     public function questTypes()
     {
         return $this->hasMany(QuestType::class);
+    }
+
+    public function dailyActivities(): HasMany
+    {
+        return $this->hasMany(UserDailyActivity::class);
     }
 }

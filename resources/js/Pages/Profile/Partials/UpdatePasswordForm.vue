@@ -32,9 +32,9 @@ const updatePassword = () => {
 <template>
     <section>
         <header>
-            <h2 class="text-lg font-bold text-white">Security Spell</h2>
+            <h2 class="text-lg font-bold text-white">Password</h2>
             <p class="mt-1 text-sm text-slate-400">
-                Ensure your account is using a long, random password to stay secure.
+                Use a strong password so only you can access this account.
             </p>
         </header>
 
@@ -45,7 +45,7 @@ const updatePassword = () => {
                     ref="currentPasswordInput"
                     v-model="form.current_password"
                     type="password"
-                    class="w-full rounded-lg border border-slate-700 bg-slate-900 px-4 py-2 text-slate-200 placeholder-slate-600 outline-none transition-all focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500"
+                    class="w-full rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-slate-200 placeholder-slate-600 outline-none transition-all focus:border-sky-400 focus:ring-2 focus:ring-sky-500/50"
                     autocomplete="current-password"
                 />
                 <div v-if="form.errors.current_password" class="mt-1 text-xs text-red-400">
@@ -59,7 +59,7 @@ const updatePassword = () => {
                     ref="passwordInput"
                     v-model="form.password"
                     type="password"
-                    class="w-full rounded-lg border border-slate-700 bg-slate-900 px-4 py-2 text-slate-200 placeholder-slate-600 outline-none transition-all focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500"
+                    class="w-full rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-slate-200 placeholder-slate-600 outline-none transition-all focus:border-sky-400 focus:ring-2 focus:ring-sky-500/50"
                     autocomplete="new-password"
                 />
                 <div v-if="form.errors.password" class="mt-1 text-xs text-red-400">
@@ -72,7 +72,7 @@ const updatePassword = () => {
                 <input
                     v-model="form.password_confirmation"
                     type="password"
-                    class="w-full rounded-lg border border-slate-700 bg-slate-900 px-4 py-2 text-slate-200 placeholder-slate-600 outline-none transition-all focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500"
+                    class="w-full rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-slate-200 placeholder-slate-600 outline-none transition-all focus:border-sky-400 focus:ring-2 focus:ring-sky-500/50"
                     autocomplete="new-password"
                 />
                 <div v-if="form.errors.password_confirmation" class="mt-1 text-xs text-red-400">
@@ -83,7 +83,7 @@ const updatePassword = () => {
             <div class="flex items-center gap-4">
                 <button
                     :disabled="form.processing"
-                    class="rounded-lg bg-emerald-600 px-6 py-2 font-bold text-white shadow-lg shadow-emerald-500/30 transition-all hover:bg-emerald-500 active:scale-95 disabled:opacity-50"
+                    class="rounded-full bg-cyan-400 px-6 py-2.5 font-bold text-slate-950 shadow-[0_12px_30px_rgba(34,211,238,0.25)] transition-all hover:bg-cyan-300 active:scale-95 disabled:opacity-50"
                 >
                     Update Password
                 </button>
@@ -94,7 +94,7 @@ const updatePassword = () => {
                     leave-active-class="transition ease-in-out"
                     leave-to-class="opacity-0"
                 >
-                    <p v-if="form.recentlySuccessful" class="text-sm font-bold text-green-400">Secured! 🔒</p>
+                    <p v-if="form.recentlySuccessful" class="text-sm font-bold text-emerald-400">Saved.</p>
                 </Transition>
             </div>
         </form>

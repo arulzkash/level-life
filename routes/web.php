@@ -1,34 +1,30 @@
 <?php
 
 use App\Http\Controllers\BadgeDebugController;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Route;
-
-use App\Http\Controllers\TaskController;
-use App\Http\Controllers\ProfileController;
-
-use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\QuestController;
-use App\Http\Controllers\QuestPageController;
-
 use App\Http\Controllers\CompletionLogController;
 use App\Http\Controllers\CompletionLogPageController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\GoalController;
 use App\Http\Controllers\HabitController;
 use App\Http\Controllers\HabitPageController;
 use App\Http\Controllers\JournalArchivePageController;
 use App\Http\Controllers\JournalPageController;
 use App\Http\Controllers\JournalTemplateController;
 use App\Http\Controllers\LeaderboardController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\PublicProfileController;
+use App\Http\Controllers\QuestController;
+use App\Http\Controllers\QuestPageController;
+use App\Http\Controllers\QuestTypeController;
 use App\Http\Controllers\TimeBlockController;
 use App\Http\Controllers\TimeBlockPageController;
 use App\Http\Controllers\TreasuryController;
 use App\Http\Controllers\TreasuryLogPageController;
 use App\Http\Controllers\TreasuryPurchaseLogController;
-use App\Http\Controllers\QuestTypeController;
-use App\Http\Controllers\GoalController;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Route;
 
-
-require __DIR__ . '/auth.php';
+require __DIR__.'/auth.php';
 
 Route::get('/', function () {
     return Auth::check()
@@ -36,17 +32,20 @@ Route::get('/', function () {
         : redirect()->route('login');
 });
 
-
+Route::get('/u/{username}', [PublicProfileController::class, 'show'])
+    ->where('username', '[a-z0-9_]+')
+    ->name('profile.show');
 
 Route::middleware('auth')->group(function () {
 
     // DASHBOARD (page)
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');;
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-    // PROFILE
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    // PROFILE SETTINGS
+    Route::redirect('/profile', '/settings/profile');
+    Route::get('/settings/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/settings/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/settings/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     // QUESTS
     Route::prefix('quests')->group(function () {
@@ -59,7 +58,7 @@ Route::middleware('auth')->group(function () {
         Route::patch('/{quest}', [QuestController::class, 'update']);
         Route::patch('/{quest}/complete', [QuestController::class, 'complete']);
         Route::delete('/{quest}', [QuestController::class, 'destroy']);
-        
+
     });
 
     // QUEST TYPES (Custom)
