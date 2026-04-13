@@ -47,6 +47,7 @@ class ProfileController extends Controller
 
         CacheBuster::invalidateNavUser($user->id);
         CacheBuster::invalidateNavProfile($user->id);
+        CacheBuster::invalidateLeaderboardDaily();
         CacheBuster::invalidatePublicProfileSummary($user->id);
         CacheBuster::invalidatePublicProfileLookup($oldUsername);
         CacheBuster::invalidatePublicProfileLookup($user->username);

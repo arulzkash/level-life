@@ -2,8 +2,10 @@
 
 namespace Tests\Feature;
 
+use App\Support\CacheKeys;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use Tests\TestCase;
 
 class ProfileTest extends TestCase
@@ -59,6 +61,29 @@ class ProfileTest extends TestCase
         $this->assertSame('test@example.com', $user->email);
         $this->assertSame('Building consistency one quest at a time.', $user->profile->bio);
         $this->assertNull($user->email_verified_at);
+    }
+
+    public function test_updating_profile_invalidates_daily_leaderboard_cache(): void
+    {
+        $user = User::factory()->create();
+        $dateKey = CacheKeys::todayJakarta();
+
+        Cache::put(CacheKeys::leaderboardRoster($dateKey), collect([
+            (object) ['user_id' => $user->id, 'username' => $user->username],
+        ]), now()->addDay());
+        Cache::put(CacheKeys::leaderboardBadges($dateKey), collect([
+            $user->id => null,
+        ]), now()->addDay());
+
+        $this->actingAs($user)->patch('/settings/profile', [
+            'name' => 'Updated User',
+            'username' => 'updated_user',
+            'email' => $user->email,
+            'bio' => null,
+        ])->assertRedirect('/settings/profile');
+
+        $this->assertNull(Cache::get(CacheKeys::leaderboardRoster($dateKey)));
+        $this->assertNull(Cache::get(CacheKeys::leaderboardBadges($dateKey)));
     }
 
     public function test_email_verification_status_is_unchanged_when_the_email_address_is_unchanged(): void

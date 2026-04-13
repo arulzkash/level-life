@@ -6,6 +6,14 @@ use Illuminate\Support\Facades\Cache;
 
 class CacheBuster
 {
+    public static function invalidateLeaderboardDaily(): void
+    {
+        $dateKey = CacheKeys::todayJakarta();
+
+        Cache::forget(CacheKeys::leaderboardRoster($dateKey));
+        Cache::forget(CacheKeys::leaderboardBadges($dateKey));
+    }
+
     public static function onQuestMutate(int $userId): void
     {
         $dateKey = CacheKeys::todayJakarta();
@@ -16,11 +24,10 @@ class CacheBuster
 
     public static function onQuestComplete(int $userId): void
     {
-        $dateKey = CacheKeys::todayJakarta();
-
         // global leaderboard cache (per-hari)
-        Cache::forget(CacheKeys::leaderboardRoster($dateKey));
-        Cache::forget(CacheKeys::leaderboardBadges($dateKey));
+        self::invalidateLeaderboardDaily();
+
+        $dateKey = CacheKeys::todayJakarta();
 
         // dashboard badge snippet
         Cache::forget(CacheKeys::dashboardTopBadge($userId));
