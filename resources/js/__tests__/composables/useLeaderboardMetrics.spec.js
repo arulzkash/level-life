@@ -250,10 +250,10 @@ describe('useLeaderboardMetrics', () => {
         });
 
         it('should return tier-specific classes', () => {
-            expect(metrics.rarityChipClass('legendary')).toContain('border-amber');
-            expect(metrics.rarityChipClass('epic')).toContain('border-purple');
-            expect(metrics.rarityChipClass('rare')).toContain('border-sky');
-            expect(metrics.rarityChipClass('uncommon')).toContain('border-emerald');
+            expect(metrics.rarityChipClass('legendary')).toContain('border-rarity-legendary');
+            expect(metrics.rarityChipClass('epic')).toContain('border-rarity-epic');
+            expect(metrics.rarityChipClass('rare')).toContain('border-rarity-rare');
+            expect(metrics.rarityChipClass('uncommon')).toContain('border-rarity-uncommon');
             expect(metrics.rarityChipClass('common')).toContain('border-slate');
         });
 

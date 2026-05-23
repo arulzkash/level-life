@@ -44,15 +44,15 @@ const isSubtasksComplete = (q) => {
 
 // Get the color bar class based on quest type
 const getTypeColorClass = (q) => {
-    if (q.type === 'Boss Fight') return 'bg-red-500';
-    if (q.type === 'Main Quest') return 'bg-yellow-400';
-    if (q.type === 'Side Quest') return 'bg-blue-400';
-    if (q.type === 'Daily Grind') return 'bg-emerald-400';
+    if (q.type === 'Boss Fight') return 'bg-quest-boss';
+    if (q.type === 'Main Quest') return 'bg-quest-main';
+    if (q.type === 'Side Quest') return 'bg-quest-side';
+    if (q.type === 'Daily Grind') return 'bg-quest-daily';
 
     // Check if it's a custom type with no matching color
     const customTypes = Object.values(props.customQuestTypes || {});
     const matchingCustom = customTypes.find(ct => ct.name === q.type);
-    if (!matchingCustom) return 'bg-slate-500';
+    if (!matchingCustom) return 'bg-quest-default';
     return '';
 };
 
@@ -124,7 +124,7 @@ const getTypeColorStyle = (q) => {
                                 class="cursor-pointer rounded border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider transition-colors hover:opacity-80"
                                 :class="
                                     q.status === 'in_progress'
-                                        ? 'border-indigo-700 bg-indigo-900 text-indigo-300 shadow-[0_0_10px_rgba(99,102,241,0.2)] ring-1 ring-indigo-500/40'
+                                        ? 'border-indigo-700 bg-indigo-900 text-indigo-300 shadow-glow-in-progress ring-1 ring-indigo-500/40'
                                         : 'border-slate-600 bg-slate-700 text-slate-300'
                                 "
                             >

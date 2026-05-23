@@ -96,11 +96,11 @@ const formatDetailTime = (iso) => {
 
 const meterFillClass = (tier) => {
     const map = {
-        common: 'bg-slate-300/20',
-        uncommon: 'bg-emerald-300/30',
-        rare: 'bg-sky-300/30',
-        epic: 'bg-purple-300/30',
-        legendary: 'bg-amber-300/35',
+        common: 'bg-rarity-common/20',
+        uncommon: 'bg-rarity-uncommon/30',
+        rare: 'bg-rarity-rare/30',
+        epic: 'bg-rarity-epic/30',
+        legendary: 'bg-rarity-legendary/35',
     };
     return map[tier] || map.common;
 };

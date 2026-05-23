@@ -178,11 +178,11 @@ export function useLeaderboardMetrics(items, me) {
         const tiers = {
             common: 'border-slate-700/60 bg-slate-950/40 text-slate-200',
             uncommon:
-                'border-emerald-400/20 bg-gradient-to-r from-emerald-500/18 to-slate-950/35 text-emerald-100 shadow-[0_0_24px_rgba(16,185,129,0.10)]',
-            rare: 'border-sky-400/20 bg-gradient-to-r from-sky-500/18 to-slate-950/35 text-sky-100 shadow-[0_0_24px_rgba(56,189,248,0.10)]',
-            epic: 'border-purple-400/20 bg-gradient-to-r from-purple-500/18 to-slate-950/35 text-purple-100 shadow-[0_0_24px_rgba(168,85,247,0.12)]',
+                'border-rarity-uncommon/20 bg-gradient-to-r from-rarity-uncommon/18 to-slate-950/35 text-emerald-100 shadow-glow-uncommon',
+            rare: 'border-rarity-rare/20 bg-gradient-to-r from-rarity-rare/18 to-slate-950/35 text-sky-100 shadow-glow-rare',
+            epic: 'border-rarity-epic/20 bg-gradient-to-r from-rarity-epic/18 to-slate-950/35 text-purple-100 shadow-glow-epic',
             legendary:
-                'border-amber-400/25 bg-gradient-to-r from-amber-500/18 to-slate-950/35 text-amber-100 shadow-[0_0_28px_rgba(245,158,11,0.14)]',
+                'border-rarity-legendary/25 bg-gradient-to-r from-rarity-legendary/18 to-slate-950/35 text-amber-100 shadow-glow-legendary',
         };
 
         return `${base} ${tiers[tier] || tiers.common}`;

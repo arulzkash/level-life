@@ -178,6 +178,26 @@ const isSubtasksComplete = (q) => {
     if (!q.subtasks || q.subtasks.length === 0) return true;
     return q.subtasks.every((t) => t.is_done);
 };
+
+const getQuestBgClass = (type) => {
+    const map = {
+        'Boss Fight': 'bg-quest-boss',
+        'Main Quest': 'bg-quest-main',
+        'Side Quest': 'bg-quest-side',
+        'Daily Grind': 'bg-quest-daily',
+        'Learning': 'bg-quest-learning',
+    };
+    return map[type] || 'bg-quest-default';
+};
+
+const isCustomType = (type) => {
+    const defaults = ['Boss Fight', 'Main Quest', 'Side Quest', 'Daily Grind', 'Learning'];
+    return !defaults.includes(type);
+};
+
+const getCustomColor = (type) => {
+    return props.customQuestTypes?.find((t) => t.name === type)?.color || '#64748b';
+};
 </script>
 
 <template>
@@ -260,7 +280,7 @@ const isSubtasksComplete = (q) => {
             <p class="text-sm text-slate-500">Try adjusting your filters.</p>
         </div>
 
-        <div v-else class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3" v-else>
             <div
                 v-for="quest in quests.data"
                 :key="quest.id"
@@ -269,19 +289,8 @@ const isSubtasksComplete = (q) => {
             >
                 <div
                     class="absolute bottom-0 left-0 top-0 w-1.5"
-                    :style="{
-                        backgroundColor:
-                            customQuestTypes?.find((t) => t.name === quest.type)?.color ||
-                            (quest.type === 'Boss Fight'
-                                ? '#ef4444'
-                                : quest.type === 'Main Quest'
-                                  ? '#fbbf24'
-                                  : quest.type === 'Side Quest'
-                                    ? '#60a5fa'
-                                    : quest.type === 'Daily Grind'
-                                      ? '#34d399'
-                                      : '#64748b'),
-                    }"
+                    :class="!isCustomType(quest.type) ? getQuestBgClass(quest.type) : ''"
+                    :style="isCustomType(quest.type) ? { backgroundColor: getCustomColor(quest.type) } : {}"
                 ></div>
 
                 <div class="flex flex-1 flex-col p-5 pl-6">

@@ -88,21 +88,21 @@ const formatDetailTime = (iso) => {
 const meterFillClass = computed(() => {
     const tier = props.tierClass ? extractTier(props.tierClass) : 'common';
     const map = {
-        common: 'bg-slate-300/20',
-        uncommon: 'bg-emerald-300/30',
-        rare: 'bg-sky-300/30',
-        epic: 'bg-purple-300/30',
-        legendary: 'bg-amber-300/35',
+        common: 'bg-rarity-common/20',
+        uncommon: 'bg-rarity-uncommon/30',
+        rare: 'bg-rarity-rare/30',
+        epic: 'bg-rarity-epic/30',
+        legendary: 'bg-rarity-legendary/35',
     };
     return map[tier] || map.common;
 });
 
 // Extract tier name from the tierClass string for meter fill
 function extractTier(tierClassStr) {
-    if (tierClassStr.includes('amber')) return 'legendary';
-    if (tierClassStr.includes('purple')) return 'epic';
-    if (tierClassStr.includes('sky')) return 'rare';
-    if (tierClassStr.includes('emerald')) return 'uncommon';
+    if (tierClassStr.includes('rarity-legendary')) return 'legendary';
+    if (tierClassStr.includes('rarity-epic')) return 'epic';
+    if (tierClassStr.includes('rarity-rare')) return 'rare';
+    if (tierClassStr.includes('rarity-uncommon')) return 'uncommon';
     return 'common';
 }
 
