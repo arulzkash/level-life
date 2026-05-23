@@ -231,11 +231,3 @@ const streakStatusObj = computed(() => ({
         <LevelUpModal v-model="showLevelUpModal" :current-level="profile?.level_data?.current_level || 1" />
     </div>
 </template>
-
-<style scoped>
-input[type='time']::-webkit-calendar-picker-indicator,
-input[type='date']::-webkit-calendar-picker-indicator {
-    filter: invert(1);
-    cursor: pointer;
-}
-</style>

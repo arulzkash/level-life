@@ -253,10 +253,6 @@ watch(currentView, (v) => { if (v === 'active7') computeWeekRangeLabel(); });
 </template>
 
 <style scoped>
-.shine { background: linear-gradient(45deg, transparent 35%, rgba(255,255,255,0.08) 45%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.08) 55%, transparent 65%); background-size: 250% 250%; animation: none !important; }
 .fade-enter-active, .fade-leave-active { transition: opacity 0.15s ease, transform 0.15s ease; }
 .fade-enter-from, .fade-leave-to { opacity: 0; transform: translate(-50%, 6px); }
-.scrollbar-hide::-webkit-scrollbar { display: none; }
-.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
-.mask-linear-x { -webkit-mask-image: linear-gradient(to right, transparent 0%, black 2%, black 98%, transparent 100%); mask-image: linear-gradient(to right, transparent 0%, black 2%, black 98%, transparent 100%); }
 </style>
