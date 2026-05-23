@@ -1,13 +1,20 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
-import { Link, useForm, router, Head } from '@inertiajs/vue3';
-import confetti from 'canvas-confetti';
+import { Link, useForm, router, Head, usePage } from '@inertiajs/vue3';
 import { useAudio } from '@/Composables/useAudio';
+import { useLevelUp } from '@/Composables/useLevelUp';
+import { useVisualEffects } from '@/Composables/useVisualEffects';
+import LevelUpModal from '@/Components/Game/LevelUpModal.vue';
 
 defineOptions({ layout: AppLayout });
 
 const { playSfx } = useAudio();
+const { showToast } = useVisualEffects();
+
+const page = usePage();
+const profile = computed(() => page.props.auth.profile);
+const { showLevelUpModal } = useLevelUp(profile);
 
 const props = defineProps({
     habits: Array,
@@ -90,16 +97,7 @@ const setView = (view) => {
     router.get('/habits', { view }, { preserveScroll: true, preserveState: true });
 };
 
-// --- VISUALS ---
-
-const showToast = (message) => {
-    const toast = document.createElement('div');
-    toast.className =
-        'fixed top-4 right-4 bg-slate-800 border-l-4 border-emerald-500 text-white px-6 py-4 rounded shadow-2xl z-[100] animate-bounce font-bold flex items-center gap-2';
-    toast.innerHTML = `<span>🎉</span> ${message}`;
-    document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 3000);
-};
+// --- VISUALS (using useVisualEffects composable) ---
 </script>
 
 <template>
@@ -330,6 +328,8 @@ const showToast = (message) => {
                 </div>
             </div>
         </div>
+
+        <LevelUpModal v-model="showLevelUpModal" :current-level="profile?.level_data?.current_level || 1" />
     </div>
 </template>
 

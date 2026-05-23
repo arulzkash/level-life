@@ -44,7 +44,7 @@ const getQuestVisuals = (type) => {
             border: 'border-slate-500/50',
             bg: 'bg-slate-800/80',
             icon: '🧩',
-            shadow: `shadow-[0_0_15px_${customType.color}20]`,
+            shadow: '',
             dot: '', // special handling for dynamic dot color
             customColor: customType.color,
         };
@@ -450,7 +450,10 @@ const dateTone = (dateKey) => {
                             ]"
                             :style="
                                 getQuestVisuals(log.quest?.type).customColor
-                                    ? { borderColor: getQuestVisuals(log.quest?.type).customColor + '50' }
+                                    ? {
+                                          borderColor: getQuestVisuals(log.quest?.type).customColor + '50',
+                                          boxShadow: '0 0 15px ' + getQuestVisuals(log.quest?.type).customColor + '20',
+                                      }
                                     : {}
                             "
                         >

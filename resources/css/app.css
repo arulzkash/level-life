@@ -2,6 +2,35 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer components {
+    .input-dark {
+        @apply rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-slate-200 placeholder-slate-600 outline-none transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/50;
+    }
+    .label-text {
+        @apply mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-400;
+    }
+    .btn-primary {
+        @apply rounded-lg bg-indigo-600 px-6 py-2 font-bold text-white shadow-lg shadow-indigo-500/30 transition-all hover:bg-indigo-500 active:scale-95;
+    }
+    .btn-secondary {
+        @apply rounded-lg border border-slate-600 bg-slate-700 px-4 py-2 text-sm font-medium text-slate-200 transition-colors hover:bg-slate-600;
+    }
+    .error-msg {
+        @apply mt-1 text-xs text-red-400;
+    }
+    .ghost-card {
+        @apply border-2 border-dashed border-indigo-500 bg-indigo-900/20 opacity-50;
+    }
+}
+
+.animate-fade-in {
+    animation: fadeIn 0.3s ease-out;
+}
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
 img.twemoji {
     display: inline-block;
     width: 1em;

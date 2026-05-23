@@ -4,7 +4,7 @@ import { router, Link, Head, useForm, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import debounce from 'lodash/debounce';
 import LevelUpModal from '@/Components/Game/LevelUpModal.vue';
-import confetti from 'canvas-confetti';
+import { useVisualEffects } from '@/Composables/useVisualEffects';
 import { useAudio } from '@/Composables/useAudio';
 import { useLevelUp } from '@/Composables/useLevelUp';
 import Pagination from '@/Components/Pagination.vue';
@@ -12,6 +12,7 @@ import QuestSubtasks from '@/Components/Game/QuestSubtasks.vue';
 
 defineOptions({ layout: AppLayout });
 
+const { triggerConfetti, triggerSlashEffect, showToast } = useVisualEffects();
 const { playSfx } = useAudio();
 
 const props = defineProps({
@@ -130,88 +131,6 @@ const submitComplete = () => {
             playSfx('slash');
         },
     });
-};
-
-// --- 5. VISUAL EFFECTS ---
-// Confetti Biasa (Complete Quest)
-const triggerConfetti = () => {
-    const count = 200;
-    const defaults = { origin: { y: 0.7 } };
-    function fire(particleRatio, opts) {
-        confetti(
-            Object.assign({}, defaults, opts, {
-                particleCount: Math.floor(count * particleRatio),
-            })
-        );
-    }
-    fire(0.25, { spread: 26, startVelocity: 55 });
-    fire(0.2, { spread: 60 });
-    fire(0.35, { spread: 100, decay: 0.91, scalar: 0.8 });
-    fire(0.1, { spread: 120, startVelocity: 25, decay: 0.92, scalar: 1.2 });
-    fire(0.1, { spread: 120, startVelocity: 45 });
-};
-
-// Efek Tebasan Pedang (Cross Slash)
-const triggerSlashEffect = () => {
-    // 1. Definisikan Bentuk
-    const swordShape = confetti.shapeFromText({ text: '🗡️', scalar: 4 });
-
-    // Settingan Dasar "Tebasan"
-    const slashConfig = {
-        shapes: [swordShape],
-        colors: ['#ffffff', '#e2e8f0'], // Warna kilatan besi
-        ticks: 30, // Hilang SANGAT cepat (efek instan)
-        gravity: 0, // 0 Gravitasi = Terbang Lurus
-        decay: 0.95, // Kecepatan konstan
-        startVelocity: 90, // Kecepatan tinggi
-        scalar: 3, // Ukuran pedang besar
-        flat: true, // 2D Rotation (biar pipih tajam)
-        drift: 0,
-    };
-
-    // Slash 1: Kiri Bawah -> Menembak ke Kanan Atas (Membentuk garis /)
-    confetti({
-        ...slashConfig,
-        particleCount: 10, // Sedikit aja biar jadi garis
-        angle: 45, // Sudut diagonal kanan
-        spread: 5, // SANGAT SEMPIT (biar jadi garis lurus)
-        origin: { x: 0.3, y: 0.7 }, // Start agak pinggir
-    });
-
-    // Slash 2: Kanan Bawah -> Menembak ke Kiri Atas (Membentuk garis \)
-    setTimeout(() => {
-        confetti({
-            ...slashConfig,
-            particleCount: 10,
-            angle: 135, // Sudut diagonal kiri
-            spread: 5,
-            origin: { x: 0.7, y: 0.7 },
-        });
-    }, 100);
-
-    // Efek Benturan di Tengah (Impact)
-    setTimeout(() => {
-        confetti({
-            shapes: ['square', 'circle'], // Percikan impact
-            colors: ['#ef4444', '#f87171', '#ffffff'], // Merah darah & Putih
-            particleCount: 40,
-            spread: 100, // Menyebar ke segala arah
-            origin: { x: 0.5, y: 0.5 }, // Di tengah layar
-            startVelocity: 30,
-            gravity: 0.8, // Yang ini boleh jatuh
-            ticks: 50,
-            scalar: 0.8,
-        });
-    }, 200);
-};
-
-const showToast = (message) => {
-    const toast = document.createElement('div');
-    toast.className =
-        'fixed top-4 right-4 bg-slate-800 border-l-4 border-emerald-500 text-white px-6 py-4 rounded shadow-2xl z-[100] animate-bounce font-bold flex items-center gap-2';
-    toast.innerHTML = `<span>🎉</span> ${message}`;
-    document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 4000);
 };
 
 // --- HELPERS ---
