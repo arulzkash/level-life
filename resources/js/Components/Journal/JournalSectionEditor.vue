@@ -104,4 +104,7 @@ const onAdd = () => {
     opacity: 0;
     transform: translateY(10px);
 }
+textarea {
+    field-sizing: content;
+}
 </style>
