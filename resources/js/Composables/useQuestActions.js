@@ -120,9 +120,10 @@ export function useQuestActions(props, options = {}) {
      * @param {number} id - Quest ID
      * @param {number} xpReward - XP reward amount
      * @param {number} coinReward - Coin reward amount
+     * @param {string} [note] - Optional completion note
      */
-    const completeQuest = (id, xpReward, coinReward) => {
-        const form = useForm({ note: '' });
+    const completeQuest = (id, xpReward, coinReward, note = '') => {
+        const form = useForm({ note: note ?? '' });
         form.patch(`/quests/${id}/complete`, {
             preserveScroll: true,
             onSuccess: () => {

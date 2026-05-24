@@ -48,7 +48,7 @@ vi.mock('@/Composables/useAudio', () => ({
 }));
 
 import { useQuestActions } from '@/Composables/useQuestActions';
-import { router } from '@inertiajs/vue3';
+import { router, useForm } from '@inertiajs/vue3';
 
 describe('useQuestActions', () => {
     const defaultProps = {
@@ -205,6 +205,14 @@ describe('useQuestActions', () => {
                     preserveScroll: true,
                 })
             );
+        });
+
+        it('sends completion note with the PATCH request', () => {
+            const { completeQuest } = useQuestActions(defaultProps);
+
+            completeQuest(42, 100, 50, 'jalan kaki 5 menit');
+
+            expect(useForm).toHaveBeenCalledWith({ note: 'jalan kaki 5 menit' });
         });
 
         it('triggers visual effects and sounds on success', () => {

@@ -36,6 +36,11 @@ const onDragEnd = () => {
     emit('reorder', orderedIds);
 };
 
+const completeQuest = (q) => {
+    emit('complete', q.id, q.xp_reward, q.coin_reward, completionNotes[q.id] ?? '');
+    completionNotes[q.id] = '';
+};
+
 // Check if all subtasks are complete
 const isSubtasksComplete = (q) => {
     if (!q.subtasks || q.subtasks.length === 0) return true;
@@ -186,7 +191,7 @@ const getTypeColorStyle = (q) => {
                         <HoldButton
                             v-else
                             class="w-full md:w-auto"
-                            @complete="emit('complete', q.id, q.xp_reward, q.coin_reward)"
+                            @complete="completeQuest(q)"
                         >
                             <span>⚔️ Hold to Slash</span>
                         </HoldButton>
