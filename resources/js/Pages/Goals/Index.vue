@@ -3,6 +3,7 @@ import { ref, computed } from 'vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { Link, useForm, Head } from '@inertiajs/vue3';
 import { useGoalUrgency } from '@/Composables/useGoalUrgency';
+import { GOAL_COPY } from '@/Utils/featureCopy';
 
 defineOptions({ layout: AppLayout });
 
@@ -185,6 +186,9 @@ const getNearestMilestoneInfo = (goalObj) => {
                 <div class="space-y-5 border-t border-slate-700/30 pt-5">
                     <div class="space-y-2">
                         <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500">Personal Reason (The "Why")</label>
+                        <p class="text-[11px] leading-relaxed text-slate-500">
+                            {{ GOAL_COPY.personalReasonHelper }}
+                        </p>
                         <textarea
                             v-model="createForm.personal_reason"
                             placeholder="Why must you achieve this?"
@@ -223,6 +227,9 @@ const getNearestMilestoneInfo = (goalObj) => {
                     </div>
 
                     <div class="space-y-3">
+                        <p class="text-[11px] leading-relaxed text-slate-500">
+                            {{ GOAL_COPY.milestoneHelper }}
+                        </p>
                         <div v-for="(m, i) in createForm.milestones" :key="i" class="flex gap-3 relative group">
                             <input
                                 v-model="m.title"
@@ -339,9 +346,13 @@ const getNearestMilestoneInfo = (goalObj) => {
                                         ? 'border-amber-600/30 bg-amber-500/10 text-amber-400'
                                         : 'border-emerald-600/30 bg-emerald-500/10 text-emerald-400',
                             ]"
+                            :title="item.stateHelper"
                         >
                             {{ item.stateName }}
                         </div>
+                        <p class="text-[10px] text-slate-500">
+                            {{ item.stateHelper }}
+                        </p>
                     </div>
                 </div>
 

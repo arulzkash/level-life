@@ -1,5 +1,6 @@
 <script setup>
 import { getBadgeIcon } from '@/Utils/badgeMeta';
+import { PROFILE_COPY } from '@/Utils/featureCopy';
 import { formatDate } from './profileFormatters';
 
 defineProps({
@@ -20,6 +21,7 @@ defineProps({
             <div>
                 <div class="text-[10px] font-bold uppercase tracking-widest text-slate-500">Badge Vault</div>
                 <div class="text-xl font-black text-white">All Badges</div>
+                <p class="mt-1 text-xs text-slate-500">{{ PROFILE_COPY.badgesEffort }}</p>
             </div>
 
             <div class="text-sm font-medium text-slate-300">

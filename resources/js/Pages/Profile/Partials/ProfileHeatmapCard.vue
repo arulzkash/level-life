@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { formatDate, heatLevelClass } from './profileFormatters';
+import { PROFILE_COPY } from '@/Utils/featureCopy';
 
 const props = defineProps({
     heatmap: {
@@ -146,6 +147,7 @@ const handleOutsidePointerDown = (event) => {
             <div>
                 <h2 class="text-lg font-black text-white">52-Week Quest Heatmap</h2>
                 <p class="mt-0.5 text-xs text-slate-400">Daily completion history over the last 52 weeks.</p>
+                <p class="mt-1 text-xs text-slate-500">{{ PROFILE_COPY.heatmapReflection }}</p>
             </div>
 
             <div class="flex items-center gap-1.5 text-[10px] font-medium text-slate-400">

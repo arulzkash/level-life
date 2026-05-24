@@ -1,4 +1,5 @@
 import { computed } from 'vue';
+import { GOAL_COPY } from '@/Utils/featureCopy';
 
 export function useGoalUrgency() {
     const getLocalYMD = (dateString) => {
@@ -107,6 +108,7 @@ export function useGoalUrgency() {
             level,
             stateName,
             stateMessage,
+            stateHelper: GOAL_COPY.urgencyHelpers[stateName] || '',
             daysLeft,
             goalDaysLeft,
             nearestDate,

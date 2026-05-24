@@ -3,6 +3,7 @@ import { ref, computed } from 'vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { Link, useForm, router, Head } from '@inertiajs/vue3';
 import { useGoalUrgency } from '@/Composables/useGoalUrgency';
+import { GOAL_COPY } from '@/Utils/featureCopy';
 
 defineOptions({ layout: AppLayout });
 
@@ -175,12 +176,16 @@ const deleteGoal = () => {
                                   : analyzed.level === 2
                                     ? 'border-amber-600/30 bg-amber-500/10 text-amber-400'
                                     : 'border-emerald-600/30 bg-emerald-500/10 text-emerald-400',
-                        ]"
+                            ]"
+                        :title="analyzed.stateHelper"
                     >
                         {{ analyzed.stateName }}
                         <span class="mx-1 opacity-50">|</span>
                         {{ analyzed.stateMessage }}
                     </div>
+                    <p v-if="goal.status !== 'completed'" class="text-xs text-slate-500">
+                        {{ analyzed.stateHelper }}
+                    </p>
                     <div
                         v-else
                         class="inline-flex items-center gap-2 rounded border border-emerald-700/40 bg-emerald-900/20 px-3 py-1.5 text-[11px] font-black uppercase tracking-widest text-emerald-400"
@@ -295,6 +300,9 @@ const deleteGoal = () => {
                     <p class="mb-2 text-[10px] font-bold uppercase tracking-widest text-slate-500">
                         My Reason
                     </p>
+                    <p class="mb-3 text-xs text-slate-500">
+                        {{ GOAL_COPY.personalReasonHelper }}
+                    </p>
                     <blockquote
                         class="whitespace-pre-wrap text-lg italic leading-relaxed text-slate-300 md:text-xl"
                     >
@@ -334,6 +342,9 @@ const deleteGoal = () => {
                         <label class="mb-1 block text-xs font-bold uppercase text-slate-500">
                             The "Why" (Personal Reason)
                         </label>
+                        <p class="mb-2 text-xs text-slate-500">
+                            {{ GOAL_COPY.personalReasonHelper }}
+                        </p>
                         <textarea
                             v-model="editForm.personal_reason"
                             class="input-dark min-h-[80px] w-full text-sm italic transition-all duration-300 focus:min-h-[120px]"
@@ -432,6 +443,9 @@ const deleteGoal = () => {
                     {{ goal.milestones.length }})
                 </span>
             </h3>
+            <p class="mb-4 text-sm text-slate-500">
+                {{ GOAL_COPY.milestoneHelper }}
+            </p>
 
             <div class="relative space-y-3">
                 <!-- Progress Line indicator purely visual -->

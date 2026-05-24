@@ -2,6 +2,7 @@
 import { computed } from 'vue';
 import { router } from '@inertiajs/vue3';
 import { formatDate, getDaysLeft, getDaysLeftClass } from '@/Utils/dateFormatters';
+import { GOAL_COPY } from '@/Utils/featureCopy';
 
 const props = defineProps({
     focusGoal: { type: Object, required: true },
@@ -76,6 +77,9 @@ const navigateToGoal = () => {
             <h4 class="text-xl font-bold text-white transition-colors group-hover:text-indigo-300">
                 {{ focusGoal.rawGoal.title }}
             </h4>
+            <p class="mt-1 text-xs text-slate-500">
+                {{ GOAL_COPY.focusGoalHelper }}
+            </p>
 
             <p
                 v-if="focusGoal.rawGoal.personal_reason"
@@ -90,6 +94,9 @@ const navigateToGoal = () => {
                 class="mt-4 rounded-lg border border-slate-700/50 bg-slate-900/60 p-3 shadow-inner"
             >
                 <div class="mb-1 text-[10px] font-bold uppercase text-slate-500">Next Checkpoint</div>
+                <p class="mb-2 text-[11px] leading-relaxed text-slate-500">
+                    {{ GOAL_COPY.milestoneHelper }}
+                </p>
                 <div class="mb-2 flex items-start gap-2 text-sm font-semibold text-slate-200">
                     <span
                         class="mt-2 shrink-0 h-1.5 w-1.5 rounded-full"
@@ -121,6 +128,7 @@ const navigateToGoal = () => {
                         <span
                             class="text-[9px] font-black uppercase tracking-widest mt-0.5"
                             :class="[deadlineDaysClass]"
+                            :title="focusGoal.stateHelper"
                         >
                             <template v-if="focusGoal.isGoalOverdue">
                                 {{ Math.abs(focusGoal.goalDaysLeft) }} Days Overdue
@@ -131,6 +139,9 @@ const navigateToGoal = () => {
                             <template v-else>
                                 {{ focusGoal.goalDaysLeft }} Days Left
                             </template>
+                        </span>
+                        <span class="mt-1 text-[10px] text-slate-500">
+                            {{ focusGoal.stateHelper }}
                         </span>
                     </div>
                 </div>
