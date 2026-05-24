@@ -93,6 +93,7 @@ const showingNavigationDropdown = ref(false);
                             <Link href="/habits" class="nav-item">Habits</Link>
                             <Link href="/timeblocks" class="nav-item">Timeline</Link>
                             <Link href="/journal" class="nav-item">Journal</Link>
+                            <Link href="/handbook" class="nav-item">Handbook</Link>
                             <Link href="/leaderboard" class="nav-item group flex items-center gap-1.5">
                                 <span
                                     class="text-yellow-500/80 transition-colors group-hover:text-yellow-400"
@@ -266,6 +267,13 @@ const showingNavigationDropdown = ref(false);
                         @click="showingNavigationDropdown = false"
                     >
                         Journal
+                    </Link>
+                    <Link
+                        href="/handbook"
+                        class="block border-l-4 border-transparent py-2 pl-3 pr-4 text-base font-medium text-slate-400 transition-colors hover:bg-slate-700 hover:text-white"
+                        @click="showingNavigationDropdown = false"
+                    >
+                        Handbook
                     </Link>
                     <Link
                         href="/leaderboard"

@@ -21,8 +21,10 @@ use App\Http\Controllers\TimeBlockPageController;
 use App\Http\Controllers\TreasuryController;
 use App\Http\Controllers\TreasuryLogPageController;
 use App\Http\Controllers\TreasuryPurchaseLogController;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
 
 require __DIR__.'/auth.php';
 
@@ -36,7 +38,23 @@ Route::get('/u/{username}', [PublicProfileController::class, 'show'])
     ->where('username', '[a-z0-9_]+')
     ->name('profile.show');
 
-Route::middleware('auth')->group(function () {
+$handbookPageData = function () {
+    $path = resource_path('content/handbook.md');
+    $exists = File::exists($path);
+
+    return [
+        'markdown' => $exists
+            ? File::get($path)
+            : "# Handbook unavailable\n\nThe handbook source file could not be found.",
+        'isMissing' => ! $exists,
+    ];
+};
+
+Route::get('/handbook-public', function () use ($handbookPageData) {
+    return Inertia::render('Handbook/Public', $handbookPageData());
+})->name('handbook.public');
+
+Route::middleware('auth')->group(function () use ($handbookPageData) {
 
     // DASHBOARD (page)
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -139,6 +157,10 @@ Route::middleware('auth')->group(function () {
     Route::delete('/journal/templates/{template}', [JournalTemplateController::class, 'destroy'])->name('journal.templates.destroy');
 
     Route::get('/journal/archive', [JournalArchivePageController::class, 'index']);
+
+    Route::get('/handbook', function () use ($handbookPageData) {
+        return Inertia::render('Handbook/Index', $handbookPageData());
+    })->name('handbook');
 
     Route::get('/debug/badges', [BadgeDebugController::class, 'index']);
 });
