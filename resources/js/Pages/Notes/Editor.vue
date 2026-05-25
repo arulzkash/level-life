@@ -6,6 +6,7 @@ import debounce from 'lodash/debounce';
 import JournalTemplateSelector from '@/Components/Journal/JournalTemplateSelector.vue';
 import JournalSectionEditor from '@/Components/Journal/JournalSectionEditor.vue';
 import { builtInTemplateOptions } from '@/Utils/journalTemplates';
+import { useAudio } from '@/Composables/useAudio';
 
 defineOptions({ layout: AppLayout });
 
@@ -17,6 +18,7 @@ const props = defineProps({
 const isEditMode = computed(() => !!props.note);
 
 const showTemplateSelector = ref(false);
+const { playSfx } = useAudio();
 
 const newId = () => {
     if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
@@ -177,6 +179,7 @@ const saveToServer = () => {
         preserveScroll: true,
         onSuccess: () => {
             clearDraft(targetKey);
+            playSfx('typing');
         },
     };
 
