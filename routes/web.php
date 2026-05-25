@@ -21,6 +21,7 @@ use App\Http\Controllers\TimeBlockPageController;
 use App\Http\Controllers\TreasuryController;
 use App\Http\Controllers\TreasuryLogPageController;
 use App\Http\Controllers\TreasuryPurchaseLogController;
+use App\Http\Controllers\NoteController;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -157,6 +158,16 @@ Route::middleware('auth')->group(function () use ($handbookPageData) {
     Route::delete('/journal/templates/{template}', [JournalTemplateController::class, 'destroy'])->name('journal.templates.destroy');
 
     Route::get('/journal/archive', [JournalArchivePageController::class, 'index']);
+
+    // NOTES
+    Route::prefix('notes')->group(function () {
+        Route::get('/', [NoteController::class, 'index'])->name('notes.index');
+        Route::get('/create', [NoteController::class, 'create'])->name('notes.create');
+        Route::post('/', [NoteController::class, 'store'])->name('notes.store');
+        Route::get('/{note}', [NoteController::class, 'show'])->name('notes.show');
+        Route::put('/{note}', [NoteController::class, 'update'])->name('notes.update');
+        Route::delete('/{note}', [NoteController::class, 'destroy'])->name('notes.destroy');
+    });
 
     Route::get('/handbook', function () use ($handbookPageData) {
         return Inertia::render('Handbook/Index', $handbookPageData());

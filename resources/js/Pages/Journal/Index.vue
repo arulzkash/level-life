@@ -1,7 +1,7 @@
 <script setup>
 import { Head, useForm, router, Link, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
-import { computed, onMounted, ref, watch, nextTick } from 'vue';
+import { computed, onMounted, onBeforeUnmount, ref, watch, nextTick } from 'vue';
 import debounce from 'lodash/debounce';
 import LevelUpModal from '@/Components/Game/LevelUpModal.vue';
 import { useAudio } from '@/Composables/useAudio';
@@ -56,6 +56,7 @@ const goToDate = (d) => {
 
 // ---------- Auto-save draft to localStorage (debounce 500ms) ----------
 const saveDraftLocal = debounce(() => {
+    if (hasLocalDraft.value) return;
     localStorage.setItem(draftKey.value, JSON.stringify({
         date: form.date, title: form.title, mood_emoji: form.mood_emoji,
         is_favorite: form.is_favorite, body: form.body, sections: form.sections, savedAt: Date.now(),
@@ -95,6 +96,10 @@ onMounted(() => {
             ((d.mood_emoji ?? '') !== (props.entry?.mood_emoji ?? '') && (d.mood_emoji ?? '').length > 0);
         if (isDifferent) hasLocalDraft.value = true;
     } catch {}
+});
+
+onBeforeUnmount(() => {
+    saveDraftLocal.flush();
 });
 
 // ---------- Template operations ----------

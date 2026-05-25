@@ -92,7 +92,29 @@ const showingNavigationDropdown = ref(false);
                             <Link href="/treasury" class="nav-item">Treasury</Link>
                             <Link href="/habits" class="nav-item">Habits</Link>
                             <Link href="/timeblocks" class="nav-item">Timeline</Link>
-                            <Link href="/journal" class="nav-item">Journal</Link>
+                            <div class="group relative ml-1 flex h-16 items-center">
+                                <button class="nav-item flex cursor-default items-center gap-1">
+                                    Journal ▾
+                                </button>
+                                <div class="absolute left-0 top-12 z-50 hidden w-40 pt-2 group-hover:block">
+                                    <div
+                                        class="overflow-hidden rounded-lg border border-slate-700 bg-slate-800 shadow-xl ring-1 ring-black ring-opacity-5"
+                                    >
+                                        <Link
+                                            href="/journal"
+                                            class="block border-b border-slate-700/50 px-4 py-2.5 text-xs font-medium transition-colors hover:bg-slate-700 hover:text-white"
+                                        >
+                                            📓 Daily Journal
+                                        </Link>
+                                        <Link
+                                            href="/notes"
+                                            class="block px-4 py-2.5 text-xs font-medium transition-colors hover:bg-slate-700 hover:text-white"
+                                        >
+                                            📝 Notes
+                                        </Link>
+                                    </div>
+                                </div>
+                            </div>
                             <Link href="/handbook" class="nav-item">Handbook</Link>
                             <Link href="/leaderboard" class="nav-item group flex items-center gap-1.5">
                                 <span
@@ -262,13 +284,6 @@ const showingNavigationDropdown = ref(false);
                         Timeline
                     </Link>
                     <Link
-                        href="/journal"
-                        class="block border-l-4 border-transparent py-2 pl-3 pr-4 text-base font-medium text-slate-400 transition-colors hover:bg-slate-700 hover:text-white"
-                        @click="showingNavigationDropdown = false"
-                    >
-                        Journal
-                    </Link>
-                    <Link
                         href="/handbook"
                         class="block border-l-4 border-transparent py-2 pl-3 pr-4 text-base font-medium text-slate-400 transition-colors hover:bg-slate-700 hover:text-white"
                         @click="showingNavigationDropdown = false"
@@ -281,6 +296,22 @@ const showingNavigationDropdown = ref(false);
                         @click="showingNavigationDropdown = false"
                     >
                         🏆 Hall of Legends
+                    </Link>
+                    <div class="my-2 border-t border-slate-700"></div>
+                    <div class="px-4 py-2 text-xs font-bold uppercase text-slate-500">Journal & Notes</div>
+                    <Link
+                        href="/journal"
+                        class="block py-2 pl-6 pr-4 text-sm font-medium text-slate-400 hover:bg-slate-700 hover:text-white"
+                        @click="showingNavigationDropdown = false"
+                    >
+                        📓 Daily Journal
+                    </Link>
+                    <Link
+                        href="/notes"
+                        class="block py-2 pl-6 pr-4 text-sm font-medium text-slate-400 hover:bg-slate-700 hover:text-white"
+                        @click="showingNavigationDropdown = false"
+                    >
+                        📝 Notes
                     </Link>
                     <div class="my-2 border-t border-slate-700"></div>
                     <div class="px-4 py-2 text-xs font-bold uppercase text-slate-500">Logs</div>
