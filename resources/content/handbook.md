@@ -232,10 +232,6 @@ Bisa lu tentuin juga if-then plan, kalau hari ini hujan, lu ganti lari pake card
 
 Journal itu cara lu menang bukan cuma lewat tenaga, tapi lewat arah. 
 
-Bener. Ini versi yang lebih pas: **padat, esensial, dan porsinya mirip level lain**. Bisa langsung paste setelah Level 7\.
-
----
-
 ## **Level 8: Goals**
 
 ### **Boss fight buat target besar lu**
