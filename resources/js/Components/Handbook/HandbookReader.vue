@@ -142,7 +142,7 @@ onBeforeUnmount(() => {
                     <div class="absolute bottom-5 left-5 h-16 w-16 rounded-bl-[18px] border-b border-l border-sky-200/6"></div>
                 </div>
 
-                <div class="relative px-6 py-8 md:px-10 md:py-10">
+                <div class="relative px-10 py-10 md:px-10 md:py-10">
                     <p
                         v-if="isMissing"
                         class="mb-6 inline-flex rounded-full border border-amber-400/20 bg-amber-500/10 px-3 py-1 text-xs font-semibold text-amber-200"

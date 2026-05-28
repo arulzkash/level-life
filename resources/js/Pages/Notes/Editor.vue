@@ -288,33 +288,30 @@ const activeBodyGlow = computed(() => {
                 <div class="mb-2 flex items-center justify-between">
                     <label class="text-xs font-bold uppercase tracking-widest text-slate-500">Title</label>
 
-                    <div class="flex items-center gap-3">
+                    <div class="flex items-center gap-2">
+                        <!-- Color Picker Selector (left of pin) -->
+                        <div class="flex gap-1.5 bg-slate-900/50 p-1 rounded-lg border border-slate-800">
+                            <button
+                                v-for="opt in colorOptions"
+                                :key="opt.value"
+                                @click="form.color = opt.value"
+                                type="button"
+                                class="h-3.5 w-3.5 rounded-full border transition-all hover:scale-125"
+                                :class="[
+                                    opt.colorClass,
+                                    form.color === opt.value ? 'ring-2 ring-white ring-offset-1 ring-offset-slate-900 border-white' : 'border-transparent'
+                                ]"
+                                :title="opt.name"
+                            ></button>
+                        </div>
+
+                        <div class="mx-1.5 h-4 w-px bg-slate-700"></div>
+
                         <!-- Pin Note Toggle -->
                         <label class="flex cursor-pointer items-center gap-2 text-xs text-slate-400 transition-colors hover:text-sky-400">
                             <input type="checkbox" v-model="form.is_pinned" class="hidden" />
                             <span class="text-[10px] font-bold uppercase tracking-widest transition-all" :class="form.is_pinned ? 'text-sky-400 drop-shadow-[0_0_8px_rgba(56,189,248,0.5)]' : ''">{{ form.is_pinned ? '📌 PINNED' : '📌 PIN NOTE' }}</span>
                         </label>
-
-                        <div class="h-4 w-px bg-slate-800"></div>
-
-                        <!-- Color Picker Dropdown/Selector -->
-                        <div class="flex items-center gap-2">
-                            <span class="text-[10px] font-bold uppercase tracking-widest text-slate-500">Color Aksen:</span>
-                            <div class="flex gap-1.5 bg-slate-900/50 p-1.5 rounded-lg border border-slate-800">
-                                <button
-                                    v-for="opt in colorOptions"
-                                    :key="opt.value"
-                                    @click="form.color = opt.value"
-                                    type="button"
-                                    class="h-4 w-4 rounded-full border transition-all hover:scale-125"
-                                    :class="[
-                                        opt.colorClass,
-                                        form.color === opt.value ? 'ring-2 ring-white ring-offset-1 ring-offset-slate-900 border-white' : 'border-transparent'
-                                    ]"
-                                    :title="opt.name"
-                                ></button>
-                            </div>
-                        </div>
                     </div>
                 </div>
                 <input

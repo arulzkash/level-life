@@ -254,7 +254,7 @@ Bisa lulus semester ini. Bisa turun berat badan. Bisa tamat course. Bisa bangun 
 
 Goals bikin lu berhenti kerja random. Lu jadi tahu semua grind kecil lu sebenarnya menuju ke mana.
 
-![](/images/handbook/image5.jpg)
+![](/images/handbook/image5.png)
 
 Setiap Goal punya target, deadline, personal reason, dan milestones.
 
@@ -269,7 +269,7 @@ Lu tidak lawan boss langsung. Lu pecah dulu jadi beberapa bagian. Satu per satu.
 
 Di dashboard, Level Life akan ngangkat satu Focus Goal. Biasanya yang paling urgent.
 
-![](/images/handbook/image6.jpg)
+![](/images/handbook/image6.png)
 
 Tujuannya biar lu langsung tahu target mana yang paling butuh perhatian sekarang. Kalau milestone mulai mepet, sistem kasih sinyal. Kalau masih aman, lu tahu lu masih on track. Kalau sudah bahaya, warning-nya kelihatan.
 
@@ -282,7 +282,7 @@ Warning, kalau buffer mulai tipis.
 Danger, kalau sudah mepet.  
 Critical, kalau milestone atau deadline sudah kelewat.
 
-![](/images/handbook/image7.jpg)
+![](/images/handbook/image7.png)
 
 Banyak orang gagal bukan karena targetnya salah. Mereka gagal karena telat sadar bahwa targetnya sudah masuk zona bahaya.
 
