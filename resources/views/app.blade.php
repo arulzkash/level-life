@@ -2,10 +2,24 @@
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 
     <head>
+        @php
+            $isHomepage = request()->is('/');
+            $homepageTitle = 'Level Life — The Player’s Handbook';
+            $homepageDescription = 'Turn your life into an RPG. Build consistency, track quests, habits, goals, XP, streaks, and personal progress with Level Life.';
+        @endphp
+
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
-        <title inertia>{{ config('app.name', 'Level Life') }}</title>
+        <title inertia>{{ $isHomepage ? $homepageTitle : config('app.name', 'Level Life') }}</title>
+        @if ($isHomepage)
+            <meta name="description" content="{{ $homepageDescription }}">
+            <meta property="og:title" content="{{ $homepageTitle }}">
+            <meta property="og:description" content="{{ $homepageDescription }}">
+            <meta property="og:type" content="website">
+            <meta property="og:url" content="{{ url('/') }}">
+            <link rel="canonical" href="{{ url('/') }}">
+        @endif
 
         <!-- App metadata -->
         <meta name="application-name" content="Level Life">

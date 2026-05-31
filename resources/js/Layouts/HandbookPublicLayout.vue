@@ -1,12 +1,16 @@
 <script setup>
-import { Link } from '@inertiajs/vue3';
+import { computed } from 'vue';
+import { Link, usePage } from '@inertiajs/vue3';
+
+const page = usePage();
+const openAppHref = computed(() => page.props.auth?.user ? '/dashboard' : '/login');
 </script>
 
 <template>
     <div class="min-h-screen bg-slate-950 text-slate-200">
         <header class="sticky top-0 z-40 border-b border-slate-800/80 bg-slate-950/90 backdrop-blur-xl">
             <div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
-                <Link href="/handbook-public" class="group flex items-center gap-3">
+                <Link href="/" class="group flex items-center gap-3">
                     <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-600 to-cyan-500 shadow-[0_0_25px_rgba(99,102,241,0.35)] transition-all duration-300 group-hover:scale-105 group-hover:shadow-[0_0_35px_rgba(34,211,238,0.4)]">
                         <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -34,7 +38,7 @@ import { Link } from '@inertiajs/vue3';
 
                 <div class="flex items-center gap-2">
                     <Link
-                        href="/"
+                        :href="openAppHref"
                         class="rounded-full border border-slate-700 px-4 py-2 text-sm font-semibold text-slate-300 transition hover:border-slate-500 hover:text-white"
                     >
                         Open App

@@ -10,7 +10,7 @@ import TwemojiDirective from '@/directives/twemoji';
 const appName = 'Level Life';
 
 createInertiaApp({
-    title: (title) => `${title} - ${appName}`,
+    title: (title) => title.includes(appName) ? title : `${title} - ${appName}`,
     resolve: (name) => resolvePageComponent(`./Pages/${name}.vue`, import.meta.glob('./Pages/**/*.vue')),
     setup({ el, App, props, plugin }) {
         const app = createApp({ render: () => h(App, props) });

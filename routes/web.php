@@ -29,16 +29,6 @@ use Inertia\Inertia;
 
 require __DIR__.'/auth.php';
 
-Route::get('/', function () {
-    return Auth::check()
-        ? redirect()->route('dashboard')
-        : redirect()->route('login');
-});
-
-Route::get('/u/{username}', [PublicProfileController::class, 'show'])
-    ->where('username', '[a-z0-9_]+')
-    ->name('profile.show');
-
 $handbookPageData = function () {
     $path = resource_path('content/handbook.md');
     $exists = File::exists($path);
@@ -51,9 +41,19 @@ $handbookPageData = function () {
     ];
 };
 
-Route::get('/handbook-public', function () use ($handbookPageData) {
+Route::get('/', function () use ($handbookPageData) {
+    if (Auth::check()) {
+        return redirect()->route('dashboard');
+    }
+
     return Inertia::render('Handbook/Public', $handbookPageData());
-})->name('handbook.public');
+})->name('home');
+
+Route::get('/u/{username}', [PublicProfileController::class, 'show'])
+    ->where('username', '[a-z0-9_]+')
+    ->name('profile.show');
+
+Route::redirect('/handbook-public', '/')->name('handbook.public');
 
 Route::middleware('auth')->group(function () use ($handbookPageData) {
 
