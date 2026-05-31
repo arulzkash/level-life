@@ -3,7 +3,7 @@ name: Level Life Reminders
 on:
   schedule:
     - cron: '0 0 * * *'   # 07:00 WIB
-    - cron: '20 12 * * *'  # 19:20 WIB
+    - cron: '*/5 * * * *'  # 19:20 WIB
   workflow_dispatch:
     inputs:
       reminder:
@@ -38,7 +38,7 @@ jobs:
       - name: Evening reminder
         if: >-
           ${{
-            (github.event_name == 'schedule' && github.event.schedule == '20 12 * * *') ||
+            (github.event_name == 'schedule' && github.event.schedule == '*/5 * * * *') ||
             (github.event_name == 'workflow_dispatch' && (inputs.reminder == 'evening' || inputs.reminder == 'both'))
           }}
         run: |
