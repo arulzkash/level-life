@@ -166,4 +166,14 @@ class User extends Authenticatable
     {
         return $this->hasMany(UserDailyActivity::class);
     }
+
+    public function notificationSetting()
+    {
+        return $this->hasOne(NotificationSetting::class);
+    }
+
+    public function notificationLogs(): HasMany
+    {
+        return $this->hasMany(NotificationLog::class);
+    }
 }

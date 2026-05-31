@@ -74,4 +74,27 @@ class PushSubscriptionController extends Controller
             'subscriptionCount' => $request->user()->pushSubscriptions()->count(),
         ]);
     }
+
+    public function updateSettings(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'morning_enabled' => ['required', 'boolean'],
+            'evening_enabled' => ['required', 'boolean'],
+        ]);
+
+        $settings = $request->user()->notificationSetting()->updateOrCreate(
+            ['user_id' => $request->user()->id],
+            [
+                'morning_enabled' => $validated['morning_enabled'],
+                'evening_enabled' => $validated['evening_enabled'],
+            ],
+        );
+
+        return response()->json([
+            'settings' => [
+                'morning_enabled' => $settings->morning_enabled,
+                'evening_enabled' => $settings->evening_enabled,
+            ],
+        ]);
+    }
 }

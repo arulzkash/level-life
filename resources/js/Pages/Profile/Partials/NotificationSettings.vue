@@ -10,6 +10,13 @@ const props = defineProps({
         type: Number,
         default: 0,
     },
+    initialSettings: {
+        type: Object,
+        default: () => ({
+            morning_enabled: false,
+            evening_enabled: false,
+        }),
+    },
 });
 
 const isSupported = ref(false);
@@ -17,7 +24,12 @@ const permission = ref(typeof Notification === 'undefined' ? 'unsupported' : Not
 const isSubscribed = ref(props.initialSubscriptionCount > 0);
 const statusMessage = ref('');
 const isBusy = ref(false);
+const isSavingSettings = ref(false);
 const subscriptionCount = ref(props.initialSubscriptionCount);
+const reminderSettings = ref({
+    morning_enabled: Boolean(props.initialSettings?.morning_enabled),
+    evening_enabled: Boolean(props.initialSettings?.evening_enabled),
+});
 
 const canUseNotifications = computed(() => isSupported.value && Boolean(props.vapidPublicKey));
 const buttonLabel = computed(() => {
@@ -153,6 +165,24 @@ const sendTestNotification = async () => {
     }
 };
 
+const saveReminderSettings = async () => {
+    isSavingSettings.value = true;
+    statusMessage.value = '';
+
+    try {
+        const response = await window.axios.patch('/push-subscriptions/settings', reminderSettings.value);
+        reminderSettings.value = {
+            morning_enabled: Boolean(response.data.settings?.morning_enabled),
+            evening_enabled: Boolean(response.data.settings?.evening_enabled),
+        };
+        statusMessage.value = 'Reminder settings saved.';
+    } catch (error) {
+        statusMessage.value = error.response?.data?.message || 'Failed to save reminder settings.';
+    } finally {
+        isSavingSettings.value = false;
+    }
+};
+
 onMounted(async () => {
     isSupported.value = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
 
@@ -209,6 +239,36 @@ onMounted(async () => {
             >
                 Send Test Notification
             </button>
+        </div>
+
+        <div class="space-y-3 rounded-2xl border border-slate-800 bg-slate-950/60 p-4">
+            <label class="flex items-start gap-3">
+                <input
+                    v-model="reminderSettings.morning_enabled"
+                    type="checkbox"
+                    :disabled="!isSubscribed || isSavingSettings"
+                    class="mt-1 rounded border-slate-700 bg-slate-900 text-sky-500 focus:ring-sky-500 disabled:opacity-50"
+                    @change="saveReminderSettings"
+                >
+                <span>
+                    <span class="block text-sm font-semibold text-slate-100">Morning reminder</span>
+                    <span class="block text-sm leading-6 text-slate-400">Send a 07:00 WIB reminder when the internal trigger runs.</span>
+                </span>
+            </label>
+
+            <label class="flex items-start gap-3">
+                <input
+                    v-model="reminderSettings.evening_enabled"
+                    type="checkbox"
+                    :disabled="!isSubscribed || isSavingSettings"
+                    class="mt-1 rounded border-slate-700 bg-slate-900 text-sky-500 focus:ring-sky-500 disabled:opacity-50"
+                    @change="saveReminderSettings"
+                >
+                <span>
+                    <span class="block text-sm font-semibold text-slate-100">Evening streak reminder</span>
+                    <span class="block text-sm leading-6 text-slate-400">Send an 18:00 WIB reminder only if no quest was completed today.</span>
+                </span>
+            </label>
         </div>
 
         <p v-if="statusMessage" class="text-sm leading-6 text-slate-300">

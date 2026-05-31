@@ -17,12 +17,24 @@ class ProfileController extends Controller
 {
     public function edit(Request $request): Response
     {
+        $notificationSettings = $request->user()->notificationSetting()->firstOrCreate(
+            ['user_id' => $request->user()->id],
+            [
+                'morning_enabled' => false,
+                'evening_enabled' => false,
+            ],
+        );
+
         return Inertia::render('Profile/Edit', [
             'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
             'status' => session('status'),
             'notifications' => [
                 'vapidPublicKey' => config('webpush.vapid.public_key'),
                 'subscriptionCount' => $request->user()->pushSubscriptions()->count(),
+                'settings' => [
+                    'morning_enabled' => $notificationSettings->morning_enabled,
+                    'evening_enabled' => $notificationSettings->evening_enabled,
+                ],
             ],
         ]);
     }

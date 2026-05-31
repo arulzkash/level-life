@@ -7,6 +7,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\GoalController;
 use App\Http\Controllers\HabitController;
 use App\Http\Controllers\HabitPageController;
+use App\Http\Controllers\InternalReminderController;
 use App\Http\Controllers\JournalArchivePageController;
 use App\Http\Controllers\JournalPageController;
 use App\Http\Controllers\JournalTemplateController;
@@ -26,6 +27,7 @@ use App\Http\Controllers\NoteController;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Inertia\Inertia;
 
 require __DIR__.'/auth.php';
@@ -72,6 +74,7 @@ Route::middleware('auth')->group(function () use ($handbookPageData) {
     Route::post('/push-subscriptions', [PushSubscriptionController::class, 'store'])->name('push-subscriptions.store');
     Route::delete('/push-subscriptions', [PushSubscriptionController::class, 'destroy'])->name('push-subscriptions.destroy');
     Route::post('/push-subscriptions/test', [PushSubscriptionController::class, 'test'])->name('push-subscriptions.test');
+    Route::patch('/push-subscriptions/settings', [PushSubscriptionController::class, 'updateSettings'])->name('push-subscriptions.settings');
 
     // QUESTS
     Route::prefix('quests')->group(function () {
@@ -189,3 +192,11 @@ Route::get('/up', function () {
         ->header('Content-Type', 'text/plain')
         ->header('Cache-Control', 'no-cache, no-store, must-revalidate');
 });
+
+Route::post('/internal/reminders/morning', [InternalReminderController::class, 'morning'])
+    ->withoutMiddleware([VerifyCsrfToken::class])
+    ->name('internal.reminders.morning');
+
+Route::post('/internal/reminders/evening', [InternalReminderController::class, 'evening'])
+    ->withoutMiddleware([VerifyCsrfToken::class])
+    ->name('internal.reminders.evening');
