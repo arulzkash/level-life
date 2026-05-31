@@ -51,6 +51,7 @@ Route::get('/', function () use ($handbookPageData) {
 
 Route::get('/u/{username}', [PublicProfileController::class, 'show'])
     ->where('username', '[a-z0-9_]+')
+    ->middleware('auth')
     ->name('profile.show');
 
 Route::redirect('/handbook-public', '/')->name('handbook.public');
