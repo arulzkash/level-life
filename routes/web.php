@@ -71,6 +71,7 @@ Route::middleware('auth')->group(function () use ($handbookPageData) {
     Route::delete('/settings/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     // PUSH NOTIFICATIONS
+    Route::post('/push-subscriptions/status', [PushSubscriptionController::class, 'status'])->name('push-subscriptions.status');
     Route::post('/push-subscriptions', [PushSubscriptionController::class, 'store'])->name('push-subscriptions.store');
     Route::delete('/push-subscriptions', [PushSubscriptionController::class, 'destroy'])->name('push-subscriptions.destroy');
     Route::post('/push-subscriptions/test', [PushSubscriptionController::class, 'test'])->name('push-subscriptions.test');

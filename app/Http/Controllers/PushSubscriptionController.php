@@ -9,6 +9,28 @@ use Throwable;
 
 class PushSubscriptionController extends Controller
 {
+    public function status(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'endpoint' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $endpoint = $validated['endpoint'] ?? null;
+        $endpointSubscribed = false;
+
+        if ($endpoint) {
+            $endpointSubscribed = $request->user()
+                ->pushSubscriptions()
+                ->where('endpoint', $endpoint)
+                ->exists();
+        }
+
+        return response()->json([
+            'endpointSubscribed' => $endpointSubscribed,
+            'subscriptionCount' => $request->user()->pushSubscriptions()->count(),
+        ]);
+    }
+
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
