@@ -2,12 +2,13 @@
 import { Link, useForm, router, Head } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
-import confetti from 'canvas-confetti';
+import { useVisualEffects } from '@/Composables/useVisualEffects.js';
 import { useAudio } from '@/Composables/useAudio';
 import CoinIcon from '@/Components/Game/icons/CoinIcon.vue';
 
 defineOptions({ layout: AppLayout });
 
+const { triggerConfetti, showToast } = useVisualEffects();
 const { playSfx } = useAudio();
 
 const props = defineProps({
@@ -102,26 +103,10 @@ const deleteReward = (r) => {
 };
 
 // --- VISUALS ---
-const showToast = (message) => {
-    const toast = document.createElement('div');
-    toast.className =
-        'fixed top-4 right-4 bg-slate-800 border-l-4 border-yellow-500 text-white px-6 py-4 rounded shadow-2xl z-[100] animate-bounce font-bold flex items-center gap-2';
-    toast.innerHTML = `<span>💰</span> ${message}`;
-    document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 3000);
-};
-
-// Simulasi efek suara/visual
 const triggerCoinSound = () => {
-    // Bisa tambah audio di sini nanti
     playSfx('coin');
     playSfx('purchase');
-    confetti({
-        particleCount: 50,
-        spread: 40,
-        origin: { y: 0.6 },
-        colors: ['#fbbf24', '#f59e0b'], // Gold colors
-    });
+    triggerConfetti();
 };
 </script>
 

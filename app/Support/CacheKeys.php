@@ -36,6 +36,36 @@ class CacheKeys
         return "nav_user:{$userId}:{$dateJakarta}";
     }
 
+    public static function profileHub(int $userId, string $dateJakarta): string
+    {
+        return "profile:hub:{$userId}:{$dateJakarta}";
+    }
+
+    public static function publicProfileSummary(int $userId, string $dateJakarta): string
+    {
+        return "profile:public:summary:{$userId}:{$dateJakarta}";
+    }
+
+    public static function publicProfileStats(int $userId, string $dateJakarta): string
+    {
+        return "profile:public:stats:{$userId}:{$dateJakarta}";
+    }
+
+    public static function publicProfileHeatmap(int $userId, string $dateJakarta): string
+    {
+        return "profile:public:heatmap:{$userId}:{$dateJakarta}";
+    }
+
+    public static function publicProfileBadgeVault(int $userId, string $dateJakarta): string
+    {
+        return "profile:public:badges:{$userId}:{$dateJakarta}";
+    }
+
+    public static function publicProfileUsername(string $username): string
+    {
+        return 'profile:username:'.strtolower($username);
+    }
+
     public static function dashboardActiveQuests(int $userId, string $dateJakarta): string
     {
         return "dashboard:active_quests:{$userId}:{$dateJakarta}";
@@ -49,5 +79,27 @@ class CacheKeys
     public static function dashboardJournalDone(int $userId, string $dateJakarta): string
     {
         return "dashboard:journal_done:{$userId}:{$dateJakarta}";
+    }
+
+    public static function dashboardCustomQuestTypes(int $userId): string
+    {
+        return "dashboard:custom_quest_types:{$userId}";
+    }
+
+    // ── GOALS ─────────────────────────────────────────────────────
+
+    public static function dashboardActiveGoals(int $userId): string
+    {
+        return "dashboard:active_goals:{$userId}";
+    }
+
+    public static function goalsIndex($userId, $page = 1)
+    {
+        return "user:{$userId}:goals:index:page:{$page}";
+    }
+
+    public static function goalShow(int $userId, int $goalId): string
+    {
+        return "goals:show:{$userId}:{$goalId}";
     }
 }

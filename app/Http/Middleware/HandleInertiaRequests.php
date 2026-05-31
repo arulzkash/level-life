@@ -2,13 +2,13 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Profile;
+use App\Models\User;
 use App\Support\CacheKeys;
 use Illuminate\Http\Request;
-use Inertia\Middleware;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Auth;
-use App\Models\User;
-use App\Models\Profile;
+use Illuminate\Support\Facades\Cache;
+use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -49,13 +49,13 @@ class HandleInertiaRequests extends Middleware
 
         $userId = Auth::id(); // Dari session, NO DB QUERY
 
-        // OPTIMASI: Cache user data (name & email jarang berubah)
+        // OPTIMASI: Cache user data (name/email/username jarang berubah)
         // Cache per hari karena jarang update, tapi bisa di-invalidate manual
         $dateKey = CacheKeys::todayJakarta();
         $userCacheKey = CacheKeys::navUser($userId, $dateKey);
 
         $user = Cache::remember($userCacheKey, 86400, function () use ($userId) {
-            return User::select(['id', 'name', 'email'])
+            return User::select(['id', 'name', 'username', 'email', 'email_verified_at'])
                 ->find($userId);
         });
 
@@ -70,13 +70,13 @@ class HandleInertiaRequests extends Middleware
         $profile = Cache::remember($profileCacheKey, 86400, function () use ($userId) {
             // PENTING: Query langsung ke Profile, BUKAN pakai relationship
             // Ini menghindari Laravel load relationship yang bisa trigger query tambahan
-            return Profile::select(['id', 'user_id', 'coin_balance', 'xp_total'])
+            return Profile::select(['id', 'user_id', 'coin_balance', 'xp_total', 'streak_current', 'last_active_date', 'freezes_used_count', 'bio'])
                 ->where('user_id', $userId)
                 ->first();
         });
 
         $shared['auth'] = [
-            'user' => $user->only(['id', 'name', 'email']),
+            'user' => $user->only(['id', 'name', 'username', 'email', 'email_verified_at']),
             'profile' => $profile,
         ];
 

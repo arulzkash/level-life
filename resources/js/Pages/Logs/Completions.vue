@@ -10,6 +10,8 @@ const props = defineProps({
     logs: Object,
     filters: Object,
     group_summaries: Object,
+    customQuestTypes: Array,
+    availableTypes: Array,
 });
 
 const JAKARTA_TZ = 'Asia/Jakarta';
@@ -34,57 +36,71 @@ const dateFromKey = (key) => {
 
 // --- HELPER: QUEST STYLES ---
 const getQuestVisuals = (type) => {
+    const customType = props.customQuestTypes?.find((t) => t.name === type);
+
+    if (customType) {
+        return {
+            color: 'text-white',
+            border: 'border-slate-500/50',
+            bg: 'bg-slate-800/80',
+            icon: '🧩',
+            shadow: '',
+            dot: '', // special handling for dynamic dot color
+            customColor: customType.color,
+        };
+    }
+
     const map = {
         'Boss Fight': {
-            color: 'text-red-400',
-            border: 'border-red-500/50',
-            bg: 'bg-red-500/10',
+            color: 'text-quest-boss',
+            border: 'border-quest-boss/50',
+            bg: 'bg-quest-boss/10',
             icon: '👹',
-            shadow: 'shadow-[0_0_15px_rgba(239,68,68,0.15)]',
-            dot: 'bg-red-500',
+            shadow: 'shadow-glow-boss',
+            dot: 'bg-quest-boss',
         },
         'Main Quest': {
-            color: 'text-yellow-400',
-            border: 'border-yellow-500/50',
-            bg: 'bg-yellow-500/10',
+            color: 'text-quest-main',
+            border: 'border-quest-main/50',
+            bg: 'bg-quest-main/10',
             icon: '👑',
-            shadow: 'shadow-[0_0_15px_rgba(234,179,8,0.15)]',
-            dot: 'bg-yellow-500',
+            shadow: 'shadow-glow-main',
+            dot: 'bg-quest-main',
         },
         'Side Quest': {
-            color: 'text-blue-400',
-            border: 'border-blue-500/50',
-            bg: 'bg-blue-500/10',
+            color: 'text-quest-side',
+            border: 'border-quest-side/50',
+            bg: 'bg-quest-side/10',
             icon: '🔍',
             shadow: 'shadow-none',
-            dot: 'bg-blue-500',
+            dot: 'bg-quest-side',
         },
         'Daily Grind': {
-            color: 'text-emerald-400',
-            border: 'border-emerald-500/50',
-            bg: 'bg-emerald-500/10',
+            color: 'text-quest-daily',
+            border: 'border-quest-daily/50',
+            bg: 'bg-quest-daily/10',
             icon: '♻️',
             shadow: 'shadow-none',
-            dot: 'bg-emerald-500',
+            dot: 'bg-quest-daily',
         },
         Learning: {
-            color: 'text-purple-400',
-            border: 'border-purple-500/50',
-            bg: 'bg-purple-500/10',
+            color: 'text-quest-learning',
+            border: 'border-quest-learning/50',
+            bg: 'bg-quest-learning/10',
             icon: '🧠',
-            shadow: 'shadow-[0_0_10px_rgba(168,85,247,0.1)]',
-            dot: 'bg-purple-500',
+            shadow: 'shadow-glow-learning',
+            dot: 'bg-quest-learning',
         },
     };
 
     return (
         map[type] || {
-            color: 'text-slate-400',
-            border: 'border-slate-600',
-            bg: 'bg-slate-800',
+            color: 'text-quest-default',
+            border: 'border-quest-default',
+            bg: 'bg-quest-default/10',
             icon: '📜',
             shadow: 'shadow-none',
-            dot: 'bg-slate-500',
+            dot: 'bg-quest-default',
         }
     );
 };
@@ -118,11 +134,13 @@ else filterMode.value = 'preset';
 
 const filterForm = useForm({
     period: props.filters?.period ?? 'all',
-    date: props.filters?.date ?? '',
-    from: props.filters?.from ?? '',
-    to: props.filters?.to ?? '',
-    sort: props.filters?.sort ?? 'completed_at',
-    dir: props.filters?.dir ?? 'desc',
+    date:   props.filters?.date   ?? '',
+    from:   props.filters?.from   ?? '',
+    to:     props.filters?.to     ?? '',
+    sort:   props.filters?.sort   ?? 'completed_at',
+    dir:    props.filters?.dir    ?? 'desc',
+    search: props.filters?.search ?? '',
+    type:   props.filters?.type   ?? '',
 });
 
 watch(filterMode, (newMode) => {
@@ -140,6 +158,16 @@ watch(filterMode, (newMode) => {
         filterForm.date = '';
     }
 });
+
+const hasActiveSearchFilter = computed(() =>
+    filterForm.search !== '' || filterForm.type !== ''
+);
+
+const clearSearchFilters = () => {
+    filterForm.search = '';
+    filterForm.type = '';
+    apply();
+};
 
 const apply = () => {
     filterForm.get('/logs/completions', { preserveScroll: true, preserveState: true });
@@ -228,9 +256,17 @@ const dateTone = (dateKey) => {
             >
                 📜
             </div>
-            <div>
+            <div class="flex-1">
                 <h1 class="text-3xl font-black tracking-tight text-white">Adventure Chronicles</h1>
                 <p class="text-sm text-slate-400">A complete record of your heroic deeds.</p>
+            </div>
+            <div v-if="hasActiveSearchFilter" class="flex items-center gap-2">
+                <span class="rounded-full border border-indigo-500/40 bg-indigo-500/10 px-3 py-1 text-xs font-bold text-indigo-300">
+                    🔍 Filtered
+                </span>
+                <button @click="clearSearchFilters" class="text-xs text-slate-500 hover:text-red-400 transition-colors">
+                    ✕ clear
+                </button>
             </div>
         </div>
 
@@ -320,6 +356,32 @@ const dateTone = (dateKey) => {
             </div>
         </div>
 
+        <!-- SEARCH + TYPE FILTER ROW -->
+        <div class="flex items-end gap-2">
+            <div class="relative flex-1">
+                <input
+                    type="text"
+                    v-model="filterForm.search"
+                    placeholder="🔍 Search quest name..."
+                    class="input-dark w-full pl-8"
+                    @keyup.enter="apply"
+                />
+            </div>
+            <div class="w-44">
+                <select v-model="filterForm.type" class="input-dark w-full">
+                    <option value="">All Types</option>
+                    <option v-for="t in availableTypes" :key="t" :value="t">{{ t }}</option>
+                </select>
+            </div>
+            <button
+                @click="apply"
+                class="rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-bold text-white shadow-lg transition hover:bg-indigo-500 disabled:opacity-50"
+                :disabled="filterForm.processing"
+            >
+                Search
+            </button>
+        </div>
+
         <div
             v-if="logs.data.length === 0"
             class="rounded-2xl border-2 border-dashed border-slate-700 py-20 text-center opacity-50"
@@ -371,6 +433,11 @@ const dateTone = (dateKey) => {
                         <div
                             class="absolute left-[18px] top-6 z-10 h-4 w-4 rounded-full border-4 border-slate-900 transition-colors duration-300 md:left-[26px]"
                             :class="getQuestVisuals(log.quest?.type).dot"
+                            :style="
+                                getQuestVisuals(log.quest?.type).customColor
+                                    ? { backgroundColor: getQuestVisuals(log.quest?.type).customColor }
+                                    : {}
+                            "
                         ></div>
 
                         <div
@@ -381,6 +448,14 @@ const dateTone = (dateKey) => {
                                 getQuestVisuals(log.quest?.type).shadow,
                                 'bg-slate-800/60 hover:bg-slate-800', // Hover normalize
                             ]"
+                            :style="
+                                getQuestVisuals(log.quest?.type).customColor
+                                    ? {
+                                          borderColor: getQuestVisuals(log.quest?.type).customColor + '50',
+                                          boxShadow: '0 0 15px ' + getQuestVisuals(log.quest?.type).customColor + '20',
+                                      }
+                                    : {}
+                            "
                         >
                             <div
                                 class="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center"
@@ -399,6 +474,14 @@ const dateTone = (dateKey) => {
                                             <span
                                                 class="text-[10px] font-black uppercase tracking-wider opacity-80"
                                                 :class="getQuestVisuals(log.quest?.type).color"
+                                                :style="
+                                                    getQuestVisuals(log.quest?.type).customColor
+                                                        ? {
+                                                              color: getQuestVisuals(log.quest?.type)
+                                                                  .customColor,
+                                                          }
+                                                        : {}
+                                                "
                                             >
                                                 {{ log.quest?.type }}
                                             </span>

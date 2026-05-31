@@ -31,4 +31,8 @@ return [
         ],
     ],
 
+    'internal_reminders' => [
+        'token' => env('LEVEL_LIFE_INTERNAL_REMINDER_TOKEN'),
+    ],
+
 ];

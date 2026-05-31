@@ -3,15 +3,22 @@
 namespace App\Http\Controllers;
 
 use App\Models\Quest;
+use App\Models\QuestType;
 use App\Services\BadgeService;
+use App\Services\UserDailyActivityService;
 use App\Support\CacheBuster;
-use Illuminate\Http\Request;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class QuestController extends Controller
 {
+    public function __construct(
+        private readonly UserDailyActivityService $userDailyActivityService
+    ) {}
+
     public function store(Request $request)
     {
         $data = $request->validate([
@@ -22,9 +29,28 @@ class QuestController extends Controller
             'coin_reward' => ['required', 'integer', 'min:0'],
             'due_date' => ['nullable', 'date'],
             'is_repeatable' => ['required', 'boolean'],
+
+            // Validasi Baru untuk Subtasks
+            'subtasks' => ['nullable', 'array'],
+            'subtasks.*.title' => ['required', 'string', 'max:100'],
+            'subtasks.*.is_done' => ['boolean'],
+
+            // Warna custom type baru
+            'custom_color' => ['nullable', 'string', 'max:7'],
         ]);
 
         $data['is_repeatable'] = $request->boolean('is_repeatable');
+
+        // Logic Subtask: Pastikan punya ID unik (penting buat FE nanti)
+        if (! empty($data['subtasks'])) {
+            $data['subtasks'] = array_map(function ($task) {
+                return [
+                    'id' => $task['id'] ?? Str::uuid()->toString(),
+                    'title' => $task['title'],
+                    'is_done' => $task['is_done'] ?? false,
+                ];
+            }, $data['subtasks']);
+        }
 
         if ($data['is_repeatable']) {
             $data['due_date'] = null;
@@ -34,6 +60,17 @@ class QuestController extends Controller
         $data['position'] = $maxPosition + 1;
 
         $request->user()->quests()->create($data);
+
+        // Auto-save custom types (kalau bukan default type)
+        $defaultTypes = ['Daily Grind', 'Main Quest', 'Side Quest', 'Boss Fight', 'Learning'];
+        if (! in_array($data['type'], $defaultTypes, true)) {
+            $questType = QuestType::firstOrCreate(
+                ['user_id' => $request->user()->id, 'name' => $data['type']],
+                ['color' => $request->input('custom_color', '#64748b')] // Default slate-500
+            );
+
+            CacheBuster::onQuestTypeMutate($request->user()->id);
+        }
 
         CacheBuster::onQuestMutate($request->user()->id);
 
@@ -83,6 +120,7 @@ class QuestController extends Controller
         });
 
         CacheBuster::onQuestMutate($request->user()->id);
+
         return redirect()->back();
     }
 
@@ -94,6 +132,14 @@ class QuestController extends Controller
         ]);
 
         $this->authorize('update', $quest);
+
+        // --- GATEKEEPER BARU: SUBTASK CHECK ---
+        // Kita pakai Accessor yg dibuat di Langkah 2
+        if (! $quest->can_be_completed) {
+            return redirect()->back()->withErrors([
+                'complete' => 'Complete all subtasks first to claim rewards!',
+            ]);
+        }
 
         if ($quest->status === 'locked') {
             return redirect()->back()->withErrors(['complete' => 'Quest is locked.']);
@@ -156,6 +202,23 @@ class QuestController extends Controller
                 'completed_at' => now(),
                 'note' => $data['note'] ?? null,
             ]);
+
+            $this->userDailyActivityService->incrementQuestCompletion($user->id, $todayStr);
+
+            if ($quest->is_repeatable && ! empty($quest->subtasks)) {
+                // Loop semua subtask, paksa is_done jadi false
+                $resetSubtasks = array_map(function ($task) {
+                    $task['is_done'] = false;
+
+                    return $task;
+                }, $quest->subtasks);
+
+                // Update kolom subtasks di DB
+                $quest->subtasks = $resetSubtasks;
+
+                // Jangan lupa save perubahan ini
+                $quest->save();
+            }
 
             // =========================================================
             // STEP C: Logic Streak & Freeze (Optimized Lazy Load + minimal writes)
@@ -276,13 +339,13 @@ class QuestController extends Controller
             // =========================================================
             $profile->last_active_date = $todayStr;
 
-            if ($profile->streak_current > (int)($profile->streak_best ?? 0)) {
+            if ($profile->streak_current > (int) ($profile->streak_best ?? 0)) {
                 $profile->streak_best = $profile->streak_current;
             }
 
             // Update Economy (In Memory)
-            $profile->xp_total = (int)$profile->xp_total + (int)$quest->xp_reward;
-            $profile->coin_balance = (int)$profile->coin_balance + (int)$quest->coin_reward;
+            $profile->xp_total = (int) $profile->xp_total + (int) $quest->xp_reward;
+            $profile->coin_balance = (int) $profile->coin_balance + (int) $quest->coin_reward;
 
             // Save perubahan sekaligus (1x Query Update)
             $profile->save();
@@ -307,6 +370,38 @@ class QuestController extends Controller
     {
         $this->authorize('update', $quest);
 
+        $onlySubtasks = collect($request->keys())->diff(['subtasks'])->isEmpty();
+
+        if ($onlySubtasks) {
+            $data = $request->validate([
+                'subtasks' => ['nullable', 'array'],
+                'subtasks.*.id' => ['nullable', 'string'],
+                'subtasks.*.title' => ['required', 'string', 'max:100'],
+                'subtasks.*.is_done' => ['boolean'],
+            ]);
+
+            $subtasks = $data['subtasks'] ?? null;
+
+            if (! empty($subtasks)) {
+                $subtasks = array_map(function ($task) {
+                    return [
+                        'id' => $task['id'] ?? Str::uuid()->toString(),
+                        'title' => $task['title'],
+                        'is_done' => $task['is_done'] ?? false,
+                    ];
+                }, $subtasks);
+            }
+
+            $quest->timestamps = false;
+            $quest->subtasks = $subtasks;
+            $quest->save();
+
+            CacheBuster::onQuestMutate($request->user()->id);
+
+            return redirect()->back();
+        }
+
+        // Full update (nama/status/reward/dll)
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'status' => ['required', 'in:todo,in_progress,locked'],

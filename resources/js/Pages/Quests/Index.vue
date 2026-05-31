@@ -4,19 +4,22 @@ import { router, Link, Head, useForm, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import debounce from 'lodash/debounce';
 import LevelUpModal from '@/Components/Game/LevelUpModal.vue';
-import confetti from 'canvas-confetti';
+import { useVisualEffects } from '@/Composables/useVisualEffects';
 import { useAudio } from '@/Composables/useAudio';
 import { useLevelUp } from '@/Composables/useLevelUp';
 import Pagination from '@/Components/Pagination.vue';
+import QuestSubtasks from '@/Components/Game/QuestSubtasks.vue';
 
 defineOptions({ layout: AppLayout });
 
+const { triggerConfetti, triggerSlashEffect, showToast } = useVisualEffects();
 const { playSfx } = useAudio();
 
 const props = defineProps({
     quests: Object,
     filters: Object,
     typeOptions: Array,
+    customQuestTypes: Array,
 });
 
 const page = usePage();
@@ -51,7 +54,6 @@ const { showLevelUpModal } = useLevelUp(globalProfile);
 
 // --- 3. EDIT LOGIC ---
 const editingQuest = ref(null);
-const isEditCustomType = ref(false);
 
 const editForm = useForm({
     name: '',
@@ -67,46 +69,28 @@ const startEdit = (q) => {
     editingQuest.value = q;
     editForm.name = q.name;
     editForm.status = q.status;
+    editForm.type = q.type;
     editForm.xp_reward = q.xp_reward;
     editForm.coin_reward = q.coin_reward;
     editForm.due_date = q.due_date;
     editForm.is_repeatable = !!q.is_repeatable;
-
-    const standardTypes = ['Daily Grind', 'Main Quest', 'Side Quest', 'Boss Fight', 'Learning'];
-    const availableOptions = [...new Set([...standardTypes, ...props.typeOptions])];
-
-    if (availableOptions.includes(q.type)) {
-        isEditCustomType.value = false;
-        editForm.type = q.type;
-    } else {
-        isEditCustomType.value = true;
-        editForm.type = q.type;
-    }
 };
 
 const handleEditTypeChange = (e) => {
     const selectedType = e.target.value;
+    editForm.type = selectedType;
 
-    if (selectedType === 'Custom') {
-        isEditCustomType.value = true;
-        editForm.type = '';
-        editForm.is_repeatable = false; // Reset
+    // Logic Auto-Lock untuk Edit
+    if (selectedType === 'Daily Grind') {
+        editForm.is_repeatable = true;
     } else {
-        editForm.type = selectedType;
-
-        // Logic Auto-Lock untuk Edit
-        if (selectedType === 'Daily Grind') {
-            editForm.is_repeatable = true;
-        } else {
-            editForm.is_repeatable = false;
-        }
+        editForm.is_repeatable = false;
     }
 };
 
 const cancelEdit = () => {
     editingQuest.value = null;
     editForm.reset();
-    isEditCustomType.value = false;
 };
 
 const saveEdit = () => {
@@ -149,89 +133,6 @@ const submitComplete = () => {
     });
 };
 
-// --- 5. VISUAL EFFECTS ---
-// Confetti Biasa (Complete Quest)
-const triggerConfetti = () => {
-    const count = 200;
-    const defaults = { origin: { y: 0.7 } };
-    function fire(particleRatio, opts) {
-        confetti(
-            Object.assign({}, defaults, opts, {
-                particleCount: Math.floor(count * particleRatio),
-            })
-        );
-    }
-    fire(0.25, { spread: 26, startVelocity: 55 });
-    fire(0.2, { spread: 60 });
-    fire(0.35, { spread: 100, decay: 0.91, scalar: 0.8 });
-    fire(0.1, { spread: 120, startVelocity: 25, decay: 0.92, scalar: 1.2 });
-    fire(0.1, { spread: 120, startVelocity: 45 });
-};
-
-// Efek Tebasan Pedang (Cross Slash)
-const triggerSlashEffect = () => {
-    // 1. Definisikan Bentuk
-    const swordShape = confetti.shapeFromText({ text: '🗡️', scalar: 4 });
-
-    // Settingan Dasar "Tebasan"
-    const slashConfig = {
-        shapes: [swordShape],
-        colors: ['#ffffff', '#e2e8f0'], // Warna kilatan besi
-        ticks: 30, // Hilang SANGAT cepat (efek instan)
-        gravity: 0, // 0 Gravitasi = Terbang Lurus
-        decay: 0.95, // Kecepatan konstan
-        startVelocity: 90, // Kecepatan tinggi
-        scalar: 3, // Ukuran pedang besar
-        flat: true, // 2D Rotation (biar pipih tajam)
-        drift: 0,
-    };
-
-    // Slash 1: Kiri Bawah -> Menembak ke Kanan Atas (Membentuk garis /)
-    confetti({
-        ...slashConfig,
-        particleCount: 10, // Sedikit aja biar jadi garis
-        angle: 45, // Sudut diagonal kanan
-        spread: 5, // SANGAT SEMPIT (biar jadi garis lurus)
-        origin: { x: 0.3, y: 0.7 }, // Start agak pinggir
-    });
-
-    // Slash 2: Kanan Bawah -> Menembak ke Kiri Atas (Membentuk garis \)
-    setTimeout(() => {
-        confetti({
-            ...slashConfig,
-            particleCount: 10,
-            angle: 135, // Sudut diagonal kiri
-            spread: 5,
-            origin: { x: 0.7, y: 0.7 },
-        });
-    }, 100);
-
-    // Efek Benturan di Tengah (Impact)
-    setTimeout(() => {
-        confetti({
-            shapes: ['square', 'circle'], // Percikan impact
-            colors: ['#ef4444', '#f87171', '#ffffff'], // Merah darah & Putih
-            particleCount: 40,
-            spread: 100, // Menyebar ke segala arah
-            origin: { x: 0.5, y: 0.5 }, // Di tengah layar
-            startVelocity: 30,
-            gravity: 0.8, // Yang ini boleh jatuh
-            ticks: 50,
-            scalar: 0.8,
-        });
-    }, 200);
-};
-
-
-const showToast = (message) => {
-    const toast = document.createElement('div');
-    toast.className =
-        'fixed top-4 right-4 bg-slate-800 border-l-4 border-emerald-500 text-white px-6 py-4 rounded shadow-2xl z-[100] animate-bounce font-bold flex items-center gap-2';
-    toast.innerHTML = `<span>🎉</span> ${message}`;
-    document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 4000);
-};
-
 // --- HELPERS ---
 const deleteQuest = (q) => {
     if (confirm(`Delete quest "${q.name}"?`)) {
@@ -242,6 +143,10 @@ const deleteQuest = (q) => {
 const canComplete = (q) => {
     if (q.status === 'locked') return false;
     if (!q.is_repeatable && q.status === 'done') return false;
+
+    // Gatekeeper: Cek subtask
+    if (!isSubtasksComplete(q)) return false;
+
     return true;
 };
 
@@ -267,6 +172,32 @@ const statusColors = {
 };
 
 const formatStatus = (s) => s.replace('_', ' ').toUpperCase();
+
+// --- HELPER BARU (Copy dari Dashboard) ---
+const isSubtasksComplete = (q) => {
+    if (!q.subtasks || q.subtasks.length === 0) return true;
+    return q.subtasks.every((t) => t.is_done);
+};
+
+const getQuestBgClass = (type) => {
+    const map = {
+        'Boss Fight': 'bg-quest-boss',
+        'Main Quest': 'bg-quest-main',
+        'Side Quest': 'bg-quest-side',
+        'Daily Grind': 'bg-quest-daily',
+        'Learning': 'bg-quest-learning',
+    };
+    return map[type] || 'bg-quest-default';
+};
+
+const isCustomType = (type) => {
+    const defaults = ['Boss Fight', 'Main Quest', 'Side Quest', 'Daily Grind', 'Learning'];
+    return !defaults.includes(type);
+};
+
+const getCustomColor = (type) => {
+    return props.customQuestTypes?.find((t) => t.name === type)?.color || '#64748b';
+};
 </script>
 
 <template>
@@ -349,7 +280,7 @@ const formatStatus = (s) => s.replace('_', ' ').toUpperCase();
             <p class="text-sm text-slate-500">Try adjusting your filters.</p>
         </div>
 
-        <div v-else class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3" v-else>
             <div
                 v-for="quest in quests.data"
                 :key="quest.id"
@@ -358,15 +289,8 @@ const formatStatus = (s) => s.replace('_', ' ').toUpperCase();
             >
                 <div
                     class="absolute bottom-0 left-0 top-0 w-1.5"
-                    :class="{
-                        'bg-red-500': quest.type === 'Boss Fight',
-                        'bg-yellow-400': quest.type === 'Main Quest',
-                        'bg-blue-400': quest.type === 'Side Quest',
-                        'bg-emerald-400': quest.type === 'Daily Grind',
-                        'bg-slate-500': !['Boss Fight', 'Main Quest', 'Side Quest', 'Daily Grind'].includes(
-                            quest.type
-                        ),
-                    }"
+                    :class="!isCustomType(quest.type) ? getQuestBgClass(quest.type) : ''"
+                    :style="isCustomType(quest.type) ? { backgroundColor: getCustomColor(quest.type) } : {}"
                 ></div>
 
                 <div class="flex flex-1 flex-col p-5 pl-6">
@@ -421,6 +345,7 @@ const formatStatus = (s) => s.replace('_', ' ').toUpperCase();
                         </div>
                         <div v-else class="text-xs italic text-slate-600">No deadline</div>
                     </div>
+                    <QuestSubtasks :quest="quest" />
                 </div>
 
                 <div
@@ -433,9 +358,18 @@ const formatStatus = (s) => s.replace('_', ' ').toUpperCase();
                     >
                         Complete
                     </button>
+
+                    <span
+                        v-else-if="!isSubtasksComplete(quest) && quest.status !== 'locked'"
+                        class="flex cursor-not-allowed items-center gap-1 rounded border border-slate-600 bg-slate-800 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-500"
+                    >
+                        🔒 Pending Steps
+                    </span>
+
                     <span v-else class="text-xs italic text-slate-600">
                         {{ quest.status === 'done' ? 'Completed' : 'Locked' }}
                     </span>
+                    <div class="flex gap-2"></div>
 
                     <div class="flex gap-2">
                         <button
@@ -496,41 +430,24 @@ const formatStatus = (s) => s.replace('_', ' ').toUpperCase();
                         </div>
                         <div>
                             <label class="mb-1 block text-xs font-bold uppercase text-slate-400">Type</label>
-                            <div v-if="!isEditCustomType">
-                                <select
-                                    :value="editForm.type"
-                                    @change="handleEditTypeChange"
-                                    class="input-dark w-full"
-                                >
+                            <select
+                                :value="editForm.type"
+                                @change="handleEditTypeChange"
+                                class="input-dark w-full"
+                            >
+                                <optgroup label="Default Types">
                                     <option value="Daily Grind">Daily Grind</option>
                                     <option value="Main Quest">Main Quest</option>
                                     <option value="Side Quest">Side Quest</option>
                                     <option value="Boss Fight">Boss Fight</option>
                                     <option value="Learning">Learning</option>
-                                    <option value="Custom" class="font-bold text-indigo-400">
-                                        + Custom Type...
+                                </optgroup>
+                                <optgroup label="Custom Types" v-if="customQuestTypes && customQuestTypes.length > 0">
+                                    <option v-for="type in customQuestTypes" :key="type.id" :value="type.name">
+                                        {{ type.name }}
                                     </option>
-                                </select>
-                            </div>
-                            <div v-else class="flex gap-2">
-                                <input
-                                    v-model="editForm.type"
-                                    placeholder="Type custom..."
-                                    class="input-dark w-full border-indigo-500"
-                                    autofocus
-                                />
-                                <button
-                                    type="button"
-                                    @click="
-                                        isEditCustomType = false;
-                                        editForm.type = 'Daily Grind';
-                                        editForm.is_repeatable = true;
-                                    "
-                                    class="rounded bg-slate-700 px-3 text-slate-300 hover:text-white"
-                                >
-                                    ✕
-                                </button>
-                            </div>
+                                </optgroup>
+                            </select>
                         </div>
                     </div>
                     <div class="grid grid-cols-2 gap-4">

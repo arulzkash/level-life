@@ -60,6 +60,7 @@ class QuestPageController extends Controller
                 ->distinct()
                 ->orderBy('type')
                 ->pluck('type'),
+            'customQuestTypes' => $user->questTypes()->select('id', 'name', 'color')->get(),
         ]);
     }
 }

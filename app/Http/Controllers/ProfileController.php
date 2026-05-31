@@ -3,58 +3,74 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ProfileUpdateRequest;
+use App\Models\Profile;
 use App\Support\CacheBuster;
-use App\Support\CacheKeys;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Redirect;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class ProfileController extends Controller
 {
-    /**
-     * Display the user's profile form.
-     */
     public function edit(Request $request): Response
     {
+        $notificationSettings = $request->user()->notificationSetting()->firstOrCreate(
+            ['user_id' => $request->user()->id],
+            [
+                'morning_enabled' => false,
+                'evening_enabled' => false,
+            ],
+        );
+
         return Inertia::render('Profile/Edit', [
             'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
             'status' => session('status'),
+            'notifications' => [
+                'vapidPublicKey' => config('webpush.vapid.public_key'),
+                'subscriptionCount' => $request->user()->pushSubscriptions()->count(),
+                'settings' => [
+                    'morning_enabled' => $notificationSettings->morning_enabled,
+                    'evening_enabled' => $notificationSettings->evening_enabled,
+                ],
+            ],
         ]);
     }
 
-    /**
-     * Update the user's profile information.
-     */
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
-        $request->user()->fill($request->validated());
+        $user = $request->user();
+        $profile = $user->profile ?: Profile::query()->firstOrCreate(['user_id' => $user->id]);
+        $validated = $request->validated();
+        $oldUsername = $user->username;
 
-        if ($request->user()->isDirty('email')) {
-            $request->user()->email_verified_at = null;
+        $user->fill([
+            'name' => $validated['name'],
+            'username' => $validated['username'],
+            'email' => $validated['email'],
+        ]);
+
+        if ($user->isDirty('email')) {
+            $user->email_verified_at = null;
         }
 
-        $request->user()->save();
+        $user->save();
 
-        // INVALIDATE CACHE: User data berubah (name/email)
-        $userId = $request->user()->id;
-        $dateKey = CacheKeys::todayJakarta();
+        $profile->bio = $validated['bio'] ?? null;
+        $profile->save();
 
-        // Invalidate nav user cache (untuk name & email)
-        Cache::forget("nav_user:{$userId}:{$dateKey}");
-
-        CacheBuster::invalidateNavUser($userId);
+        CacheBuster::invalidateNavUser($user->id);
+        CacheBuster::invalidateNavProfile($user->id);
+        CacheBuster::invalidateLeaderboardDaily();
+        CacheBuster::invalidatePublicProfileSummary($user->id);
+        CacheBuster::invalidatePublicProfileLookup($oldUsername);
+        CacheBuster::invalidatePublicProfileLookup($user->username);
 
         return Redirect::route('profile.edit');
     }
 
-    /**
-     * Delete the user's account.
-     */
     public function destroy(Request $request): RedirectResponse
     {
         $request->validate([

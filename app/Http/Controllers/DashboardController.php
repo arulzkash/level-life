@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
 use Carbon\Carbon;
 use App\Models\JournalEntry;
+use App\Models\QuestType;
 use App\Support\CacheKeys;
 
 class DashboardController extends Controller
@@ -16,12 +17,7 @@ class DashboardController extends Controller
     {
         $user = $request->user();
 
-        // PROFILE
-        $profile = $user->profile()
-            ->select(['id', 'user_id', 'coin_balance', 'xp_total', 'streak_current'])
-            ->first();
-
-
+        // CACHE KEYS
         $today = CacheKeys::todayJakarta();
 
         $journalTodayExists = Cache::remember(
@@ -140,8 +136,18 @@ class DashboardController extends Controller
                     'coin_reward',
                     'due_date',
                     'is_repeatable',
-                    'position'
+                    'position',
+                    'subtasks'
                 ]);
+        });
+
+        $activeGoalsKey = CacheKeys::dashboardActiveGoals($user->id);
+
+        $activeGoals = Cache::remember($activeGoalsKey, 86400, function () use ($user) {
+            return $user->goals()
+                ->where('status', 'active')
+                ->with('milestones')
+                ->get();
         });
 
 
@@ -191,8 +197,13 @@ class DashboardController extends Controller
                 ->first();
         });
 
+        $customQuestTypes = Cache::remember(
+            CacheKeys::dashboardCustomQuestTypes($user->id),
+            86400,
+            fn() => $user->questTypes()->select('id', 'name', 'color')->orderBy('name')->get()
+        );
+
         return Inertia::render('Dashboard', [
-            'profile' => $profile,
             'today' => $today,
             'journalTodayExists' => $journalTodayExists,
             'habits' => $habitsPayload,
@@ -201,9 +212,11 @@ class DashboardController extends Controller
                 'total' => $totalCount,
             ],
             'activeQuests' => $activeQuests,
+            'activeGoals' => $activeGoals,
             'todayBlocks' => $todayBlocks,
             'leaderboardData' => $leaderboardData,
             'topBadge' => $topBadge,
+            'customQuestTypes' => $customQuestTypes,
         ]);
     }
 }

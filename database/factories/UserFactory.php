@@ -23,8 +23,15 @@ class UserFactory extends Factory
      */
     public function definition(): array
     {
+        $username = Str::of(fake()->unique()->userName())
+            ->lower()
+            ->replaceMatches('/[^a-z0-9_]+/', '_')
+            ->trim('_')
+            ->value();
+
         return [
             'name' => fake()->name(),
+            'username' => $username !== '' ? substr($username, 0, 30) : 'user_'.fake()->unique()->numberBetween(1000, 999999),
             'email' => fake()->unique()->safeEmail(),
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
