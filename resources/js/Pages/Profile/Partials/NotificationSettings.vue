@@ -17,6 +17,10 @@ const props = defineProps({
             evening_enabled: false,
         }),
     },
+    showTestNotification: {
+        type: Boolean,
+        default: false,
+    },
 });
 
 const isSupported = ref(false);
@@ -283,7 +287,7 @@ onMounted(async () => {
         <div>
             <h2 class="text-lg font-black tracking-tight text-white">Notifications</h2>
             <p class="mt-1 text-sm leading-6 text-slate-400">
-                Enable push notifications on this device and send a manual test notification.
+                Enable push notifications on this device and manage your daily reminders.
             </p>
         </div>
 
@@ -315,6 +319,7 @@ onMounted(async () => {
             </button>
 
             <button
+                v-if="showTestNotification"
                 type="button"
                 :disabled="isBusy || !accountSubscribed"
                 class="inline-flex items-center rounded-full border border-slate-700 bg-slate-900 px-4 py-2 text-sm font-semibold text-slate-200 transition hover:border-slate-600 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
@@ -349,7 +354,7 @@ onMounted(async () => {
                 >
                 <span>
                     <span class="block text-sm font-semibold text-slate-100">Evening streak reminder</span>
-                    <span class="block text-sm leading-6 text-slate-400">Send an 18:00 WIB reminder only if no quest was completed today.</span>
+                    <span class="block text-sm leading-6 text-slate-400">Send a 19:00 WIB reminder only if no quest was completed today.</span>
                 </span>
             </label>
         </div>

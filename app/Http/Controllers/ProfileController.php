@@ -31,6 +31,7 @@ class ProfileController extends Controller
             'notifications' => [
                 'vapidPublicKey' => config('webpush.vapid.public_key'),
                 'subscriptionCount' => $request->user()->pushSubscriptions()->count(),
+                'showTestNotification' => app()->environment('local'),
                 'settings' => [
                     'morning_enabled' => $notificationSettings->morning_enabled,
                     'evening_enabled' => $notificationSettings->evening_enabled,

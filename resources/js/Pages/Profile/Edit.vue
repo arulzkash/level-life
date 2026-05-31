@@ -15,6 +15,7 @@ defineProps({
         default: () => ({
             vapidPublicKey: null,
             subscriptionCount: 0,
+            showTestNotification: false,
             settings: {
                 morning_enabled: false,
                 evening_enabled: false,
@@ -97,6 +98,7 @@ const publicProfileHref = computed(() => {
                     <NotificationSettings
                         :vapid-public-key="notifications.vapidPublicKey"
                         :initial-subscription-count="notifications.subscriptionCount"
+                        :show-test-notification="notifications.showTestNotification"
                         :initial-settings="notifications.settings"
                     />
                 </div>
