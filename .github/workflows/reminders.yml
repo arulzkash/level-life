@@ -1,9 +1,6 @@
 name: Level Life Reminders
 
 on:
-  schedule:
-    - cron: '0 0 * * *'   # 07:00 WIB
-    - cron: '20 13 * * *'  # 19:20 WIB
   workflow_dispatch:
     inputs:
       reminder:
@@ -25,22 +22,19 @@ jobs:
       CRON_SECRET: ${{ secrets.CRON_SECRET }}
 
     steps:
+      - name: Scheduler note
+        run: |
+          echo "cron-job.org is the primary production scheduler."
+          echo "This GitHub Actions workflow is a manual backup/debug trigger only."
+
       - name: Morning reminder
-        if: >-
-          ${{
-            (github.event_name == 'schedule' && github.event.schedule == '0 0 * * *') ||
-            (github.event_name == 'workflow_dispatch' && (inputs.reminder == 'morning' || inputs.reminder == 'both'))
-          }}
+        if: ${{ inputs.reminder == 'morning' || inputs.reminder == 'both' }}
         run: |
           test -n "$CRON_SECRET"
           curl -fsS --retry 3 --retry-delay 10 "${APP_URL}/internal/cron/notifications/morning?token=${CRON_SECRET}"
 
       - name: Evening reminder
-        if: >-
-          ${{
-            (github.event_name == 'schedule' && github.event.schedule == '20 13 * * *') ||
-            (github.event_name == 'workflow_dispatch' && (inputs.reminder == 'evening' || inputs.reminder == 'both'))
-          }}
+        if: ${{ inputs.reminder == 'evening' || inputs.reminder == 'both' }}
         run: |
           test -n "$CRON_SECRET"
           curl -fsS --retry 3 --retry-delay 10 "${APP_URL}/internal/cron/notifications/evening?token=${CRON_SECRET}"
