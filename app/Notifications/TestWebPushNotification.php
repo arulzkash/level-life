@@ -22,7 +22,7 @@ class TestWebPushNotification extends Notification
             ->title('Level Life notifications enabled')
             ->body('This is a test notification from Level Life.')
             ->icon('/icons/icon-192.png')
-            ->badge('/icons/icon-192.png')
+            ->badge('/icons/notification-badge-96x96.png')
             ->tag('level-life-test')
             ->data([
                 'url' => url('/dashboard'),

@@ -22,7 +22,7 @@ class EveningStreakReminderNotification extends Notification
             ->title('Keep your streak alive')
             ->body('You have not completed a quest today. Finish one before the day ends.')
             ->icon('/icons/icon-192.png')
-            ->badge('/icons/icon-192.png')
+            ->badge('/icons/notification-badge-96x96.png')
             ->tag('level-life-evening-streak-reminder')
             ->data([
                 'url' => url('/dashboard'),

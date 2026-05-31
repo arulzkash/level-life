@@ -22,7 +22,7 @@ class MorningReminderNotification extends Notification
             ->title('Start your Level Life run')
             ->body('Pick one quest and make today count.')
             ->icon('/icons/icon-192.png')
-            ->badge('/icons/icon-192.png')
+            ->badge('/icons/notification-badge-96x96.png')
             ->tag('level-life-morning-reminder')
             ->data([
                 'url' => url('/dashboard'),
