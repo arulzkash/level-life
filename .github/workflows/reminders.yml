@@ -1,0 +1,46 @@
+name: Level Life Reminders
+
+on:
+  schedule:
+    - cron: '0 0 * * *'   # 07:00 WIB
+    - cron: '0 12 * * *'  # 19:00 WIB
+  workflow_dispatch:
+    inputs:
+      reminder:
+        description: Reminder endpoint to trigger
+        required: true
+        default: both
+        type: choice
+        options:
+          - morning
+          - evening
+          - both
+
+jobs:
+  reminder:
+    runs-on: ubuntu-latest
+
+    env:
+      APP_URL: https://levellife.my.id
+      CRON_SECRET: ${{ secrets.CRON_SECRET }}
+
+    steps:
+      - name: Morning reminder
+        if: >-
+          ${{
+            (github.event_name == 'schedule' && github.event.schedule == '0 0 * * *') ||
+            (github.event_name == 'workflow_dispatch' && (inputs.reminder == 'morning' || inputs.reminder == 'both'))
+          }}
+        run: |
+          test -n "$CRON_SECRET"
+          curl -fsS --retry 3 --retry-delay 10 "${APP_URL}/internal/cron/notifications/morning?token=${CRON_SECRET}"
+
+      - name: Evening reminder
+        if: >-
+          ${{
+            (github.event_name == 'schedule' && github.event.schedule == '0 12 * * *') ||
+            (github.event_name == 'workflow_dispatch' && (inputs.reminder == 'evening' || inputs.reminder == 'both'))
+          }}
+        run: |
+          test -n "$CRON_SECRET"
+          curl -fsS --retry 3 --retry-delay 10 "${APP_URL}/internal/cron/notifications/evening?token=${CRON_SECRET}"

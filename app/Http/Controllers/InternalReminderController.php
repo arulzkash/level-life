@@ -8,6 +8,24 @@ use Illuminate\Http\Request;
 
 class InternalReminderController extends Controller
 {
+    public function cronMorning(Request $request, ReminderNotificationService $reminders): JsonResponse
+    {
+        if (! $this->tokenIsValid($request)) {
+            return response()->json(['message' => 'Forbidden.'], 403);
+        }
+
+        return response()->json($reminders->sendMorningReminders());
+    }
+
+    public function cronEvening(Request $request, ReminderNotificationService $reminders): JsonResponse
+    {
+        if (! $this->tokenIsValid($request)) {
+            return response()->json(['message' => 'Forbidden.'], 403);
+        }
+
+        return response()->json($reminders->sendEveningReminders());
+    }
+
     public function morning(Request $request, ReminderNotificationService $reminders): JsonResponse
     {
         if (! $this->tokenIsValid($request)) {
@@ -38,6 +56,10 @@ class InternalReminderController extends Controller
 
         if ($providedToken === '') {
             $providedToken = (string) $request->header('X-Internal-Token');
+        }
+
+        if ($providedToken === '') {
+            $providedToken = (string) $request->query('token');
         }
 
         return hash_equals($configuredToken, $providedToken);

@@ -201,3 +201,9 @@ Route::post('/internal/reminders/morning', [InternalReminderController::class, '
 Route::post('/internal/reminders/evening', [InternalReminderController::class, 'evening'])
     ->withoutMiddleware([VerifyCsrfToken::class])
     ->name('internal.reminders.evening');
+
+Route::get('/internal/cron/notifications/morning', [InternalReminderController::class, 'cronMorning'])
+    ->name('internal.cron.notifications.morning');
+
+Route::get('/internal/cron/notifications/evening', [InternalReminderController::class, 'cronEvening'])
+    ->name('internal.cron.notifications.evening');
