@@ -12,6 +12,7 @@ use App\Http\Controllers\JournalPageController;
 use App\Http\Controllers\JournalTemplateController;
 use App\Http\Controllers\LeaderboardController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\PushSubscriptionController;
 use App\Http\Controllers\PublicProfileController;
 use App\Http\Controllers\QuestController;
 use App\Http\Controllers\QuestPageController;
@@ -66,6 +67,11 @@ Route::middleware('auth')->group(function () use ($handbookPageData) {
     Route::get('/settings/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/settings/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/settings/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    // PUSH NOTIFICATIONS
+    Route::post('/push-subscriptions', [PushSubscriptionController::class, 'store'])->name('push-subscriptions.store');
+    Route::delete('/push-subscriptions', [PushSubscriptionController::class, 'destroy'])->name('push-subscriptions.destroy');
+    Route::post('/push-subscriptions/test', [PushSubscriptionController::class, 'test'])->name('push-subscriptions.test');
 
     // QUESTS
     Route::prefix('quests')->group(function () {

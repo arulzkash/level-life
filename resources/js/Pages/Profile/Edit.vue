@@ -1,6 +1,7 @@
 <script setup>
 import AppLayout from '@/Layouts/AppLayout.vue';
 import DeleteUserForm from './Partials/DeleteUserForm.vue';
+import NotificationSettings from './Partials/NotificationSettings.vue';
 import UpdatePasswordForm from './Partials/UpdatePasswordForm.vue';
 import UpdateProfileInformationForm from './Partials/UpdateProfileInformationForm.vue';
 import { Head, Link, usePage } from '@inertiajs/vue3';
@@ -9,6 +10,13 @@ import { computed } from 'vue';
 defineProps({
     mustVerifyEmail: Boolean,
     status: String,
+    notifications: {
+        type: Object,
+        default: () => ({
+            vapidPublicKey: null,
+            subscriptionCount: 0,
+        }),
+    },
 });
 
 defineOptions({ layout: AppLayout });
@@ -81,6 +89,13 @@ const publicProfileHref = computed(() => {
             </div>
 
             <div class="space-y-6">
+                <div class="rounded-[1.75rem] border border-emerald-300/15 bg-slate-900/95 p-5 shadow-[0_18px_50px_rgba(16,185,129,0.06)] md:p-6">
+                    <NotificationSettings
+                        :vapid-public-key="notifications.vapidPublicKey"
+                        :initial-subscription-count="notifications.subscriptionCount"
+                    />
+                </div>
+
                 <div class="rounded-[1.75rem] border border-cyan-300/15 bg-slate-900/95 p-5 shadow-[0_18px_50px_rgba(34,211,238,0.06)] md:p-6">
                     <UpdatePasswordForm />
                 </div>

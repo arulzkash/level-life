@@ -20,6 +20,10 @@ class ProfileController extends Controller
         return Inertia::render('Profile/Edit', [
             'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
             'status' => session('status'),
+            'notifications' => [
+                'vapidPublicKey' => config('webpush.vapid.public_key'),
+                'subscriptionCount' => $request->user()->pushSubscriptions()->count(),
+            ],
         ]);
     }
 
