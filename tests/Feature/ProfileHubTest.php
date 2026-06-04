@@ -17,11 +17,23 @@ class ProfileHubTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_public_profile_page_is_guest_accessible_and_returns_compact_payload(): void
+    public function test_profile_page_requires_authentication(): void
+    {
+        $user = User::factory()->create([
+            'username' => 'private_profile',
+        ]);
+
+        $this->get("/u/{$user->username}")->assertRedirect('/login');
+    }
+
+    public function test_profile_page_returns_compact_payload_for_authenticated_viewer(): void
     {
         Carbon::setTestNow(Carbon::create(2026, 4, 12, 10, 0, 0, 'Asia/Jakarta'));
         Artisan::call('badges:seed');
 
+        $viewer = User::factory()->create([
+            'username' => 'profile_viewer',
+        ]);
         $user = User::factory()->create([
             'name' => 'Consistency Crafter',
             'username' => 'consistency_crafter',
@@ -83,7 +95,8 @@ class ProfileHubTest extends TestCase
             'updated_at' => now(),
         ]);
 
-        $this->get("/u/{$user->username}")
+        $this->actingAs($viewer)
+            ->get("/u/{$user->username}")
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('Profile/Show')
@@ -128,7 +141,11 @@ class ProfileHubTest extends TestCase
 
     public function test_unknown_public_username_returns_not_found(): void
     {
-        $this->get('/u/unknown_user')->assertNotFound();
+        $viewer = User::factory()->create();
+
+        $this->actingAs($viewer)
+            ->get('/u/unknown_user')
+            ->assertNotFound();
     }
 
     public function test_profile_bio_updates_are_visible_on_public_profile(): void
@@ -140,7 +157,8 @@ class ProfileHubTest extends TestCase
             'bio' => 'This bio is visible on the public profile.',
         ]);
 
-        $this->get('/u/bio_visible')
+        $this->actingAs(User::factory()->create())
+            ->get('/u/bio_visible')
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('Profile/Show')
@@ -154,8 +172,10 @@ class ProfileHubTest extends TestCase
         $user = User::factory()->create([
             'username' => 'rank_refresh',
         ]);
+        $viewer = User::factory()->create();
 
-        $this->get('/u/rank_refresh')
+        $this->actingAs($viewer)
+            ->get('/u/rank_refresh')
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('Profile/Show')
@@ -168,7 +188,8 @@ class ProfileHubTest extends TestCase
             ],
         ]), 86400);
 
-        $this->get('/u/rank_refresh')
+        $this->actingAs($viewer)
+            ->get('/u/rank_refresh')
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('Profile/Show')
