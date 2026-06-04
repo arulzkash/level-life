@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      APP_URL: https://levellife.my.id
+      APP_URL: https://levellife.net
       CRON_SECRET: ${{ secrets.CRON_SECRET }}
 
     steps:

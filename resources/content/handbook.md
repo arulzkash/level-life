@@ -438,4 +438,4 @@ Dan besok, muncul lagi.
 
 Selamat datang di Level Life, Adventurer.
 
-[levellife.my.id](http://levellife.my.id)
+[levellife.net](http://levellife.net)

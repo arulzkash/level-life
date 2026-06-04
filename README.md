@@ -145,4 +145,4 @@ This project is open-sourced software licensed under the [MIT license](https://o
 ---
 
 **Author:** [Arulzkash]
-**Deployed App:** [https://levellife.my.id](https://levellife.my.id)
+**Deployed App:** [https://levellife.net](https://levellife.net)
