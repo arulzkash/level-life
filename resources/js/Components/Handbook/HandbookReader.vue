@@ -5,7 +5,52 @@ import MarkdownIt from 'markdown-it';
 const props = defineProps({
     markdown: { type: String, default: '' },
     isMissing: { type: Boolean, default: false },
+    handbooks: { type: Object, default: () => ({}) },
 });
+
+const STORAGE_KEY = 'levellife.handbook.lang';
+const DEFAULT_LANG = 'id';
+
+const langLabels = {
+    id: 'ID',
+    en: 'EN',
+};
+
+const availableLangs = computed(() => {
+    const keys = Object.keys(props.handbooks || {}).filter(
+        (key) => typeof props.handbooks[key]?.markdown === 'string',
+    );
+
+    return keys.length > 0 ? keys : [DEFAULT_LANG];
+});
+
+const lang = ref(DEFAULT_LANG);
+
+const activeEntry = computed(() => props.handbooks?.[lang.value] ?? null);
+
+const activeMarkdown = computed(() => activeEntry.value?.markdown ?? props.markdown ?? '');
+
+const activeIsMissing = computed(() =>
+    activeEntry.value ? Boolean(activeEntry.value.isMissing) : props.isMissing,
+);
+
+const setLang = (next) => {
+    if (!availableLangs.value.includes(next) || next === lang.value) {
+        return;
+    }
+
+    lang.value = next;
+
+    if (typeof window !== 'undefined') {
+        try {
+            window.localStorage.setItem(STORAGE_KEY, next);
+        } catch (error) {
+            // Ignore storage failures (e.g. private mode).
+        }
+
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+};
 
 const md = new MarkdownIt({
     html: false,
@@ -84,7 +129,7 @@ md.renderer.rules.paragraph_close = (tokens, idx) => {
     return '</p>';
 };
 
-const renderedHtml = computed(() => md.render(props.markdown || ''));
+const renderedHtml = computed(() => md.render(activeMarkdown.value || ''));
 const showBackToTop = ref(false);
 
 const syncBackToTop = () => {
@@ -107,6 +152,16 @@ const backToTop = () => {
 };
 
 onMounted(() => {
+    try {
+        const saved = window.localStorage.getItem(STORAGE_KEY);
+
+        if (saved && availableLangs.value.includes(saved)) {
+            lang.value = saved;
+        }
+    } catch (error) {
+        // Ignore storage failures (e.g. private mode).
+    }
+
     syncBackToTop();
     window.addEventListener('scroll', syncBackToTop, { passive: true });
 });
@@ -143,8 +198,29 @@ onBeforeUnmount(() => {
                 </div>
 
                 <div class="relative px-10 py-10 md:px-10 md:py-10">
+                    <div
+                        v-if="availableLangs.length > 1"
+                        class="mb-6 flex justify-end"
+                    >
+                        <div class="inline-flex items-center gap-1 rounded-full border border-[#31415f] bg-[#0b1120] p-1 text-xs font-bold">
+                            <button
+                                v-for="code in availableLangs"
+                                :key="code"
+                                type="button"
+                                class="rounded-full px-3 py-1 transition"
+                                :class="lang === code
+                                    ? 'bg-blue-500/20 text-amber-200 shadow-[inset_0_0_0_1px_rgba(251,191,36,0.35)]'
+                                    : 'text-slate-400 hover:text-slate-200'"
+                                :aria-pressed="lang === code"
+                                @click="setLang(code)"
+                            >
+                                {{ langLabels[code] ?? code.toUpperCase() }}
+                            </button>
+                        </div>
+                    </div>
+
                     <p
-                        v-if="isMissing"
+                        v-if="activeIsMissing"
                         class="mb-6 inline-flex rounded-full border border-amber-400/20 bg-amber-500/10 px-3 py-1 text-xs font-semibold text-amber-200"
                     >
                         Source file missing. Showing fallback content.

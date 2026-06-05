@@ -33,14 +33,30 @@ use Inertia\Inertia;
 require __DIR__.'/auth.php';
 
 $handbookPageData = function () {
-    $path = resource_path('content/handbook.md');
-    $exists = File::exists($path);
+    $read = function (string $file) {
+        $path = resource_path("content/{$file}");
+        $exists = File::exists($path);
+
+        return [
+            'markdown' => $exists
+                ? File::get($path)
+                : "# Handbook unavailable\n\nThe handbook source file could not be found.",
+            'isMissing' => ! $exists,
+        ];
+    };
+
+    $id = $read('handbook.md');
+    $en = $read('handbook_en.md');
 
     return [
-        'markdown' => $exists
-            ? File::get($path)
-            : "# Handbook unavailable\n\nThe handbook source file could not be found.",
-        'isMissing' => ! $exists,
+        // Backward-compatible defaults (Indonesian).
+        'markdown' => $id['markdown'],
+        'isMissing' => $id['isMissing'],
+        // Per-language payload for the in-page language toggle.
+        'handbooks' => [
+            'id' => $id,
+            'en' => $en,
+        ],
     ];
 };
 

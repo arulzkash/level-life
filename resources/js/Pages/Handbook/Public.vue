@@ -8,6 +8,7 @@ defineOptions({ layout: HandbookPublicLayout });
 defineProps({
     markdown: { type: String, default: '' },
     isMissing: { type: Boolean, default: false },
+    handbooks: { type: Object, default: () => ({}) },
 });
 </script>
 
@@ -29,5 +30,6 @@ defineProps({
     <HandbookReader
         :markdown="markdown"
         :is-missing="isMissing"
+        :handbooks="handbooks"
     />
 </template>

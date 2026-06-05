@@ -20,6 +20,10 @@ class ExampleTest extends TestCase
             ->assertInertia(fn (Assert $page) => $page
                 ->component('Handbook/Public')
                 ->has('markdown')
-                ->where('isMissing', false));
+                ->where('isMissing', false)
+                ->has('handbooks.id.markdown')
+                ->where('handbooks.id.isMissing', false)
+                ->has('handbooks.en.markdown')
+                ->where('handbooks.en.isMissing', false));
     }
 }
