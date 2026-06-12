@@ -382,28 +382,32 @@ const deleteGoal = () => {
                             <div
                                 v-for="(m, index) in editForm.milestones"
                                 :key="index"
-                                class="flex items-center gap-2"
+                                class="flex flex-col gap-2 rounded-lg border border-slate-700/50 p-2 sm:flex-row sm:items-center sm:border-0 sm:p-0 sm:gap-2"
                             >
                                 <input
                                     v-model="m.title"
                                     placeholder="Milestone Name"
-                                    class="input-dark flex-1"
+                                    class="input-dark w-full sm:flex-1"
                                     required
                                 />
-                                <input
-                                    type="date"
-                                    v-model="m.due_date"
-                                    class="input-dark w-32 text-sm md:w-40"
-                                    required
-                                />
-                                <button
-                                    type="button"
-                                    @click="removeMilestoneRow(index)"
-                                    class="text-red-400 hover:text-red-300"
-                                    title="Delete Milestone"
-                                >
-                                    ✕
-                                </button>
+                                <div class="flex items-center gap-2 w-full sm:w-auto">
+                                    <input
+                                        type="date"
+                                        v-model="m.due_date"
+                                        class="input-dark flex-1 sm:w-32 md:w-40 text-sm"
+                                        required
+                                    />
+                                    <button
+                                        type="button"
+                                        @click="removeMilestoneRow(index)"
+                                        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-slate-700/50 text-slate-400 hover:border-red-500/50 hover:bg-red-500/10 hover:text-red-400 transition sm:border-0 sm:h-auto sm:w-auto"
+                                        title="Delete Milestone"
+                                    >
+                                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                    </button>
+                                </div>
                             </div>
                             <div
                                 v-if="editForm.milestones.length === 0"

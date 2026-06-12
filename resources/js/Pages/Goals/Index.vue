@@ -230,28 +230,35 @@ const getNearestMilestoneInfo = (goalObj) => {
                         <p class="text-[11px] leading-relaxed text-slate-500">
                             {{ GOAL_COPY.milestoneHelper }}
                         </p>
-                        <div v-for="(m, i) in createForm.milestones" :key="i" class="flex gap-3 relative group">
+                        <div
+                            v-for="(m, i) in createForm.milestones"
+                            :key="i"
+                            class="flex flex-col gap-2 rounded-lg border border-slate-700/50 p-2 sm:flex-row sm:items-center sm:border-0 sm:p-0 sm:gap-3 relative group"
+                        >
                             <input
                                 v-model="m.title"
                                 placeholder="Step title"
-                                class="input-quest flex-1 px-3 py-2 text-sm"
+                                class="input-quest w-full px-3 py-2 text-sm sm:flex-1"
                                 required
                             />
-                            <input
-                                type="date"
-                                v-model="m.due_date"
-                                class="input-quest w-36 px-3 py-2 text-sm md:w-48"
-                                required
-                            />
-                            <button
-                                type="button"
-                                @click="removeMilestoneRow(i)"
-                                class="flex items-center justify-center px-1 text-slate-500 hover:text-red-400 opacity-50 transition hover:opacity-100"
-                            >
-                                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                            </button>
+                            <div class="flex items-center gap-2 w-full sm:w-auto">
+                                <input
+                                    type="date"
+                                    v-model="m.due_date"
+                                    class="input-quest flex-1 px-3 py-2 text-sm sm:w-36 md:w-48"
+                                    required
+                                />
+                                <button
+                                    type="button"
+                                    @click="removeMilestoneRow(i)"
+                                    class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-slate-700/50 text-slate-500 hover:border-red-500/50 hover:bg-red-500/10 hover:text-red-400 transition sm:border-0 sm:h-auto sm:w-auto sm:opacity-50 sm:hover:opacity-100"
+                                    title="Delete Milestone"
+                                >
+                                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            </div>
                         </div>
                         <div
                             v-if="createForm.milestones.length === 0"
