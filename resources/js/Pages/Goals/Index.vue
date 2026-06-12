@@ -4,6 +4,7 @@ import AppLayout from '@/Layouts/AppLayout.vue';
 import { Link, useForm, Head } from '@inertiajs/vue3';
 import { useGoalUrgency } from '@/Composables/useGoalUrgency';
 import { GOAL_COPY } from '@/Utils/featureCopy';
+import draggable from 'vuedraggable';
 
 defineOptions({ layout: AppLayout });
 
@@ -33,7 +34,11 @@ const createForm = useForm({
 });
 
 const addMilestoneRow = () => {
-    createForm.milestones.push({ title: '', due_date: '' });
+    createForm.milestones.push({
+        id: 'new-' + Date.now() + '-' + Math.random().toString(36).substring(2, 9),
+        title: '',
+        due_date: '',
+    });
 };
 
 const removeMilestoneRow = (index) => {
@@ -230,36 +235,64 @@ const getNearestMilestoneInfo = (goalObj) => {
                         <p class="text-[11px] leading-relaxed text-slate-500">
                             {{ GOAL_COPY.milestoneHelper }}
                         </p>
-                        <div
-                            v-for="(m, i) in createForm.milestones"
-                            :key="i"
-                            class="flex flex-col gap-2 rounded-lg border border-slate-700/50 p-2 sm:flex-row sm:items-center sm:border-0 sm:p-0 sm:gap-3 relative group"
+                        <draggable
+                            v-model="createForm.milestones"
+                            item-key="id"
+                            handle=".drag-handle"
+                            ghost-class="opacity-50"
+                            :animation="200"
+                            class="space-y-3"
                         >
-                            <input
-                                v-model="m.title"
-                                placeholder="Step title"
-                                class="input-quest w-full px-3 py-2 text-sm sm:flex-1"
-                                required
-                            />
-                            <div class="flex items-center gap-2 w-full sm:w-auto">
-                                <input
-                                    type="date"
-                                    v-model="m.due_date"
-                                    class="input-quest flex-1 px-3 py-2 text-sm sm:w-36 md:w-48"
-                                    required
-                                />
-                                <button
-                                    type="button"
-                                    @click="removeMilestoneRow(i)"
-                                    class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-slate-700/50 text-slate-500 hover:border-red-500/50 hover:bg-red-500/10 hover:text-red-400 transition sm:border-0 sm:h-auto sm:w-auto sm:opacity-50 sm:hover:opacity-100"
-                                    title="Delete Milestone"
+                            <template #item="{ element: m, index: i }">
+                                <div
+                                    class="flex flex-col gap-2 rounded-lg border border-slate-700/50 p-2 sm:flex-row sm:items-center sm:border-0 sm:p-0 sm:gap-3 relative group"
                                 >
-                                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                                    </svg>
-                                </button>
-                            </div>
-                        </div>
+                                    <div class="flex items-center gap-2 w-full sm:flex-1">
+                                        <!-- drag handle -->
+                                        <div
+                                            class="drag-handle cursor-grab p-1.5 text-slate-500 hover:text-slate-300 transition active:cursor-grabbing shrink-0"
+                                            title="Drag to reorder"
+                                        >
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4">
+                                                <circle cx="9" cy="5" r="1"></circle>
+                                                <circle cx="9" cy="12" r="1"></circle>
+                                                <circle cx="9" cy="19" r="1"></circle>
+                                                <circle cx="15" cy="5" r="1"></circle>
+                                                <circle cx="15" cy="12" r="1"></circle>
+                                                <circle cx="15" cy="19" r="1"></circle>
+                                            </svg>
+                                        </div>
+
+                                        <input
+                                            v-model="m.title"
+                                            placeholder="Step title"
+                                            class="input-quest w-full px-3 py-2 text-sm"
+                                            required
+                                        />
+                                    </div>
+
+                                    <div class="flex items-center gap-2 w-full sm:w-auto">
+                                        <div class="w-7 sm:hidden shrink-0"></div>
+                                        <input
+                                            type="date"
+                                            v-model="m.due_date"
+                                            class="input-quest flex-1 px-3 py-2 text-sm sm:w-36 md:w-48"
+                                            required
+                                        />
+                                        <button
+                                            type="button"
+                                            @click="removeMilestoneRow(i)"
+                                            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-slate-700/50 text-slate-500 hover:border-red-500/50 hover:bg-red-500/10 hover:text-red-400 transition sm:border-0 sm:h-auto sm:w-auto sm:opacity-50 sm:hover:opacity-100"
+                                            title="Delete Milestone"
+                                        >
+                                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+                            </template>
+                        </draggable>
                         <div
                             v-if="createForm.milestones.length === 0"
                             class="py-2 text-[11px] italic text-slate-500 text-center rounded border border-dashed border-slate-700/50 bg-slate-800/30"
