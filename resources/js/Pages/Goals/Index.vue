@@ -608,9 +608,9 @@ const getNearestMilestoneInfo = (goalObj) => {
 <style scoped>
 .input-quest {
     @apply rounded-lg border border-slate-700 bg-slate-900 px-4 py-2 text-slate-200 placeholder-slate-600 outline-none transition-all focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500;
+    color-scheme: dark;
 }
 input[type='date']::-webkit-calendar-picker-indicator {
-    filter: invert(1);
     opacity: 0.5;
     cursor: pointer;
 }

@@ -435,7 +435,6 @@ const dateTone = (dateKey) => {
 }
 /* Calendar Icon White Fix */
 input[type='date']::-webkit-calendar-picker-indicator {
-    filter: invert(1);
     opacity: 0.6;
     cursor: pointer;
 }

@@ -336,9 +336,9 @@ const setView = (view) => {
 <style scoped>
 .input-dark {
     @apply rounded-lg border border-slate-700 bg-slate-900 px-4 py-2.5 text-slate-200 placeholder-slate-600 outline-none transition-all focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/50;
+    color-scheme: dark;
 }
 input[type='date']::-webkit-calendar-picker-indicator {
-    filter: invert(1);
     opacity: 0.6;
     cursor: pointer;
 }
