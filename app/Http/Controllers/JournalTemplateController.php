@@ -15,7 +15,7 @@ class JournalTemplateController extends Controller
 
         $data = $request->validate([
             'name' => ['required', 'string', 'max:80'],
-            'sections' => ['nullable', 'array'],
+            'sections' => ['nullable', 'array', 'max:100'],
             'sections.*.title' => ['nullable', 'string', 'max:120'],
         ]);
 
@@ -36,7 +36,7 @@ class JournalTemplateController extends Controller
 
     public function destroy(Request $request, JournalTemplate $template)
     {
-        abort_unless($template->user_id === $request->user()->id, 403);
+        abort_unless($request->user()->can('delete', $template), 403);
         $template->delete();
 
         return back()->with('success', 'Template deleted.');

@@ -36,7 +36,7 @@ class HabitController extends Controller
 
     public function toggleToday(Request $request, Habit $habit)
     {
-        abort_unless($habit->user_id === $request->user()->id, 403);
+        abort_unless($request->user()->can('update', $habit), 403);
 
         $today = now()->toDateString();
 
@@ -65,7 +65,7 @@ class HabitController extends Controller
 
     public function toggleDate(Request $request, Habit $habit)
     {
-        abort_unless($habit->user_id === $request->user()->id, 403);
+        abort_unless($request->user()->can('update', $habit), 403);
 
         $data = $request->validate([
             'date' => ['required', 'date_format:Y-m-d'],
@@ -103,7 +103,7 @@ class HabitController extends Controller
 
     public function update(Request $request, Habit $habit)
     {
-        abort_unless($habit->user_id === $request->user()->id, 403);
+        abort_unless($request->user()->can('update', $habit), 403);
 
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
@@ -121,7 +121,7 @@ class HabitController extends Controller
 
     public function archive(Request $request, Habit $habit)
     {
-        abort_unless($habit->user_id === $request->user()->id, 403);
+        abort_unless($request->user()->can('update', $habit), 403);
 
         if ($habit->end_date) return redirect()->back();
 
@@ -135,7 +135,7 @@ class HabitController extends Controller
 
     public function unarchive(Request $request, Habit $habit)
     {
-        abort_unless($habit->user_id === $request->user()->id, 403);
+        abort_unless($request->user()->can('update', $habit), 403);
 
         if (is_null($habit->end_date)) return redirect()->back();
 

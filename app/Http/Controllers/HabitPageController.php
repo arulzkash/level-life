@@ -76,7 +76,7 @@ class HabitPageController extends Controller
 
     public function show(Request $request, Habit $habit)
     {
-        abort_unless($habit->user_id === $request->user()->id, 403);
+        abort_unless($request->user()->can('view', $habit), 403);
 
         $month = $request->query('month'); // YYYY-MM
         $base = $month ? Carbon::createFromFormat('Y-m', $month)->startOfMonth() : now()->startOfMonth();

@@ -98,7 +98,10 @@ export function useVisualEffects() {
         const toast = document.createElement('div');
         toast.className =
             'fixed top-4 right-4 bg-slate-800 border-l-4 border-emerald-500 text-white px-6 py-4 rounded shadow-2xl z-50 animate-bounce font-bold flex items-center gap-2';
-        toast.innerHTML = `<span>🎉</span> ${truncatedMessage}`;
+        const icon = document.createElement('span');
+        icon.textContent = '🎉';
+        toast.appendChild(icon);
+        toast.appendChild(document.createTextNode(' ' + (truncatedMessage ?? '')));
         document.body.appendChild(toast);
         setTimeout(() => toast.remove(), 4000);
     };

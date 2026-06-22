@@ -59,7 +59,7 @@ const md = new MarkdownIt({
 });
 
 const defaultValidateLink = md.validateLink.bind(md);
-const allowedInlineImagePattern = /^data:image\/(?:png|jpe?g|gif|webp|svg\+xml);base64,[a-z0-9+/=]+$/i;
+const allowedInlineImagePattern = /^data:image\/(?:png|jpe?g|gif|webp);base64,[a-z0-9+/=]+$/i;
 
 md.validateLink = (url) => {
     const normalized = String(url || '').trim();

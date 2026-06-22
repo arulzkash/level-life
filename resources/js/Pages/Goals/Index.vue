@@ -60,7 +60,10 @@ const showToast = (message) => {
     const toast = document.createElement('div');
     toast.className =
         'fixed top-4 right-4 bg-slate-800 border-l-4 border-indigo-500 text-white px-6 py-4 rounded shadow-2xl z-[100] animate-bounce font-bold flex items-center gap-2';
-    toast.innerHTML = `<span>🎯</span> ${message}`;
+    const icon = document.createElement('span');
+    icon.textContent = '🎯';
+    toast.appendChild(icon);
+    toast.appendChild(document.createTextNode(` ${message ?? ''}`));
     document.body.appendChild(toast);
     setTimeout(() => toast.remove(), 3000);
 };
@@ -84,6 +87,11 @@ const formatDaysLeft = (daysLeft) => {
 };
 
 // Helper to get nearest pending milestone
+const decodePaginationLabel = (label) => String(label ?? '')
+    .replaceAll('&laquo;', '«')
+    .replaceAll('&raquo;', '»')
+    .replaceAll('&amp;', '&');
+
 const getNearestMilestoneInfo = (goalObj) => {
     if (!goalObj.rawGoal.milestones || goalObj.rawGoal.milestones.length === 0) return null;
     const pending = goalObj.rawGoal.milestones.filter((m) => !m.is_completed);
@@ -597,10 +605,8 @@ const getNearestMilestoneInfo = (goalObj) => {
                         !link.url ? 'opacity-30 cursor-not-allowed' : ''
                     ]"
                     :href="link.url ? `${link.url}&tab=completed` : '#'"
-                    v-html="link.label"
                     preserve-scroll
-                />
-            </div>
+                >{{ decodePaginationLabel(link.label) }}</Link></div>
         </div>
     </div>
 </template>

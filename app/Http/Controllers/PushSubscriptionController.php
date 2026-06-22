@@ -35,8 +35,8 @@ class PushSubscriptionController extends Controller
     {
         $validated = $request->validate([
             'endpoint' => ['required', 'string', 'max:500'],
-            'keys.p256dh' => ['required', 'string'],
-            'keys.auth' => ['required', 'string'],
+            'keys.p256dh' => ['required', 'string', 'max:500'],
+            'keys.auth' => ['required', 'string', 'max:255'],
             'contentEncoding' => ['nullable', 'string', 'max:50'],
         ]);
 

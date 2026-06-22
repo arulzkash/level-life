@@ -154,13 +154,22 @@ class QuestController extends Controller
         $today = Carbon::now('Asia/Jakarta')->startOfDay();
         $todayStr = $today->toDateString();
 
-        // 2. Mulai Transaksi (Tanpa Locking Row untuk Hemat RU)
-        DB::transaction(function () use ($user, $quest, $data, $today, $todayStr) {
+        $alreadyCompleted = false;
+
+        // 2. Mulai Transaksi
+        DB::transaction(function () use ($user, $quest, $data, $today, $todayStr, &$alreadyCompleted) {
+            $quest = Quest::whereKey($quest->id)->lockForUpdate()->first();
+
+            if (! $quest->is_repeatable && $quest->status === 'done') {
+                $alreadyCompleted = true;
+                return;
+            }
 
             // =========================================================
             // STEP A: Fetch Profile "Ringan" (Hanya kolom krusial)
             // =========================================================
             $profile = $user->profile()
+                ->lockForUpdate()
                 ->select([
                     'id',
                     'user_id',
@@ -353,6 +362,10 @@ class QuestController extends Controller
             // Update relasi object user
             $user->setRelation('profile', $profile);
         });
+
+        if ($alreadyCompleted) {
+            return redirect()->back();
+        }
 
         // =========================================================
         // STEP E: Post-Transaction (Side Effects)

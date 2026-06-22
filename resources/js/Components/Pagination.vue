@@ -13,6 +13,10 @@ watch(() => props.meta.current_page, (newVal) => {
     jumpPage.value = newVal;
 });
 
+const decodePaginationLabel = (label) => String(label ?? '')
+    .replaceAll('&laquo;', '«')
+    .replaceAll('&raquo;', '»')
+    .replaceAll('&amp;', '&');
 const handleJump = () => {
     const page = parseInt(jumpPage.value);
     
@@ -103,7 +107,6 @@ const handleJump = () => {
                         <Component
                             :is="link.url ? Link : 'span'"
                             :href="link.url"
-                            v-html="link.label"
                             class="relative inline-flex items-center px-3 py-1.5 text-sm font-semibold focus:z-20 border transition-all duration-200"
                             :class="{
                                 'z-10 bg-indigo-600 text-white border-indigo-500 shadow-[0_0_10px_rgba(79,70,229,0.4)]': link.active,
@@ -112,7 +115,7 @@ const handleJump = () => {
                                 'rounded-l-md': k === 0,
                                 'rounded-r-md': k === meta.links.length - 1,
                             }"
-                        />
+                        >{{ decodePaginationLabel(link.label) }}</Component>
                     </template>
                 </nav>
 

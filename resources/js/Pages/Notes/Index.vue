@@ -35,6 +35,10 @@ const clearSearch = () => {
     searchQuery.value = '';
 };
 
+const decodePaginationLabel = (label) => String(label ?? '')
+    .replaceAll('&laquo;', '«')
+    .replaceAll('&raquo;', '»')
+    .replaceAll('&amp;', '&');
 const deleteNote = (id, title) => {
     if (confirm(`Are you sure you want to delete note "${title}"?`)) {
         router.delete(`/notes/${id}`, { preserveScroll: true });
@@ -218,9 +222,8 @@ const colorClasses = {
                         !link.url ? 'opacity-30 cursor-not-allowed' : ''
                     ]"
                     :href="link.url ? link.url : '#'"
-                    v-html="link.label"
                     preserve-scroll
-                />
+                >{{ decodePaginationLabel(link.label) }}</Link>
             </div>
         </div>
     </div>

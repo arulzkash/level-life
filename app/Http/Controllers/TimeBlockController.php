@@ -41,7 +41,7 @@ class TimeBlockController extends Controller
 
     public function update(Request $request, TimeBlock $timeBlock)
     {
-        abort_unless($timeBlock->user_id === $request->user()->id, 403);
+        abort_unless($request->user()->can('update', $timeBlock), 403);
 
         $data = $request->validate([
             'date' => ['required', 'date'],
@@ -72,7 +72,7 @@ class TimeBlockController extends Controller
 
     public function destroy(Request $request, TimeBlock $timeBlock)
     {
-        abort_unless($timeBlock->user_id === $request->user()->id, 403);
+        abort_unless($request->user()->can('update', $timeBlock), 403);
 
         $timeBlock->delete();
 

@@ -50,7 +50,7 @@ class GoalController extends Controller
 
     public function show(Request $request, Goal $goal)
     {
-        if ($request->user()->id !== $goal->user_id) {
+        if (! $request->user()->can('view', $goal)) {
             abort(403);
         }
 
@@ -70,11 +70,11 @@ class GoalController extends Controller
     {
         $data = $request->validate([
             'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'personal_reason' => 'required|string',
-            'deadline' => 'required|date',
-            'milestones' => 'nullable|array',
-            'milestones.*.title' => 'required|string|max:255',
+            'description' => 'nullable|string|max:10000',
+'personal_reason' => 'required|string|max:10000',
+'deadline' => 'required|date',
+            'milestones' => 'nullable|array|max:100',
+'milestones.*.title' => 'required|string|max:255',
             'milestones.*.due_date' => 'required|date',
         ]);
 
@@ -103,17 +103,17 @@ class GoalController extends Controller
 
     public function update(Request $request, Goal $goal)
     {
-        if ($request->user()->id !== $goal->user_id) {
+        if (! $request->user()->can('update', $goal)) {
             abort(403);
         }
 
         $data = $request->validate([
             'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'personal_reason' => 'required|string',
-            'deadline' => 'required|date',
-            'milestones' => 'nullable|array',
-            'milestones.*.id' => 'nullable',
+            'description' => 'nullable|string|max:10000',
+'personal_reason' => 'required|string|max:10000',
+'deadline' => 'required|date',
+            'milestones' => 'nullable|array|max:100',
+'milestones.*.id' => 'nullable',
             'milestones.*.title' => 'required|string|max:255',
             'milestones.*.due_date' => 'required|date',
         ]);
@@ -162,7 +162,7 @@ class GoalController extends Controller
 
     public function destroy(Request $request, Goal $goal)
     {
-        if ($request->user()->id !== $goal->user_id) {
+        if (! $request->user()->can('delete', $goal)) {
             abort(403);
         }
 
@@ -178,7 +178,7 @@ class GoalController extends Controller
 
     public function toggleMilestone(Request $request, GoalMilestone $goalMilestone)
     {
-        if ($request->user()->id !== $goalMilestone->goal->user_id) {
+        if (! $request->user()->can('update', $goalMilestone)) {
             abort(403);
         }
 
@@ -197,7 +197,7 @@ class GoalController extends Controller
 
     public function complete(Request $request, Goal $goal)
     {
-        if ($request->user()->id !== $goal->user_id) {
+        if (! $request->user()->can('update', $goal)) {
             abort(403);
         }
 

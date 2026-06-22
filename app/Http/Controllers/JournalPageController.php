@@ -79,13 +79,13 @@ class JournalPageController extends Controller
             'title' => ['nullable', 'string', 'max:160'],
             'mood_emoji' => ['nullable', 'string', 'max:16'],
             'is_favorite' => ['nullable', 'boolean'],
-            'body' => ['nullable', 'string'],
-            'sections' => ['nullable', 'array'],
+            'body' => ['nullable', 'string', 'max:50000'],
+            'sections' => ['nullable', 'array', 'max:100'],
 
             // sections[] optional, tapi kalau ada item -> id wajib
-            'sections.*.id' => ['required_with:sections', 'string'],
-            'sections.*.title' => ['nullable', 'string'],
-            'sections.*.content' => ['nullable', 'string'],
+            'sections.*.id' => ['required_with:sections', 'string', 'max:100'],
+            'sections.*.title' => ['nullable', 'string', 'max:255'],
+            'sections.*.content' => ['nullable', 'string', 'max:10000'],
 
             // user set reward sendiri (today only)
             'xp_reward' => ['nullable', 'integer', 'min:0', 'max:1000000'],
@@ -130,9 +130,13 @@ class JournalPageController extends Controller
                 // - not rewarded yet
                 // - and at least one of xp/coin > 0 (avoid locking reward with 0)
                 if ($isToday && !$entry->rewarded_at && ($xp > 0 || $coin > 0)) {
-                    // Apply to profile once
-                    if ($xp > 0) $user->profile()->increment('xp_total', $xp);
-                    if ($coin > 0) $user->profile()->increment('coin_balance', $coin);
+                    // Apply to profile once, with row lock so concurrent saves cannot double-apply balances.
+                    $profile = $user->profile()->lockForUpdate()->first();
+                    if ($profile) {
+                        if ($xp > 0) $profile->xp_total = (int) $profile->xp_total + $xp;
+                        if ($coin > 0) $profile->coin_balance = (int) $profile->coin_balance + $coin;
+                        $profile->save();
+                    }
 
                     $entry->xp_awarded = $xp;
                     $entry->coin_awarded = $coin;

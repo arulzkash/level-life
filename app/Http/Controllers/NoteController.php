@@ -30,7 +30,10 @@ class NoteController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
-        $q = trim((string)$request->query('q', ''));
+        $validated = $request->validate([
+            'q' => ['nullable', 'string', 'max:120'],
+        ]);
+        $q = trim((string) ($validated['q'] ?? ''));
 
         $query = Note::where('user_id', $user->id);
 
@@ -87,11 +90,11 @@ class NoteController extends Controller
     {
         $data = $request->validate([
             'title' => ['nullable', 'string', 'max:255'],
-            'body' => ['nullable', 'string'],
-            'sections' => ['nullable', 'array'],
-            'sections.*.id' => ['required_with:sections', 'string'],
-            'sections.*.title' => ['nullable', 'string'],
-            'sections.*.content' => ['nullable', 'string'],
+            'body' => ['nullable', 'string', 'max:50000'],
+            'sections' => ['nullable', 'array', 'max:100'],
+            'sections.*.id' => ['required_with:sections', 'string', 'max:100'],
+            'sections.*.title' => ['nullable', 'string', 'max:255'],
+            'sections.*.content' => ['nullable', 'string', 'max:10000'],
             'is_pinned' => ['nullable', 'boolean'],
             'color' => ['nullable', 'string', 'in:slate,indigo,emerald,amber,rose,sky'],
         ]);
@@ -110,7 +113,7 @@ class NoteController extends Controller
 
     public function show(Request $request, Note $note)
     {
-        if ($request->user()->id !== $note->user_id) {
+        if (! $request->user()->can('view', $note)) {
             abort(403);
         }
 
@@ -139,17 +142,17 @@ class NoteController extends Controller
 
     public function update(Request $request, Note $note)
     {
-        if ($request->user()->id !== $note->user_id) {
+        if (! $request->user()->can('update', $note)) {
             abort(403);
         }
 
         $data = $request->validate([
             'title' => ['nullable', 'string', 'max:255'],
-            'body' => ['nullable', 'string'],
-            'sections' => ['nullable', 'array'],
-            'sections.*.id' => ['required_with:sections', 'string'],
-            'sections.*.title' => ['nullable', 'string'],
-            'sections.*.content' => ['nullable', 'string'],
+            'body' => ['nullable', 'string', 'max:50000'],
+            'sections' => ['nullable', 'array', 'max:100'],
+            'sections.*.id' => ['required_with:sections', 'string', 'max:100'],
+            'sections.*.title' => ['nullable', 'string', 'max:255'],
+            'sections.*.content' => ['nullable', 'string', 'max:10000'],
             'is_pinned' => ['nullable', 'boolean'],
             'color' => ['nullable', 'string', 'in:slate,indigo,emerald,amber,rose,sky'],
         ]);
@@ -167,7 +170,7 @@ class NoteController extends Controller
 
     public function destroy(Request $request, Note $note)
     {
-        if ($request->user()->id !== $note->user_id) {
+        if (! $request->user()->can('delete', $note)) {
             abort(403);
         }
 

@@ -200,7 +200,8 @@ Route::middleware('auth')->group(function () use ($handbookPageData) {
         return Inertia::render('Handbook/Index', $handbookPageData());
     })->name('handbook');
 
-    Route::get('/debug/badges', [BadgeDebugController::class, 'index']);
+    Route::get('/debug/badges', [BadgeDebugController::class, 'index'])
+        ->middleware(\App\Http\Middleware\EnsureBadgeDebugEnabled::class);
 });
 
 // Route khusus buat UptimeRobot "nyolek" server
@@ -211,15 +212,19 @@ Route::get('/up', function () {
 });
 
 Route::post('/internal/reminders/morning', [InternalReminderController::class, 'morning'])
+    ->middleware('throttle:internal-reminders')
     ->withoutMiddleware([VerifyCsrfToken::class])
     ->name('internal.reminders.morning');
 
 Route::post('/internal/reminders/evening', [InternalReminderController::class, 'evening'])
+    ->middleware('throttle:internal-reminders')
     ->withoutMiddleware([VerifyCsrfToken::class])
     ->name('internal.reminders.evening');
 
 Route::get('/internal/cron/notifications/morning', [InternalReminderController::class, 'cronMorning'])
+    ->middleware('throttle:internal-reminders')
     ->name('internal.cron.notifications.morning');
 
 Route::get('/internal/cron/notifications/evening', [InternalReminderController::class, 'cronEvening'])
+    ->middleware('throttle:internal-reminders')
     ->name('internal.cron.notifications.evening');
